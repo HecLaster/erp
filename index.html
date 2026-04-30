@@ -284,6 +284,125 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
   .card { border: 1px solid #ccc; box-shadow: none; }
   .kpi, .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — phones & tablets
+═══════════════════════════════════════════════════════════ */
+
+/* HAMBURGER BUTTON */
+#hamburger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: 8px; color: var(--text); flex-direction: column;
+  gap: 5px; align-items: center; justify-content: center;
+}
+#hamburger span {
+  display: block; width: 22px; height: 2px;
+  background: var(--text2); border-radius: 2px; transition: all 0.25s;
+}
+#hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+#hamburger.open span:nth-child(2) { opacity: 0; }
+#hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* SIDEBAR OVERLAY */
+#sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 99;
+}
+#sidebar-overlay.show { display: block; }
+
+/* BOTTOM NAV */
+#bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  z-index: 90; padding: 0;
+  grid-template-columns: repeat(5, 1fr);
+  safe-area-inset-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-item {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 8px 4px 10px;
+  font-size: 10px; color: var(--text3); cursor: pointer;
+  border: none; background: none; gap: 3px; transition: color 0.15s;
+}
+.bottom-nav-item .bn-icon { font-size: 18px; line-height: 1; }
+.bottom-nav-item.active { color: var(--accent); }
+.bottom-nav-item:hover { color: var(--text); }
+
+@media (max-width: 768px) {
+  /* Show hamburger, hide desktop sidebar */
+  #hamburger { display: flex; }
+  #bottom-nav { display: grid; }
+
+  /* Sidebar becomes slide-in drawer */
+  #sidebar {
+    position: fixed; left: -260px; top: 0; bottom: 0;
+    z-index: 100; width: 260px; transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+  #sidebar.open { left: 0; }
+
+  /* Main takes full width */
+  #main { width: 100%; }
+
+  /* Topbar mobile */
+  #topbar { padding: 0 12px; }
+  #topbar-title { font-size: 13px; }
+  .topbar-chip { display: none; }
+  #topbar-chip-date { display: none; }
+
+  /* Content padding + bottom nav space */
+  #content { padding: 14px; padding-bottom: 80px; }
+
+  /* Alerts bar wraps nicely */
+  #alerts-bar { padding: 6px 12px; gap: 6px; }
+  .alert-chip { font-size: 10px; padding: 2px 8px; }
+
+  /* Grids collapse to single column */
+  .grid-2, .grid-3, .grid-4, .grid-6 { grid-template-columns: 1fr !important; }
+
+  /* KPI grids — 2 columns on mobile */
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Cards */
+  .card { padding: 14px; margin-bottom: 12px; }
+
+  /* Tables — horizontal scroll */
+  table { font-size: 12px; }
+  .card > table, .card > div > table {
+    display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+
+  /* Schedule board chips wrap */
+  .sched-row { grid-template-columns: 100px 1fr; }
+  .job-chip { font-size: 10px; padding: 4px 8px; }
+
+  /* Page header */
+  .page-header h1 { font-size: 18px; }
+  .page-header p { font-size: 12px; }
+
+  /* Buttons full width on forms */
+  .btn { font-size: 13px; }
+
+  /* Machine blocks — 2 col */
+  .section-grid.grid-2 > div:first-child > .section-grid { 
+    grid-template-columns: 1fr 1fr !important; 
+  }
+
+  /* Status buttons wrap */
+  .status-btn { font-size: 10px; padding: 2px 6px; }
+
+  /* Input/select sizing for fingers */
+  input, select, textarea { font-size: 16px !important; padding: 10px !important; }
+
+  /* Hide sidebar footer on mobile */
+  #sidebar-foot { display: none; }
+}
+
+@media (max-width: 400px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+  .kpi-val { font-size: 22px; }
+}
+
 </style>
 </head>
 <body>
@@ -349,7 +468,11 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 
 <!-- MAIN -->
 <div id="main">
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
   <div id="topbar">
+    <button id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
     <span id="topbar-title">Shop Floor Entry</span>
     <div id="topbar-right">
       <span class="topbar-chip as9100">AS9100D</span>
@@ -3070,6 +3193,34 @@ function custportal(){
   ${customers.length===0?'<div class="card"><div style="text-align:center;color:var(--text3);padding:32px">No active jobs</div></div>':''}`);
 }
 
+
+// ── MOBILE NAV ───────────────────────────────────────────────
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const hb = document.getElementById('hamburger');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  hb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+function setBN(page){
+  document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById('bn-'+page);
+  if(el) el.classList.add('active');
+}
+
+// Close sidebar on nav (mobile)
+const _origNav = nav;
+window.nav = function(page){
+  _origNav(page);
+  if(window.innerWidth <= 768) closeSidebar();
+};
+
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
   const bar=document.getElementById('alerts-bar');
@@ -3112,5 +3263,24 @@ document.getElementById('topbar-date').textContent = today();
 refreshAlerts();
 floor();
 </script>
+
+  <!-- BOTTOM NAV (mobile only) -->
+  <nav id="bottom-nav">
+    <button class="bottom-nav-item active" id="bn-floor" onclick="nav('floor');setBN('floor')">
+      <span class="bn-icon">⬡</span><span>Floor</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-schedule" onclick="nav('schedule');setBN('schedule')">
+      <span class="bn-icon">▦</span><span>Schedule</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-kpi" onclick="nav('kpi');setBN('kpi')">
+      <span class="bn-icon">◈</span><span>KPIs</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-summary" onclick="nav('summary');setBN('summary')">
+      <span class="bn-icon">◉</span><span>Summary</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-menu" onclick="toggleSidebar()">
+      <span class="bn-icon">☰</span><span>More</span>
+    </button>
+  </nav>
 </body>
 </html>
