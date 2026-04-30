@@ -997,59 +997,127 @@ function schedule(){
         <button class="btn btn-secondary btn-sm" onclick="schedule()">↻</button>
       </div>
     </div>
-    <div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+    <div style="display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
       ${MACHINES.map(m=>{
         const mJobs = jobs.filter(j=>{
           if(j.status==='Shipped') return false;
-          // Check if any operation is assigned to this machine
-          if(j.operations&&j.operations.length>0){
-            return j.operations.some(op=>op.machine==m.id);
-          }
+          if(j.operations&&j.operations.length>0) return j.operations.some(op=>op.machine==m.id);
           return j.machine==m.id;
         }).sort((a,b)=>{
-          const pri = {Rush:0,Hot:1,Normal:2};
-          const pa = pri[a.priority]||2, pb = pri[b.priority]||2;
+          // Running/Setup first, then by priority+date
+          const stOrder = {Running:0,Setup:1,Queued:2,Complete:3};
+          const sa=stOrder[a.status]||2, sb=stOrder[b.status]||2;
+          if(sa!==sb) return sa-sb;
+          const pri={Rush:0,Hot:1,Normal:2};
+          const pa=pri[a.priority]||2, pb=pri[b.priority]||2;
           if(pa!==pb) return pa-pb;
           return new Date(a.ship)-new Date(b.ship);
         });
 
-        return `<div class="sched-row">
-          <div class="sched-machine-col">
-            <div class="sched-machine-name">#${m.id} ${m.name}</div>
-            <div class="sched-machine-cap">${m.cap}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:2px">${mJobs.length} jobs</div>
-          </div>
-          <div class="sched-jobs">
-            ${mJobs.length===0?`<span class="muted" style="font-size:12px">Open</span>`:''}
-            ${mJobs.map(j=>{
-              const daysOut=Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000);
-              const dateColor=daysOut<0?'var(--red)':daysOut<=7?'var(--amber)':'var(--text3)';
-              const isHot=j.priority==='Hot'||j.priority==='Rush';
-              const isLocked=j.locked;
-              return `<div class="job-chip ${j.status==='In Progress'?'in-progress':''}" 
-                style="position:relative;${isLocked?'border-color:var(--purple);':''}${daysOut<0?'border-color:var(--red);':''}"
-                title="${j.part||''} · ${j.customer||''} · Ship ${j.ship}">
-                ${isHot?'🔴 ':''}${isLocked?'🔒 ':''}
-                <span class="mono">${j.wo}</span>
-                <span style="font-size:9px;color:${dateColor}"> · ${j.ship}</span>
-                <div style="display:flex;gap:3px;margin-top:4px">
-                  <button onclick="schedLock('${j.id}')" 
-                    style="background:${isLocked?'rgba(155,89,255,0.15)':'var(--bg)'};border:1px solid ${isLocked?'var(--purple)':'var(--border)'};border-radius:3px;padding:1px 5px;font-size:9px;cursor:pointer;color:${isLocked?'var(--purple)':'var(--text3)'}" 
-                    title="${isLocked?'Unlock':'Lock to this machine'}">${isLocked?'🔒 Locked':'Lock'}</button>
-                  <select onchange="schedSetStatus('${j.id}',this.value)" 
-                    style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text2)">
-                    ${['Queued','Setup','Running','Complete','Shipped'].map(s=>`<option ${j.status===s?'selected':''}>${s}</option>`).join('')}
-                  </select>
-                </div>
-              </div>`;
-            }).join('')}
-          </div>
-        </div>`;
+        const activeJob = mJobs.find(j=>j.status==='Running'||j.status==='Setup');
+        const nextJob = mJobs.find(j=>j.status==='Queued'&&j!==activeJob);
+        const queueJobs = mJobs.filter(j=>j!==activeJob&&j!==nextJob&&j.status==='Queued');
+        const isEmpty = mJobs.length===0;
+
+        return '<div style="border-bottom:1px solid var(--border);display:grid;grid-template-columns:160px 1fr;min-height:80px">'
+
+          // Machine label column
+          +'<div style="padding:14px 16px;background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">'
+          +'<div style="font-weight:600;font-size:13px">#'+m.id+' '+m.name+'</div>'
+          +'<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">'+m.cap+'</div>'
+          +'<div style="font-size:10px;color:var(--text3);margin-top:4px">'+mJobs.length+' job'+(mJobs.length!==1?'s':'')+' queued</div>'
+          +'</div>'
+
+          // Jobs column
+          +'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--bg2)">'
+
+          // EMPTY
+          +(isEmpty?'<div style="display:flex;align-items:center;height:100%;color:var(--text3);font-size:13px;font-style:italic">Open — no jobs assigned</div>':'')
+
+          // ACTIVE JOB (Running or Setup)
+          +(activeJob?
+            '<div style="background:'+(activeJob.status==='Running'?'rgba(14,158,106,0.08)':'rgba(26,111,255,0.06)')+';border:1.5px solid '+(activeJob.status==='Running'?'var(--green)':'var(--accent)')+';border-radius:var(--r2);padding:10px 12px">'
+            +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+            +'<span style="width:8px;height:8px;border-radius:50%;background:'+(activeJob.status==='Running'?'var(--green)':'var(--accent)')+';display:inline-block;'+(activeJob.status==='Running'?'box-shadow:0 0 0 3px rgba(14,158,106,0.2)':'')+';flex-shrink:0"></span>'
+            +'<span class="badge '+(activeJob.status==='Running'?'badge-green':'badge-blue')+'" style="font-size:10px">'+(activeJob.status==='Running'?'▶ RUNNING':'⚙ SETUP')+'</span>'
+            +(activeJob.priority==='Hot'||activeJob.priority==='Rush'?'<span class="badge badge-red" style="font-size:10px">🔴 '+activeJob.priority+'</span>':'')
+            +(activeJob.locked?'<span style="font-size:11px">🔒</span>':'')
+            +'<span style="margin-left:auto;font-size:11px;color:var(--text3)">'+(activeJob.operator||'')+'</span>'
+            +'</div>'
+            +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">'
+            +'<span class="mono" style="font-size:15px;font-weight:600">'+activeJob.wo+'</span>'
+            +'<span style="font-size:12px;color:var(--text2)">'+(activeJob.part||'')+'</span>'
+            +'<span style="font-size:12px;color:var(--text3)">'+(activeJob.customer||'')+'</span>'
+            +'</div>'
+            +(activeJob.desc?'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+activeJob.desc+'</div>':'')
+            +'<div style="display:flex;align-items:center;gap:6px">'
+            +'<span style="font-size:11px;color:var(--text3)">Ship:</span>'
+            +'<span class="mono" style="font-size:11px;color:'+(Math.round((new Date(activeJob.ship+'T12:00:00')-new Date())/86400000)<7?'var(--amber)':'var(--text2)')+'">'+activeJob.ship+'</span>'
+            +'<span style="font-size:10px;color:var(--text3)">('+Math.round((new Date(activeJob.ship+'T12:00:00')-new Date())/86400000)+'d)</span>'
+            +'<div style="margin-left:auto;display:flex;gap:6px">'
+            +(activeJob.status==='Setup'?'<button class="btn btn-green btn-sm" data-id="'+activeJob.id+'" data-st="Running">▶ Start Running</button>':'')
+            +(activeJob.status==='Running'?'<button class="btn btn-secondary btn-sm" data-id="'+activeJob.id+'" data-st="Complete">✓ Complete</button>':'')
+            +'<button data-lockid="'+activeJob.id+'" style="background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text3)">'+( activeJob.locked?'🔒':'🔓')+'</button>'
+            +'</div></div>'
+            +'</div>'
+          :'')
+
+          // NEXT UP
+          +(nextJob&&!activeJob?
+            '<div style="background:rgba(26,111,255,0.04);border:1.5px solid var(--accent2);border-radius:var(--r2);padding:10px 12px">'
+            +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+            +'<span class="badge badge-blue" style="font-size:10px">NEXT UP</span>'
+            +(nextJob.priority==='Hot'||nextJob.priority==='Rush'?'<span class="badge badge-red" style="font-size:10px">🔴 '+nextJob.priority+'</span>':'')
+            +(nextJob.locked?'<span style="font-size:11px">🔒</span>':'')
+            +'<span style="margin-left:auto;display:flex;gap:6px">'
+            +'<button class="btn btn-primary btn-sm" data-id="'+nextJob.id+'" data-st="Setup">▶ Start Setup</button>'
+            +'<button data-lockid="'+nextJob.id+'" style="background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text3)">'+( nextJob.locked?'🔒':'🔓')+'</button>'
+            +'</span></div>'
+            +'<div style="display:flex;align-items:baseline;gap:8px">'
+            +'<span class="mono" style="font-size:14px;font-weight:600">'+nextJob.wo+'</span>'
+            +'<span style="font-size:12px;color:var(--text2)">'+(nextJob.part||'')+'</span>'
+            +'<span style="font-size:12px;color:var(--text3)">'+(nextJob.customer||'')+'</span>'
+            +'<span class="mono" style="margin-left:auto;font-size:11px;color:var(--text3)">Ship: '+nextJob.ship+'</span>'
+            +'</div>'
+            +'</div>'
+          :'')
+
+          // NEXT UP when there IS an active job
+          +(nextJob&&activeJob?
+            '<div style="border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;background:var(--bg3)">'
+            +'<div style="display:flex;align-items:center;gap:8px">'
+            +'<span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Next:</span>'
+            +(nextJob.priority==='Hot'||nextJob.priority==='Rush'?'🔴 ':'')
+            +(nextJob.locked?'🔒 ':'')
+            +'<span class="mono" style="font-size:13px;font-weight:500">'+nextJob.wo+'</span>'
+            +'<span style="font-size:12px;color:var(--text3)">'+(nextJob.part||'')+'</span>'
+            +'<span class="mono" style="margin-left:auto;font-size:11px;color:var(--text3)">'+nextJob.ship+'</span>'
+            +'</div></div>'
+          :'')
+
+          // QUEUE (remaining jobs, collapsed)
+          +(queueJobs.length>0?
+            '<div style="display:flex;flex-wrap:wrap;gap:5px;padding-top:2px">'
+            +'<span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px">Queue ('+queueJobs.length+'):</span>'
+            +queueJobs.map(j=>{
+              const d=Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000);
+              const dc=d<0?'var(--red)':d<=7?'var(--amber)':'var(--text3)';
+              return '<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer" data-id="'+j.id+'" data-st="Setup" title="Click to start setup">'
+                +(j.priority==='Hot'||j.priority==='Rush'?'🔴 ':'')
+                +(j.locked?'🔒 ':'')
+                +'<span class="mono">'+j.wo+'</span>'
+                +'<span style="color:'+dc+';font-family:var(--mono)"> '+j.ship+'</span>'
+                +'</div>';
+            }).join('')
+            +'</div>'
+          :'')
+
+          +'</div></div>';
       }).join('')}
     </div>
   </div>
 
-  <!-- FULL JOB TABLE -->
+    <!-- FULL JOB TABLE -->
   <div class="card">
     <div class="card-header">
       <span class="card-title">All Active Jobs — ${jobs.filter(j=>j.status!=='Shipped').length} Work Orders</span>
