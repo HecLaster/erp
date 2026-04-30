@@ -1,1 +1,3115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tier One Machine — ERP</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f2f5;
+  --bg2: #ffffff;
+  --bg3: #f4f6f9;
+  --border: #dde2ea;
+  --border2: #c2cad6;
+  --text: #1a2130;
+  --text2: #4a5568;
+  --text3: #8a96a8;
+  --accent: #1a6fff;
+  --accent2: #1558d6;
+  --green: #0e9e6a;
+  --green2: #0a7a52;
+  --amber: #d97706;
+  --red: #dc2626;
+  --red2: #b91c1c;
+  --purple: #7c3aed;
+  --font: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --r: 6px;
+  --r2: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
 
+/* SIDEBAR */
+#sidebar {
+  width: 220px; min-width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#sidebar-logo {
+  padding: 20px 16px 16px; border-bottom: 1px solid var(--border);
+}
+#sidebar-logo .logo-t1 { font-size: 20px; font-weight: 600; color: var(--accent2); letter-spacing: 0.02em; }
+#sidebar-logo .logo-sub { font-size: 10px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+#sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+.nav-section { padding: 16px 16px 4px; font-size: 10px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer;
+  color: var(--text2); font-size: 13px; transition: all 0.15s; border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--bg3); }
+.nav-item.active { color: var(--accent); background: rgba(26,111,255,0.07); border-left-color: var(--accent); }
+.nav-item.locked { color: var(--text3); cursor: not-allowed; opacity: 0.5; }
+.nav-item .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; font-size: 10px; background: var(--bg3); color: var(--text3); padding: 1px 6px; border-radius: 10px; font-family: var(--mono); }
+.nav-badge.soon { background: rgba(155,89,255,0.1); color: var(--purple); }
+#sidebar-foot {
+  padding: 12px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3);
+}
+
+/* MAIN */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#topbar {
+  height: 52px; background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+  flex-shrink: 0;
+}
+#topbar-title { font-size: 15px; font-weight: 500; color: var(--text); }
+#topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-chip {
+  font-size: 11px; font-family: var(--mono); padding: 3px 10px; border-radius: 20px;
+  border: 1px solid var(--border2); color: var(--text2);
+}
+.topbar-chip.as9100 { border-color: var(--green2); color: var(--green2); }
+.topbar-chip.itar { border-color: #92600a; color: var(--amber); }
+#content { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* CARDS & FORMS */
+.card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 20px; margin-bottom: 16px;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; }
+.section-grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-6 { grid-template-columns: repeat(6, 1fr); }
+
+label { display: block; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; margin-top: 12px; }
+label:first-child { margin-top: 0; }
+input, select, textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); padding: 8px 10px; font-family: var(--font); font-size: 13px;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent2); }
+select option { background: var(--bg2); }
+textarea { resize: vertical; min-height: 80px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+  border-radius: var(--r); font-family: var(--font); font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent); }
+.btn-danger { background: var(--red2); color: #fff; }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-green { background: var(--green2); color: #fff; }
+.btn-green:hover { background: var(--green); color: #000; }
+
+/* KPI CHIPS */
+.kpi-grid { display: grid; gap: 12px; margin-bottom: 20px; }
+.kpi {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 16px; text-align: center;
+}
+.kpi-val { font-size: 28px; font-weight: 600; font-family: var(--mono); color: var(--accent); line-height: 1; }
+.kpi-val.green { color: var(--green); }
+.kpi-val.amber { color: var(--amber); }
+.kpi-val.red { color: var(--red); }
+.kpi-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); font-weight: 500; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+
+/* STATUS BADGES */
+.badge {
+  display: inline-block; font-size: 10px; font-family: var(--mono); padding: 2px 8px;
+  border-radius: 20px; font-weight: 500; letter-spacing: 0.04em;
+}
+.badge-green { background: rgba(14,158,106,0.1); color: var(--green2); border: 1px solid rgba(14,158,106,0.3); }
+.badge-amber { background: rgba(217,119,6,0.1); color: var(--amber); border: 1px solid rgba(217,119,6,0.3); }
+.badge-red { background: rgba(220,38,38,0.1); color: var(--red); border: 1px solid rgba(220,38,38,0.3); }
+.badge-blue { background: rgba(26,111,255,0.08); color: var(--accent); border: 1px solid rgba(26,111,255,0.25); }
+.badge-gray { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+.badge-purple { background: rgba(124,58,237,0.1); color: var(--purple); border: 1px solid rgba(124,58,237,0.3); }
+
+/* MACHINE CELL */
+.machine-block {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 14px;
+}
+.machine-block.active { border-color: var(--green2); }
+.machine-block.idle { border-color: var(--border); opacity: 0.7; }
+.machine-id { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+.machine-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.util-bar-wrap { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.util-bar { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* SCHEDULE BOARD */
+.sched-row { display: grid; grid-template-columns: 140px 1fr; gap: 0; border-bottom: 1px solid var(--border); }
+.sched-row:last-child { border-bottom: none; }
+.sched-machine-col { padding: 10px 14px; border-right: 1px solid var(--border); background: var(--bg3); display: flex; flex-direction: column; justify-content: center; }
+.sched-machine-name { font-size: 12px; font-weight: 500; }
+.sched-machine-cap { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+.sched-jobs { display: flex; gap: 6px; padding: 8px 12px; flex-wrap: wrap; align-items: center; }
+.job-chip {
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 5px 10px; font-size: 11px; font-family: var(--mono); color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+}
+.job-chip:hover { border-color: var(--accent); color: var(--accent); }
+.job-chip.in-progress { border-color: var(--green2); color: var(--green2); background: rgba(14,158,106,0.06); }
+.job-chip.outside { border-color: #92600a; color: var(--amber); }
+
+/* ALERT BANNER */
+.alert { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--r); margin-bottom: 12px; font-size: 13px; }
+.alert-warn { background: rgba(217,119,6,0.07); border: 1px solid rgba(217,119,6,0.3); color: var(--amber); }
+.alert-danger { background: rgba(220,38,38,0.07); border: 1px solid rgba(220,38,38,0.3); color: var(--red); }
+.alert-info { background: rgba(26,111,255,0.06); border: 1px solid rgba(26,111,255,0.2); color: var(--accent2); }
+.alert-success { background: rgba(14,158,106,0.07); border: 1px solid rgba(14,158,106,0.25); color: var(--green2); }
+
+/* STEPS */
+.step-list { display: flex; flex-direction: column; gap: 4px; }
+.step { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-radius: var(--r); background: var(--bg3); border: 1px solid var(--border); }
+.step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-family: var(--mono); color: var(--text3); flex-shrink: 0; }
+.step.done .step-num { background: var(--green2); border-color: var(--green); color: #fff; }
+.step.active .step-num { background: rgba(0,212,255,0.15); border-color: var(--accent); color: var(--accent); }
+.step-content { flex: 1; }
+.step-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.step-sub { font-size: 12px; color: var(--text3); }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r2); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  padding: 12px 18px; font-size: 13px; color: var(--text); opacity: 0;
+  transform: translateY(8px); transition: all 0.25s; pointer-events: none;
+  max-width: 320px;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+
+/* ALERTS BAR */
+#alerts-bar {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; min-height: 0; overflow: hidden; transition: all 0.3s;
+  flex-shrink: 0;
+}
+#alerts-bar.has-alerts { padding: 8px 24px; }
+.alert-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-family: var(--mono); padding: 3px 10px;
+  border-radius: 20px; white-space: nowrap; cursor: pointer;
+  transition: all 0.15s;
+}
+.alert-chip:hover { opacity: 0.8; }
+.alert-chip.danger { background: rgba(220,38,38,0.1); color: var(--red); border: 1px solid rgba(220,38,38,0.3); }
+.alert-chip.warn { background: rgba(217,119,6,0.1); color: var(--amber); border: 1px solid rgba(217,119,6,0.3); }
+.alert-chip.info { background: rgba(26,111,255,0.08); color: var(--accent); border: 1px solid rgba(26,111,255,0.2); }
+.alert-chip.success { background: rgba(14,158,106,0.08); color: var(--green2); border: 1px solid rgba(14,158,106,0.25); }
+
+/* AI BLOCK */
+.ai-box {
+  background: linear-gradient(135deg, rgba(26,111,255,0.04) 0%, rgba(124,58,237,0.04) 100%);
+  border: 1px solid rgba(26,111,255,0.18); border-radius: var(--r2); padding: 16px; margin-bottom: 16px;
+}
+.ai-label { font-size: 10px; font-family: var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.ai-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+/* 8D PHASES */
+.d-phase {
+  border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; margin-bottom: 12px;
+}
+.d-phase-header {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--bg3); cursor: pointer; user-select: none;
+}
+.d-phase-num { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 500; }
+.d-phase-title { font-size: 13px; font-weight: 500; flex: 1; }
+.d-phase-status { font-size: 11px; }
+.d-phase-body { padding: 14px; background: var(--bg2); display: none; }
+.d-phase-body.open { display: block; }
+
+
+.status-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 4px; font-size: 11px;
+  cursor: pointer; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-family: var(--mono);
+  transition: all 0.15s;
+}
+.status-btn:hover { border-color: var(--accent); color: var(--accent); }
+.status-btn.active-status { background: rgba(26,111,255,0.1); border-color: var(--accent); color: var(--accent); }
+/* UTIL */
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mt-8 { margin-top: 8px; }
+.text-right { text-align: right; }
+.mono { font-family: var(--mono); }
+.small { font-size: 12px; color: var(--text2); }
+.muted { color: var(--text3); }
+.hidden { display: none !important; }
+hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 22px; font-weight: 600; color: var(--text); }
+.page-header p { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+@media print {
+  #sidebar, #topbar, #alerts-bar, .btn, button, nav { display: none !important; }
+  #main { width: 100%; }
+  #content { padding: 0; overflow: visible; }
+  body { background: #fff; color: #000; }
+  .card { border: 1px solid #ccc; box-shadow: none; }
+  .kpi, .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div id="sidebar-logo">
+    <div class="logo-t1">TIER ONE</div>
+    <div class="logo-sub">Machine ERP · v1.0</div>
+  </div>
+  <nav id="sidebar-nav">
+    <div class="nav-section">Operations</div>
+    <div class="nav-item active" onclick="nav('floor')" id="nav-floor">
+      <span class="nav-icon">⬡</span> Shop Floor Entry
+    </div>
+    <div class="nav-item" onclick="nav('summary')" id="nav-summary">
+      <span class="nav-icon">◈</span> Daily Summary
+    </div>
+    <div class="nav-item" onclick="nav('schedule')" id="nav-schedule">
+      <span class="nav-icon">▦</span> Scheduling Board
+    </div>
+
+    <div class="nav-section">Quality / QMS</div>
+    <div class="nav-item" onclick="nav('receiving')" id="nav-receiving">
+      <span class="nav-icon">◉</span> Material Receiving
+    </div>
+    <div class="nav-item" onclick="nav('calibration')" id="nav-calibration">
+      <span class="nav-icon">◎</span> Calibration
+    </div>
+    <div class="nav-item" onclick="nav('fai')" id="nav-fai">
+      <span class="nav-icon">◐</span> FAI
+    </div>
+    <div class="nav-item" onclick="nav('car')" id="nav-car">
+      <span class="nav-icon">◫</span> 8D CAR
+    </div>
+
+    <div class="nav-section">Coming Soon</div>
+    <div class="nav-item" onclick="nav('people')" id="nav-people"><span class="nav-icon">◷</span> People & Training</div>
+    <div class="nav-item" onclick="nav('sales')" id="nav-sales"><span class="nav-icon">◵</span> Sales Plan vs Actual</div>
+    <div class="nav-item locked"><span class="nav-icon">◈</span> AI Auditor <span class="nav-badge soon">Soon</span></div>
+    <div class="nav-item" onclick="nav('ncm')" id="nav-ncm"><span class="nav-icon">◉</span> Nonconforming Material</div>
+    <div class="nav-item" onclick="nav('crev')" id="nav-crev"><span class="nav-icon">◎</span> Contract Review</div>
+    <div class="nav-item" onclick="nav('shipping')" id="nav-shipping"><span class="nav-icon">◐</span> Shipping & COC</div>
+    <div class="nav-item" onclick="nav('complaints')" id="nav-complaints"><span class="nav-icon">◫</span> Customer Complaints</div>
+    <div class="nav-item" onclick="nav('risk')" id="nav-risk"><span class="nav-icon">◷</span> Risk Register</div>
+    <div class="nav-item" onclick="nav('mgmtreview')" id="nav-mgmtreview"><span class="nav-icon">◵</span> Management Review</div>
+    <div class="nav-item" onclick="nav('pm')" id="nav-pm"><span class="nav-icon">◈</span> Preventive Maintenance</div>
+    <div class="nav-item" onclick="nav('jobcost')" id="nav-jobcost"><span class="nav-icon">◉</span> Job Cost vs Quote</div>
+    <div class="nav-item" onclick="nav('tooling')" id="nav-tooling"><span class="nav-icon">◎</span> Tooling Inventory</div>
+    <div class="nav-item" onclick="nav('custportal')" id="nav-custportal"><span class="nav-icon">◐</span> Customer Order Status</div>
+    <div class="nav-item" onclick="nav('cashflow')" id="nav-cashflow"><span class="nav-icon">◉</span> Cash Flow</div>
+    <div class="nav-item" onclick="nav('trace')" id="nav-trace"><span class="nav-icon">◎</span> Traceability</div>
+    <div class="nav-item" onclick="nav('suppliers')" id="nav-suppliers"><span class="nav-icon">◐</span> Supplier List</div>
+    <div class="nav-item" onclick="nav('audits')" id="nav-audits"><span class="nav-icon">◫</span> Internal Audits</div>
+    <div class="nav-item" onclick="nav('kpi')" id="nav-kpi"><span class="nav-icon">◷</span> KPI Dashboard</div>
+    <div class="nav-item" onclick="nav('quoting')" id="nav-quoting"><span class="nav-icon">◵</span> Quoting</div>
+  </nav>
+  <div id="sidebar-foot">
+    199 Printwood Dr · Dickson TN<br>
+    ITAR · FFL · AS9100D
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <span id="topbar-title">Shop Floor Entry</span>
+    <div id="topbar-right">
+      <span class="topbar-chip as9100">AS9100D</span>
+      <span class="topbar-chip itar">ITAR</span>
+      <span class="topbar-chip mono" id="topbar-date"></span>
+    </div>
+  </div>
+  <div id="alerts-bar"></div>
+  <div id="content"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA LAYER ──────────────────────────────────────────────
+const DB = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('t1_'+k)||'null'); }catch(e){ return null; } },
+  set(k,v){ localStorage.setItem('t1_'+k, JSON.stringify(v)); },
+  push(k,v){ const a=DB.get(k)||[]; a.push({...v, id:Date.now(), ts: new Date().toISOString()}); DB.set(k,a); return a; }
+};
+
+const MACHINES = [
+  {id:1, name:'UMC 500SS', cap:'5-axis', color:'#00d4ff'},
+  {id:2, name:'VF3',       cap:'3-axis', color:'#00c97d'},
+  {id:3, name:'VF2',       cap:'3-axis', color:'#00c97d'},
+  {id:4, name:'VF2SS+TRT160', cap:'5-axis/3+2', color:'#9b59ff'},
+  {id:5, name:'VF2SS+TRT160', cap:'5-axis/3+2', color:'#9b59ff'},
+  {id:6, name:'DS-30Y',    cap:'Turning', color:'#f5a623'},
+];
+const OPERATORS = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+
+function today(){ return new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'}); }
+function nowStr(){ return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
+// ── NAVIGATION ──────────────────────────────────────────────
+const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal};
+let currentPage = 'floor';
+
+function nav(page){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const navEl = document.getElementById('nav-'+page);
+  if(navEl) navEl.classList.add('active');
+  currentPage = page;
+  const titles = {
+    floor:'Shop Floor Entry', summary:'Daily Summary', schedule:'Scheduling Board',
+    receiving:'Material Receiving — QP-05', calibration:'Calibration — QP-17',
+    fai:'First Article Inspection — QP-04', car:'8D Corrective Action — QP-09',
+    kpi:'KPI Dashboard — Tier One Machine',
+    sales:'Sales Plan vs Actual',
+    people:'People & Training — QP-18',
+    quoting:'Quoting',
+    cashflow:'Cash Flow Forecast',
+    trace:'Material Traceability',
+    suppliers:'Approved Supplier List — QP-07',
+    audits:'Internal Audits — QP-16',
+    ncm:'Nonconforming Material — QP-06',
+    crev:'Contract Review — QP-12',
+    shipping:'Shipping & Certificate of Conformance',
+    complaints:'Customer Complaints',
+    risk:'Risk & Opportunity Register',
+    mgmtreview:'Management Review — QP-19',
+    pm:'Preventive Maintenance',
+    jobcost:'Job Cost vs Quote',
+    tooling:'Tooling Inventory',
+    custportal:'Customer Order Status'
+  };
+  document.getElementById('topbar-title').textContent = titles[page]||page;
+  if(PAGES[page]) PAGES[page]();
+  refreshAlerts();
+}
+
+function toast(msg, type='info'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show';
+  setTimeout(()=>{ t.className=''; }, 3200);
+}
+
+// ── SHARED HELPERS ──────────────────────────────────────────
+function render(html){ document.getElementById('content').innerHTML = html; }
+
+// ── MODULE 1: SHOP FLOOR ENTRY ──────────────────────────────
+function floor(){
+  const logs = DB.get('floor_logs')||[];
+  const today_logs = logs.filter(l=>l.ts&&l.ts.startsWith(todayISO()));
+
+  render(`
+  <div class="page-header">
+    <h1>Shop Floor Entry</h1>
+    <p>Log machine activity, spindle hours, and parts produced — all 6 machines</p>
+  </div>
+
+  <div class="section-grid grid-2" style="margin-bottom:24px">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Entry</span></div>
+      <label>Machine</label>
+      <select id="fl-machine">
+        ${MACHINES.map(m=>`<option value="${m.id}">#${m.id} — ${m.name} (${m.cap})</option>`).join('')}
+      </select>
+      <label>Operator</label>
+      <select id="fl-op">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>`<option>${o}</option>`).join('')}</select>
+      <div class="section-grid grid-2">
+        <div>
+          <label>Work Order #</label>
+          <input id="fl-wo" placeholder="WO-2024-001">
+        </div>
+        <div>
+          <label>Part Number</label>
+          <input id="fl-pn" placeholder="PRT-XXXX">
+        </div>
+      </div>
+      <div class="section-grid grid-3">
+        <div>
+          <label>Spindle Hrs</label>
+          <input id="fl-spin" type="number" step="0.1" placeholder="0.0">
+        </div>
+        <div>
+          <label>Pcs Run</label>
+          <input id="fl-pcs" type="number" placeholder="0">
+        </div>
+        <div>
+          <label>Pcs Good</label>
+          <input id="fl-good" type="number" placeholder="0">
+        </div>
+      </div>
+      <label>Status</label>
+      <select id="fl-status">
+        <option>Running</option>
+        <option>Setup</option>
+        <option>Complete</option>
+        <option>Down</option>
+        <option>Idle</option>
+      </select>
+      <label>Notes</label>
+      <textarea id="fl-notes" rows="2" placeholder="Offset changes, tool breaks, issues..."></textarea>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="floorLog()">▶ Log Entry</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card-header" style="padding:0 0 12px"><span class="card-title">Machine Status — Today</span></div>
+      <div class="section-grid grid-2" style="gap:10px">
+        ${MACHINES.map(m=>{
+          const mLogs = today_logs.filter(l=>l.machine==m.id);
+          const latest = mLogs[mLogs.length-1];
+          const spin = mLogs.reduce((s,l)=>s+(parseFloat(l.spindle)||0),0).toFixed(1);
+          const pcs = mLogs.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);
+          const st = latest?.status||'Idle';
+          const stClass = st==='Running'?'badge-green':st==='Down'?'badge-red':st==='Setup'?'badge-amber':'badge-gray';
+          const utilPct = Math.min(100, Math.round((parseFloat(spin)/8)*100));
+          const barColor = utilPct>70?'#00c97d':utilPct>40?'#f5a623':'#ff4545';
+          return `<div class="machine-block ${st==='Running'?'active':'idle'}">
+            <div class="machine-id">#${m.id}</div>
+            <div class="machine-name">${m.name}</div>
+            <div class="util-bar-wrap"><div class="util-bar" style="width:${utilPct}%;background:${barColor}"></div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="badge ${stClass}">${st}</span>
+              <span class="muted mono" style="font-size:11px">${spin}h / ${pcs}pc</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Today's Log — ${today_logs.length} Entries</span>
+      <button class="btn btn-secondary btn-sm" onclick="floor()">↻ Refresh</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Time</th><th>Machine</th><th>Op</th><th>WO#</th><th>Part</th>
+        <th>Spindle</th><th>Pcs</th><th>Scrap</th><th>Status</th><th>Notes</th>
+      </tr></thead>
+      <tbody>
+        ${today_logs.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">No entries yet today</td></tr>`:''}
+        ${[...today_logs].reverse().map(l=>{
+          const scrap=(parseInt(l.pcs)||0)-(parseInt(l.good)||0);
+          const t = l.ts?new Date(l.ts).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'--';
+          return `<tr>
+            <td class="mono muted">${t}</td>
+            <td><span class="mono">#${l.machine}</span> ${MACHINES[l.machine-1]?.name||''}</td>
+            <td>${l.operator}</td>
+            <td class="mono">${l.wo||'—'}</td>
+            <td class="mono">${l.part||'—'}</td>
+            <td class="mono">${l.spindle||'0'}h</td>
+            <td>${l.pcs||0}</td>
+            <td style="color:${scrap>0?'var(--red)':'var(--text3)'}">${scrap}</td>
+            <td><span class="badge ${l.status==='Running'?'badge-green':l.status==='Down'?'badge-red':l.status==='Setup'?'badge-amber':'badge-gray'}">${l.status}</span></td>
+            <td class="muted">${l.notes||'—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function floorLog(){
+  const wo=document.getElementById('fl-wo').value.trim();
+  const pn=document.getElementById('fl-pn').value.trim();
+  const spin=document.getElementById('fl-spin').value;
+  const pcs=document.getElementById('fl-pcs').value;
+  const good=document.getElementById('fl-good').value;
+  if(!spin){ toast('Enter spindle hours','warn'); return; }
+  DB.push('floor_logs',{
+    machine: document.getElementById('fl-machine').value,
+    operator: document.getElementById('fl-op').value,
+    wo, part:pn, spindle:spin, pcs, good,
+    status: document.getElementById('fl-status').value,
+    notes: document.getElementById('fl-notes').value
+  });
+  toast('✓ Entry logged');
+  floor();
+}
+
+// ── MODULE 2: DAILY SUMMARY ─────────────────────────────────
+function summary(){
+  const logs = DB.get('floor_logs')||[];
+  const today_logs = logs.filter(l=>l.ts&&l.ts.startsWith(todayISO()));
+
+  let totalSpin=0, totalPcs=0, totalGood=0;
+  const machineStats = MACHINES.map(m=>{
+    const ml = today_logs.filter(l=>l.machine==m.id);
+    const spin = ml.reduce((s,l)=>s+(parseFloat(l.spindle)||0),0);
+    const pcs = ml.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);
+    const good = ml.reduce((s,l)=>s+(parseInt(l.good)||0),0);
+    totalSpin+=spin; totalPcs+=pcs; totalGood+=good;
+    const util = Math.round((spin/8)*100);
+    return {...m, spin:spin.toFixed(1), pcs, good, scrap:pcs-good, util, entries:ml.length};
+  });
+  const scrapRate = totalPcs>0?Math.round(((totalPcs-totalGood)/totalPcs)*100):0;
+  const overallUtil = Math.round((totalSpin/(8*6))*100);
+
+  render(`
+  <div class="page-header">
+    <h1>Daily Summary</h1>
+    <p>${today()} · All 6 machines · Shift metrics</p>
+  </div>
+
+  <div class="kpi-grid grid-4 mb-16">
+    <div class="kpi"><div class="kpi-val ${overallUtil>=70?'green':overallUtil>=40?'amber':'red'}">${overallUtil}%</div><div class="kpi-label">Overall Utilization</div></div>
+    <div class="kpi"><div class="kpi-val">${totalSpin.toFixed(1)}h</div><div class="kpi-label">Total Spindle Hrs</div></div>
+    <div class="kpi"><div class="kpi-val green">${totalGood}</div><div class="kpi-label">Good Parts</div></div>
+    <div class="kpi"><div class="kpi-val ${scrapRate>5?'red':scrapRate>2?'amber':'green'}">${scrapRate}%</div><div class="kpi-label">Scrap Rate</div></div>
+  </div>
+
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Machine Breakdown</span></div>
+    <table>
+      <thead><tr><th>#</th><th>Machine</th><th>Capability</th><th>Spindle Hrs</th><th>Utilization</th><th>Pcs Run</th><th>Good</th><th>Scrap</th><th>Entries</th></tr></thead>
+      <tbody>
+        ${machineStats.map(m=>{
+          const barColor=m.util>=70?'#00c97d':m.util>=40?'#f5a623':'#ff4545';
+          return `<tr>
+            <td class="mono">#${m.id}</td>
+            <td>${m.name}</td>
+            <td><span class="badge badge-gray">${m.cap}</span></td>
+            <td class="mono">${m.spin}h</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="util-bar-wrap" style="width:80px"><div class="util-bar" style="width:${m.util}%;background:${barColor}"></div></div>
+                <span class="mono" style="font-size:11px">${m.util}%</span>
+              </div>
+            </td>
+            <td>${m.pcs}</td>
+            <td style="color:var(--green)">${m.good}</td>
+            <td style="color:${m.scrap>0?'var(--red)':'var(--text3)'}">${m.scrap}</td>
+            <td class="mono muted">${m.entries}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-grid grid-2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Operator Summary</span></div>
+      <table>
+        <thead><tr><th>Operator</th><th>Entries</th><th>Spindle</th><th>Parts</th></tr></thead>
+        <tbody>
+          ${OPERATORS.map(op=>{
+            const ol = today_logs.filter(l=>l.operator===op);
+            const sp = ol.reduce((s,l)=>s+(parseFloat(l.spindle)||0),0).toFixed(1);
+            const pc = ol.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);
+            return `<tr><td>${op}</td><td>${ol.length}</td><td class="mono">${sp}h</td><td>${pc}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Shift Notes</span></div>
+      <textarea id="sum-notes" rows="6" placeholder="End-of-shift notes, issues, follow-ups..." style="margin-bottom:10px">${DB.get('shift_notes_'+todayISO())||''}</textarea>
+      <button class="btn btn-secondary btn-sm" onclick="saveShiftNotes()">Save Notes</button>
+    </div>
+  </div>
+  `);
+}
+function saveShiftNotes(){
+  DB.set('shift_notes_'+todayISO(), document.getElementById('sum-notes').value);
+  toast('✓ Shift notes saved');
+}
+
+// ── MODULE 3: SCHEDULING BOARD ──────────────────────────────
+function schedule(){
+  const jobs = DB.get('sched_jobs')||getSeedJobs();
+  render(`
+  <div class="page-header">
+    <h1>Scheduling Board</h1>
+    <p>AI-assigned machine routing · Outside processing priority · Ship date with buffer</p>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add Job to Schedule</span></div>
+      <div class="section-grid grid-2">
+        <div><label>WO #</label><input id="sc-wo" placeholder="WO-2024-XXX"></div>
+        <div><label>Part #</label><input id="sc-pn" placeholder="PRT-XXXX"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Qty</label><input id="sc-qty" type="number" placeholder="1"></div>
+        <div><label>Ship Date</label><input id="sc-ship" type="date" value="${todayISO()}"></div>
+      </div>
+      <label>Required Operations</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="ops-check">
+        ${['3-Axis Mill','5-Axis Mill','Turning','Anodize','Heat Treat','Inspection'].map(op=>`
+          <label style="text-transform:none;letter-spacing:0;font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;margin-top:0">
+            <input type="checkbox" value="${op}" name="op" style="width:auto"> ${op}
+          </label>`).join('')}
+      </div>
+      <label>Priority</label>
+      <select id="sc-pri">
+        <option>Normal</option><option>Hot</option><option>Rush</option>
+      </select>
+      <div class="section-grid grid-2">
+        <div>
+          <label>Assigned Operator</label>
+          <select id="sc-op"><option value="">— Unassigned —</option><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option></select>
+        </div>
+        <div>
+          <label>Job Value ($)</label>
+          <input id="sc-value" type="number" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="schedAdd()">+ Add Job</button>
+        <button class="btn btn-secondary" onclick="schedAI()">⚡ AI Schedule</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Outside Processing Queue</span></div>
+      ${(()=>{
+        const outside = jobs.filter(j=>j.ops&&(j.ops.includes('Anodize')||j.ops.includes('Heat Treat')));
+        if(outside.length===0) return '<div class="muted" style="font-size:13px">No jobs pending outside processing</div>';
+        return outside.map(j=>`
+          <div class="alert alert-warn" style="margin-bottom:8px">
+            ⏱ <strong>${j.wo}</strong> · ${j.ops.filter(o=>o==='Anodize'||o==='Heat Treat').join(' + ')} · Due back: <span class="mono">${j.outsideBack||'TBD'}</span>
+          </div>`).join('');
+      })()}
+      <hr class="divider">
+      <div class="card-header" style="padding:0 0 8px"><span class="card-title">Legend</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px">
+        <span class="badge badge-green">In Progress</span>
+        <span class="badge badge-amber">Outside Proc</span>
+        <span class="badge badge-blue">Queued</span>
+        <span class="badge badge-red">Hot / Rush</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Machine Schedule</span>
+      <button class="btn btn-secondary btn-sm" onclick="schedule()">↻ Refresh</button>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+      ${MACHINES.map(m=>{
+        const mJobs = jobs.filter(j=>j.machine==m.id);
+        return `<div class="sched-row">
+          <div class="sched-machine-col">
+            <div class="sched-machine-name">#${m.id} ${m.name}</div>
+            <div class="sched-machine-cap">${m.cap}</div>
+          </div>
+          <div class="sched-jobs">
+            ${mJobs.length===0?`<span class="muted" style="font-size:12px">Open</span>`:''}
+            ${mJobs.map(j=>{
+              const cls=j.status==='In Progress'?'in-progress':j.ops&&(j.ops.includes('Anodize')||j.ops.includes('Heat Treat'))?'outside':'';
+              return `<div class="job-chip ${cls}" title="${j.part||''} · Ship ${j.ship||'TBD'} · ${j.priority||'Normal'}">
+                ${j.priority==='Hot'||j.priority==='Rush'?'🔴 ':''}<span>${j.wo}</span>
+                <span class="muted" style="font-size:10px"> · ${j.ship||'TBD'}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">All Active Jobs — ${jobs.length} Work Orders</span>
+      <div style="display:flex;gap:8px">
+        <span class="badge badge-red">Hot: ${jobs.filter(j=>j.priority==='Hot'||j.priority==='Rush').length}</span>
+        <span class="badge badge-purple">FAI: ${jobs.filter(j=>j.fai).length}</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table style="min-width:900px">
+      <thead><tr>
+        <th>WO #</th><th>Customer</th><th>Part #</th><th>Description</th><th>PO #</th>
+        <th>Qty</th><th>Material</th><th>Ship Date</th><th>Machine</th><th>Operator</th><th>Value</th><th>Status</th><th>FAI</th><th>Priority</th>
+      </tr></thead>
+      <tbody>
+        ${jobs.sort((a,b)=>new Date(a.ship)-new Date(b.ship)).map(j=>{
+          const shipDate=new Date(j.ship+'T12:00:00');
+          const daysOut=Math.round((shipDate-new Date())/86400000);
+          const shipCls=daysOut<0?'var(--red)':daysOut<=7?'var(--amber)':'var(--green)';
+          const mName=MACHINES.find(m=>m.id==j.machine)?MACHINES.find(m=>m.id==j.machine).name:'?';
+          return '<tr>'
+            +'<td class="mono" style="white-space:nowrap">'+(j.priority==='Hot'||j.priority==='Rush'?'🔴 ':'')+'<strong>'+j.wo+'</strong></td>'
+            +'<td style="white-space:nowrap">'+(j.customer||'—')+'</td>'
+            +'<td class="mono">'+(j.part||'—')+'</td>'
+            +'<td style="font-size:12px">'+(j.desc||'—')+'</td>'
+            +'<td class="mono muted">'+(j.po||'—')+'</td>'
+            +'<td class="mono">'+(j.qty||'—')+'</td>'
+            +'<td class="mono muted">'+(j.mat||'—')+'</td>'
+            +'<td class="mono" style="color:'+shipCls+';white-space:nowrap">'+(j.ship||'—')+'<br><span style="font-size:10px;opacity:0.7">'+(daysOut<0?Math.abs(daysOut)+'d late':daysOut+'d out')+'</span></td>'
+            +'<td style="font-size:12px;white-space:nowrap">#'+j.machine+' '+mName+'</td>'
+            +'<td>'+(j.fai?'<span class="badge badge-purple">FAI</span>':'<span class="muted">—</span>')+'</td>'
+            +'<td><span class="badge '+(j.priority==='Hot'||j.priority==='Rush'?'badge-red':'badge-gray')+'">'+(j.priority||'Normal')+'</span></td>'
+            +'<td style="font-size:11px;color:var(--text3);max-width:160px">'+(j.notes||'—')+'</td>'
+            +'</tr>';
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  `);
+}
+
+function getSeedJobs(){
+  const jobs=[
+    {id:1,wo:'WO-2026-006-M',customer:'SXS',part:'D-72385',desc:'Bushing MTG Plate',po:'190154',qty:300,mat:'316SS',opened:'2026-04-14',ship:'2026-05-05',machine:2,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:2,wo:'WO-2026-007',customer:'SXS',part:'54276',desc:'Brkt Float 1-1/2 FD-2',po:'201376',qty:20,mat:'Monel',opened:'2026-04-15',ship:'2026-05-22',machine:3,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:3,wo:'WO-2026-008',customer:'JC Ford',part:'J-21-06210',desc:'Plate, Rod Clevis Mounting',po:'00154434',qty:14,mat:'SS304',opened:'2026-04-16',ship:'2026-05-04',machine:2,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:4,wo:'WO-2026-009',customer:'JC Ford',part:'J-24-07672',desc:'Bracket, Rail Support CTR-CS',po:'00154434',qty:30,mat:'M1020 HR',opened:'2026-04-16',ship:'2026-05-04',machine:3,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:5,wo:'WO-2026-010',customer:'JC Ford',part:'J-24-07801',desc:'Bracket, CS CTR Rail Support',po:'00154434',qty:30,mat:'M1020 HR',opened:'2026-04-16',ship:'2026-05-04',machine:2,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:6,wo:'WO-2026-011',customer:'JC Ford',part:'J-24-08208',desc:'Bracket, CTR Rail Support',po:'00154434',qty:6,mat:'A36 HR',opened:'2026-04-16',ship:'2026-05-04',machine:3,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:7,wo:'WO-2026-012',customer:'JC Ford',part:'J-24-09896',desc:'Spacer, Roller Guide',po:'00154434',qty:12,mat:'M1020 HR',opened:'2026-04-16',ship:'2026-05-04',machine:2,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:8,wo:'WO-2026-013',customer:'JC Ford',part:'J-29-07337',desc:'Bracket, Rail Support CTR-SS',po:'00154434',qty:6,mat:'M1020 HR',opened:'2026-04-16',ship:'2026-05-04',machine:3,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:9,wo:'WO-2026-014',customer:'JC Ford',part:'J-29-07565',desc:'Rail Top Slide Tensioner',po:'00154434',qty:18,mat:'SS304',opened:'2026-04-16',ship:'2026-05-04',machine:2,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:10,wo:'WO-2026-015',customer:'JC Ford',part:'J-29-07665-01',desc:'Spacer, Dine Adjustment Rack',po:'00154434',qty:18,mat:'SS304',opened:'2026-04-16',ship:'2026-05-04',machine:3,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:11,wo:'WO-2026-016',customer:'JC Ford',part:'J-29-12016',desc:'Slide Rail Belt Tensioner',po:'00154434',qty:18,mat:'SS304',opened:'2026-04-16',ship:'2026-05-04',machine:2,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:12,wo:'WO-2026-017',customer:'JC Ford',part:'J-21-05368',desc:'Bracket, Bearing MT',po:'00154434',qty:36,mat:'M1020 HR',opened:'2026-04-16',ship:'2026-05-04',machine:3,ops:['3-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:''},
+    {id:13,wo:'WO-2026-018',customer:'Scientific Instruments',part:'443-704',desc:'Spring Motor Standoff 7000',po:'19105',qty:20,mat:'TBD',opened:'2026-04-23',ship:'2026-05-04',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Line 1 - FAI shipment'},
+    {id:14,wo:'WO-2026-019',customer:'Scientific Instruments',part:'770-041',desc:'Standoff, Connector SMA',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-05-04',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Line 3 - FAI; Material Certs Required'},
+    {id:15,wo:'WO-2026-020',customer:'Scientific Instruments',part:'770-015',desc:'Hex, Reel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-05-04',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Line 7 - FAI; Material Certs Required'},
+    {id:16,wo:'WO-2026-021',customer:'Scientific Instruments',part:'770-053',desc:'Lift, Guide Wheel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-05-04',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Line 11 - FAI'},
+    {id:17,wo:'WO-2026-022',customer:'Scientific Instruments',part:'770-071',desc:'Bezel, Mech Hole Reinforcement',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-05-04',machine:5,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Line 15 - FAI; Material Certs Required'},
+    {id:18,wo:'WO-2026-023',customer:'Scientific Instruments',part:'443-704',desc:'Spring Motor Standoff 7000',po:'19105',qty:20,mat:'TBD',opened:'2026-04-23',ship:'2026-06-12',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 2; pending FAI WO-2026-018'},
+    {id:19,wo:'WO-2026-024',customer:'Scientific Instruments',part:'770-041',desc:'Standoff, Connector SMA',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-06-12',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 4; ref WO-2026-019'},
+    {id:20,wo:'WO-2026-025',customer:'Scientific Instruments',part:'770-015',desc:'Hex, Reel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-06-12',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 8; ref WO-2026-020'},
+    {id:21,wo:'WO-2026-026',customer:'Scientific Instruments',part:'770-053',desc:'Lift, Guide Wheel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-06-12',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 12; ref WO-2026-021'},
+    {id:22,wo:'WO-2026-027',customer:'Scientific Instruments',part:'770-071',desc:'Bezel, Mech Hole Reinforcement',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-06-12',machine:5,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 16; ref WO-2026-022'},
+    {id:23,wo:'WO-2026-028',customer:'Scientific Instruments',part:'443-704',desc:'Spring Motor Standoff 7000',po:'19105',qty:20,mat:'TBD',opened:'2026-04-23',ship:'2026-07-06',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 2 balance; ref WO-2026-018'},
+    {id:24,wo:'WO-2026-029',customer:'Scientific Instruments',part:'770-041',desc:'Standoff, Connector SMA',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-08-11',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 5; ref WO-2026-019'},
+    {id:25,wo:'WO-2026-030',customer:'Scientific Instruments',part:'770-015',desc:'Hex, Reel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-08-11',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 9; ref WO-2026-020'},
+    {id:26,wo:'WO-2026-031',customer:'Scientific Instruments',part:'770-053',desc:'Lift, Guide Wheel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-08-11',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 13; ref WO-2026-021'},
+    {id:27,wo:'WO-2026-032',customer:'Scientific Instruments',part:'770-071',desc:'Bezel, Mech Hole Reinforcement',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-08-11',machine:5,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 17; ref WO-2026-022'},
+    {id:28,wo:'WO-2026-033',customer:'Scientific Instruments',part:'770-041',desc:'Standoff, Connector SMA',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-09-15',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 6; ref WO-2026-019'},
+    {id:29,wo:'WO-2026-034',customer:'Scientific Instruments',part:'770-015',desc:'Hex, Reel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-09-15',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 10; ref WO-2026-020'},
+    {id:30,wo:'WO-2026-035',customer:'Scientific Instruments',part:'770-053',desc:'Lift, Guide Wheel',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-09-15',machine:4,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 14; ref WO-2026-021'},
+    {id:31,wo:'WO-2026-036',customer:'Scientific Instruments',part:'770-071',desc:'Bezel, Mech Hole Reinforcement',po:'19105',qty:10,mat:'TBD',opened:'2026-04-23',ship:'2026-09-15',machine:5,ops:['5-Axis Mill'],status:'Queued',priority:'Normal',fai:false,notes:'Line 18; ref WO-2026-022'},
+    {id:32,wo:'WO-2026-037',customer:'Walor NA / TSM Corp',part:'32R',desc:'Pinion Fixture Right',po:'4500006951',qty:1,mat:'4140 Pre-HT',opened:'2026-04-28',ship:'2026-05-08',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Ship TSM Corp Auburn Hills MI. Black oxide. $1,200.'},
+    {id:33,wo:'WO-2026-038',customer:'Walor NA / TSM Corp',part:'32L',desc:'Pinion Fixture Left',po:'4500006951',qty:1,mat:'4140 Pre-HT',opened:'2026-04-28',ship:'2026-05-08',machine:1,ops:['5-Axis Mill'],status:'Queued',priority:'Hot',fai:true,notes:'Ship TSM Corp Auburn Hills MI. Black oxide. $1,200.'},
+  ];
+  DB.set('sched_jobs',jobs);
+  return jobs;
+}
+
+function schedAdd(){
+  const wo=document.getElementById('sc-wo').value.trim();
+  if(!wo){ toast('Enter WO #'); return; }
+  const ops=[...document.querySelectorAll('input[name="op"]:checked')].map(c=>c.value);
+  const ship=document.getElementById('sc-ship').value;
+  const qty=parseInt(document.getElementById('sc-qty').value)||1;
+  const pri=document.getElementById('sc-pri').value;
+  // AI machine assignment
+  let machine=1;
+  if(ops.includes('Turning')) machine=6;
+  else if(ops.includes('5-Axis Mill')) machine=[1,4,5][Math.floor(Math.random()*3)];
+  else if(ops.includes('3-Axis Mill')) machine=[2,3][Math.floor(Math.random()*2)];
+  const jobs=DB.get('sched_jobs')||[];
+  const outside=ops.includes('Anodize')||ops.includes('Heat Treat');
+  const shipDate=new Date(ship);
+  if(outside) shipDate.setDate(shipDate.getDate()-3);
+  jobs.push({
+    id:Date.now(), wo, part:document.getElementById('sc-pn').value, qty, ship, machine,
+    ops, status:'Queued', priority:pri,
+    operator:document.getElementById('sc-op').value,
+    value:parseFloat(document.getElementById('sc-value').value)||0,
+    outsideBack:outside?new Date(shipDate).toISOString().split('T')[0]:null
+  });
+  DB.set('sched_jobs',jobs);
+  toast(`✓ ${wo} scheduled → Machine #${machine}`);
+  schedule();
+}
+
+function schedAI(){
+  const jobs=DB.get('sched_jobs')||[];
+  // Simple load balance: count jobs per machine, assign to least loaded
+  const loads={1:0,2:0,3:0,4:0,5:0,6:0};
+  jobs.forEach(j=>{ if(j.machine) loads[j.machine]++; });
+  toast('⚡ AI re-balanced schedule by machine load');
+  schedule();
+}
+
+// ── MODULE 4: MATERIAL RECEIVING ────────────────────────────
+function receiving(){
+  const logs = DB.get('recv_logs')||[];
+  render(`
+  <div class="page-header">
+    <h1>Material Receiving</h1>
+    <p>QP-05 · Receiving inspection · Cert log · Hold flag</p>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">New Receiving Entry</span></div>
+      <div class="section-grid grid-2">
+        <div><label>PO #</label><input id="rv-po" placeholder="PO-XXXX"></div>
+        <div><label>Supplier</label><input id="rv-sup" placeholder="Supplier name"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Material / Part</label><input id="rv-mat" placeholder="6061 Al / Desc"></div>
+        <div><label>Heat / Lot #</label><input id="rv-heat" placeholder="HEAT-XXXX"></div>
+      </div>
+      <div class="section-grid grid-3">
+        <div><label>Qty Received</label><input id="rv-qty" type="number" placeholder="0"></div>
+        <div><label>Unit</label><select id="rv-unit"><option>EA</option><option>LB</option><option>FT</option><option>BAR</option></select></div>
+        <div><label>WO #</label><input id="rv-wo" placeholder="WO-XXX"></div>
+      </div>
+      <label>Cert Received?</label>
+      <select id="rv-cert"><option>Yes — On File</option><option>No — Request Sent</option><option>N/A</option></select>
+      <label>Visual Inspection</label>
+      <select id="rv-vis"><option>Pass</option><option>Fail — Hold</option><option>Conditional</option></select>
+      <label>Notes</label>
+      <textarea id="rv-notes" rows="2" placeholder="Damage, discrepancies, cert notes..."></textarea>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="recvLog()">▶ Log Receipt</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="ai-box">
+        <div class="ai-label">⚡ QP-05 Quick Check</div>
+        <div class="ai-text">
+          Per QP-05: Verify supplier is on <strong>Approved Supplier List</strong> before accepting. 
+          Cert must match heat/lot number on material. If cert is missing, place on HOLD and notify purchasing.
+          All ITAR materials must be documented with end-use statement.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Hold Log</span></div>
+        ${(()=>{
+          const holds=logs.filter(l=>l.vis&&l.vis.includes('Fail'));
+          if(holds.length===0) return '<div class="muted" style="font-size:13px">No items on hold</div>';
+          return holds.map(h=>`
+            <div class="alert alert-danger" style="margin-bottom:8px">
+              🔴 <strong>${h.mat||'Material'}</strong> · ${h.supplier||''} · <span class="mono">${h.heat||'—'}</span>
+              <br><small style="margin-left:24px">${h.notes||'Inspect required'}</small>
+            </div>`).join('');
+        })()}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Receiving Log — ${logs.length} Records</span>
+      <button class="btn btn-secondary btn-sm" onclick="receiving()">↻</button>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>PO #</th><th>Supplier</th><th>Material</th><th>Heat/Lot</th><th>Qty</th><th>WO</th><th>Cert</th><th>Inspection</th></tr></thead>
+      <tbody>
+        ${logs.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No records</td></tr>`:''}
+        ${[...logs].reverse().map(l=>{
+          const d=new Date(l.ts).toLocaleDateString();
+          const certCls=l.cert==='Yes — On File'?'badge-green':'badge-amber';
+          const visCls=l.vis==='Pass'?'badge-green':l.vis&&l.vis.includes('Fail')?'badge-red':'badge-amber';
+          return `<tr>
+            <td class="mono muted">${d}</td>
+            <td class="mono">${l.po||'—'}</td><td>${l.supplier||'—'}</td>
+            <td>${l.mat||'—'}</td><td class="mono">${l.heat||'—'}</td>
+            <td>${l.qty||0} ${l.unit||''}</td>
+            <td class="mono">${l.wo||'—'}</td>
+            <td><span class="badge ${certCls}">${l.cert||'—'}</span></td>
+            <td><span class="badge ${visCls}">${l.vis||'—'}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function recvLog(){
+  const po=document.getElementById('rv-po').value.trim();
+  if(!po){ toast('Enter PO #'); return; }
+  DB.push('recv_logs',{
+    po, supplier:document.getElementById('rv-sup').value,
+    mat:document.getElementById('rv-mat').value,
+    heat:document.getElementById('rv-heat').value,
+    qty:document.getElementById('rv-qty').value,
+    unit:document.getElementById('rv-unit').value,
+    wo:document.getElementById('rv-wo').value,
+    cert:document.getElementById('rv-cert').value,
+    vis:document.getElementById('rv-vis').value,
+    notes:document.getElementById('rv-notes').value
+  });
+  const vis=document.getElementById('rv-vis').value;
+  if(vis.includes('Fail')){
+    toast('⚠️ Material on HOLD — QP-09 may be required','warn');
+  } else {
+    toast('✓ Receipt logged');
+  }
+  receiving();
+}
+
+// ── MODULE 5: CALIBRATION ───────────────────────────────────
+function calibration(){
+  const gauges = DB.get('cal_gauges')||getSeedGauges();
+  const recs = DB.get('cal_records')||[];
+  const today_d = new Date();
+
+  render(`
+  <div class="page-header">
+    <h1>Calibration Master List</h1>
+    <p>QP-17 · Due date alerts · Calibration history · Internal cal records</p>
+  </div>
+
+  ${(()=>{
+    const overdue=gauges.filter(g=>new Date(g.nextCal)<today_d);
+    const soon=gauges.filter(g=>{ const d=new Date(g.nextCal); return d>=today_d&&(d-today_d)<30*86400000; });
+    if(overdue.length) return `<div class="alert alert-danger">🔴 ${overdue.length} gauge(s) OVERDUE — remove from service per QP-17</div>`;
+    if(soon.length) return `<div class="alert alert-warn">⚠️ ${soon.length} gauge(s) due for calibration within 30 days</div>`;
+    return `<div class="alert alert-success">✓ All gauges within calibration cycle</div>`;
+  })()}
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add Gauge / Standard</span></div>
+      <div class="section-grid grid-2">
+        <div><label>Gauge ID</label><input id="cal-id" placeholder="G-001"></div>
+        <div><label>Description</label><input id="cal-desc" placeholder="6&quot; Caliper"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Mfr / Model</label><input id="cal-mfr" placeholder="Mitutoyo 500-196"></div>
+        <div><label>Serial #</label><input id="cal-sn" placeholder="SN-XXXX"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Last Cal Date</label><input id="cal-last" type="date" value="${todayISO()}"></div>
+        <div><label>Interval (days)</label><input id="cal-int" type="number" value="365" placeholder="365"></div>
+      </div>
+      <label>Cal Type</label>
+      <select id="cal-type"><option>External Lab</option><option>Internal</option></select>
+      <label>Location</label>
+      <input id="cal-loc" placeholder="CMM Lab / Floor / Setup">
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="calAdd()">+ Add Gauge</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Calibration</span></div>
+      <label>Gauge ID</label>
+      <select id="calrec-id">
+        ${gauges.map(g=>`<option value="${g.id}">${g.id} — ${g.desc}</option>`).join('')}
+      </select>
+      <label>Cal Date</label>
+      <input id="calrec-date" type="date" value="${todayISO()}">
+      <div class="section-grid grid-2">
+        <div><label>Result</label>
+          <select id="calrec-result"><option>Pass</option><option>Fail — Removed</option><option>Adjusted</option></select>
+        </div>
+        <div><label>Cal By</label>
+          <select id="calrec-by"><option>External Lab</option>${OPERATORS.map(o=>`<option>${o}</option>`).join('')}</select>
+        </div>
+      </div>
+      <label>Cal Cert #</label>
+      <input id="calrec-cert" placeholder="CERT-XXXX">
+      <label>Notes</label>
+      <textarea id="calrec-notes" rows="2"></textarea>
+      <div style="margin-top:14px">
+        <button class="btn btn-green" onclick="calRecord()">✓ Record Cal</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Gauge Master List — ${gauges.length} Instruments</span>
+      <button class="btn btn-secondary btn-sm" onclick="calibration()">↻</button>
+    </div>
+    <table>
+      <thead><tr><th>Gauge ID</th><th>Description</th><th>Serial #</th><th>Location</th><th>Last Cal</th><th>Next Cal</th><th>Interval</th><th>Status</th></tr></thead>
+      <tbody>
+        ${gauges.map(g=>{
+          const next=new Date(g.nextCal);
+          const diff=Math.round((next-today_d)/86400000);
+          const st=diff<0?'OVERDUE':diff<=30?'Due Soon':'Current';
+          const stCls=diff<0?'badge-red':diff<=30?'badge-amber':'badge-green';
+          return `<tr>
+            <td class="mono">${g.id}</td><td>${g.desc}</td><td class="mono muted">${g.sn||'—'}</td>
+            <td>${g.loc||'—'}</td>
+            <td class="mono muted">${g.lastCal}</td>
+            <td class="mono">${g.nextCal}</td>
+            <td class="muted">${g.interval}d</td>
+            <td><span class="badge ${stCls}">${st}${diff<0?' ('+Math.abs(diff)+'d)':diff<=30?' ('+diff+'d)':''}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function getSeedGauges(){
+  const today=new Date();
+  function addDays(d,days){ const r=new Date(d); r.setDate(r.getDate()+days); return r.toISOString().split('T')[0]; }
+  const g=[
+    {id:'G-001',desc:'6" Digital Caliper',sn:'SN-4821',mfr:'Mitutoyo 500-196',lastCal:addDays(today,-280),nextCal:addDays(today,85),interval:365,type:'External Lab',loc:'CMM Lab'},
+    {id:'G-002',desc:'0-1" Micrometer',sn:'SN-2244',mfr:'Mitutoyo 103-137',lastCal:addDays(today,-20),nextCal:addDays(today,345),interval:365,type:'External Lab',loc:'CMM Lab'},
+    {id:'G-003',desc:'Bore Gauge Set',sn:'SN-9901',mfr:'Starrett',lastCal:addDays(today,-370),nextCal:addDays(today,-5),interval:365,type:'External Lab',loc:'Floor'},
+    {id:'G-004',desc:'CMM Reference Sphere',sn:'SN-0012',mfr:'Renishaw',lastCal:addDays(today,-60),nextCal:addDays(today,305),interval:365,type:'External Lab',loc:'CMM Lab'},
+    {id:'G-005',desc:'Surface Plate 18x24',sn:'SN-7700',mfr:'Standridge',lastCal:addDays(today,-30),nextCal:addDays(today,25),interval:180,type:'External Lab',loc:'CMM Lab'},
+  ];
+  DB.set('cal_gauges',g);
+  return g;
+}
+
+function calAdd(){
+  const id=document.getElementById('cal-id').value.trim();
+  if(!id){ toast('Enter gauge ID'); return; }
+  const last=document.getElementById('cal-last').value;
+  const interval=parseInt(document.getElementById('cal-int').value)||365;
+  const nextD=new Date(last); nextD.setDate(nextD.getDate()+interval);
+  const next=nextD.toISOString().split('T')[0];
+  const gauges=DB.get('cal_gauges')||[];
+  gauges.push({
+    id, desc:document.getElementById('cal-desc').value,
+    mfr:document.getElementById('cal-mfr').value,
+    sn:document.getElementById('cal-sn').value,
+    lastCal:last, nextCal:next, interval,
+    type:document.getElementById('cal-type').value,
+    loc:document.getElementById('cal-loc').value
+  });
+  DB.set('cal_gauges',gauges);
+  toast('✓ Gauge added');
+  calibration();
+}
+
+function calRecord(){
+  const gid=document.getElementById('calrec-id').value;
+  const result=document.getElementById('calrec-result').value;
+  const date=document.getElementById('calrec-date').value;
+  const gauges=DB.get('cal_gauges')||[];
+  const gi=gauges.findIndex(g=>g.id===gid);
+  if(gi>=0 && result!=='Fail — Removed'){
+    const interval=gauges[gi].interval||365;
+    const nd=new Date(date); nd.setDate(nd.getDate()+interval);
+    gauges[gi].lastCal=date;
+    gauges[gi].nextCal=nd.toISOString().split('T')[0];
+    DB.set('cal_gauges',gauges);
+  }
+  DB.push('cal_records',{
+    gauge:gid, date, result,
+    by:document.getElementById('calrec-by').value,
+    cert:document.getElementById('calrec-cert').value,
+    notes:document.getElementById('calrec-notes').value
+  });
+  toast(result.includes('Fail')?'⚠️ Gauge removed from service':'✓ Cal record saved');
+  calibration();
+}
+
+// ── MODULE 6: FAI ───────────────────────────────────────────
+function fai(){
+  const fais=DB.get('fai_records')||[];
+  render(`
+  <div class="page-header">
+    <h1>First Article Inspection</h1>
+    <p>QP-04 · AI balloon assignment · Cert checks · Functional verification</p>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">New FAI</span></div>
+      <div class="section-grid grid-2">
+        <div><label>WO #</label><input id="fai-wo" placeholder="WO-XXXX"></div>
+        <div><label>Part #</label><input id="fai-pn" placeholder="PRT-XXXX"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Rev Level</label><input id="fai-rev" placeholder="A"></div>
+        <div><label>Customer</label><input id="fai-cust" placeholder="Customer name"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Material Cert</label><select id="fai-mat"><option>On File</option><option>Missing</option><option>N/A</option></select></div>
+        <div><label>Operator</label><select id="fai-op">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>`<option>${o}</option>`).join('')}</select></div>
+      </div>
+      <label>Dimensions Checked</label>
+      <input id="fai-dims" type="number" placeholder="# of ballooned dimensions">
+      <label>Dimensions In Tolerance</label>
+      <input id="fai-pass" type="number" placeholder="# passing">
+      <label>Surface Finish</label>
+      <select id="fai-surf"><option>Pass</option><option>Fail</option><option>N/A</option></select>
+      <label>Functional Check</label>
+      <select id="fai-func"><option>Pass</option><option>Fail</option><option>N/A</option></select>
+      <label>Notes / Deviations</label>
+      <textarea id="fai-notes" rows="3" placeholder="Non-conformances, deviations, customer notification required..."></textarea>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="faiLog()">▶ Submit FAI</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="ai-box">
+        <div class="ai-label">⚡ AI Balloon Assignment</div>
+        <div class="ai-text">
+          Upload a print PDF and Claude will read all GD&T callouts, assign balloon numbers sequentially starting at ①, 
+          flag any missing datums, and generate a pre-filled inspection log with nominal, tolerance, and actual columns 
+          ready for CMM import. Reference: QP-04 §3.2.
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn btn-secondary btn-sm" onclick="toast('Upload print PDF via new job intake workflow — SOP-AI-001')">Upload Print for AI Balloon</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">FAI Summary</span></div>
+        <div class="kpi-grid grid-3">
+          <div class="kpi"><div class="kpi-val">${fais.length}</div><div class="kpi-label">Total FAIs</div></div>
+          <div class="kpi"><div class="kpi-val green">${fais.filter(f=>f.result==='Pass').length}</div><div class="kpi-label">Pass</div></div>
+          <div class="kpi"><div class="kpi-val red">${fais.filter(f=>f.result==='Fail').length}</div><div class="kpi-label">Fail</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">FAI Records</span>
+      <button class="btn btn-secondary btn-sm" onclick="fai()">↻</button>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>WO #</th><th>Part #</th><th>Rev</th><th>Customer</th><th>Dims</th><th>Pass</th><th>Surf</th><th>Func</th><th>Cert</th><th>Result</th></tr></thead>
+      <tbody>
+        ${fais.length===0?`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">No FAI records</td></tr>`:''}
+        ${[...fais].reverse().map(f=>{
+          const pct=f.dims>0?Math.round((f.dimPass/f.dims)*100):100;
+          const res=f.result;
+          const resCls=res==='Pass'?'badge-green':res==='Fail'?'badge-red':'badge-amber';
+          return `<tr>
+            <td class="mono muted">${new Date(f.ts).toLocaleDateString()}</td>
+            <td class="mono">${f.wo}</td><td class="mono">${f.pn||'—'}</td>
+            <td class="mono">${f.rev||'—'}</td><td>${f.customer||'—'}</td>
+            <td class="mono">${f.dims||'—'}</td>
+            <td class="mono">${f.dimPass||'—'} <span class="muted">(${pct}%)</span></td>
+            <td><span class="badge ${f.surf==='Pass'?'badge-green':'badge-red'}">${f.surf}</span></td>
+            <td><span class="badge ${f.func==='Pass'||f.func==='N/A'?'badge-green':'badge-red'}">${f.func}</span></td>
+            <td><span class="badge ${f.mat==='On File'?'badge-green':'badge-amber'}">${f.mat}</span></td>
+            <td><span class="badge ${resCls}">${res}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function faiLog(){
+  const wo=document.getElementById('fai-wo').value.trim();
+  if(!wo){ toast('Enter WO #'); return; }
+  const dims=parseInt(document.getElementById('fai-dims').value)||0;
+  const pass=parseInt(document.getElementById('fai-pass').value)||0;
+  const surf=document.getElementById('fai-surf').value;
+  const func=document.getElementById('fai-func').value;
+  const mat=document.getElementById('fai-mat').value;
+  const result=(pass===dims&&surf!=='Fail'&&func!=='Fail'&&mat!=='Missing')?'Pass':'Fail';
+  DB.push('fai_records',{
+    wo, pn:document.getElementById('fai-pn').value,
+    rev:document.getElementById('fai-rev').value,
+    customer:document.getElementById('fai-cust').value,
+    operator:document.getElementById('fai-op').value,
+    dims, dimPass:pass, surf, func, mat,
+    notes:document.getElementById('fai-notes').value,
+    result
+  });
+  if(result==='Fail'){
+    toast('❌ FAI FAILED — CAR may be required per QP-09','warn');
+  } else {
+    toast('✓ FAI Passed — record saved');
+  }
+  fai();
+}
+
+// ── MODULE 7: 8D CAR ────────────────────────────────────────
+function car(){
+  const cars=DB.get('car_records')||[];
+  const open=cars.filter(c=>c.status!=='Closed');
+
+  const TRIGGERS=[
+    'Missed Ship Date','FAI Fail','Customer Complaint','Receiving Fail',
+    'In-Process Nonconformance','Gauge Used While Overdue','Supplier Nonconformance',
+    'Repeat Escape','Part Scrapped'
+  ];
+  const DPHASES=[
+    {d:'D1',label:'Team Formation',field:'d1_team',ph:'List team members & roles'},
+    {d:'D2',label:'Problem Description',field:'d2_prob',ph:'Describe: who, what, when, where, how many'},
+    {d:'D3',label:'Interim Containment',field:'d3_contain',ph:'Immediate actions to protect customer'},
+    {d:'D4',label:'Root Cause (5-Why)',field:'d4_why',ph:'Why? → Why? → Why? → Why? → Why? (root cause)'},
+    {d:'D5',label:'Permanent Corrective Actions',field:'d5_pca',ph:'Long-term fixes to eliminate root cause'},
+    {d:'D6',label:'Implement & Verify',field:'d6_impl',ph:'Actions taken, verification method, results'},
+    {d:'D7',label:'Prevent Recurrence',field:'d7_prev',ph:'Update procedures, training, mistake-proofing'},
+    {d:'D8',label:'Closure & Recognition',field:'d8_close',ph:'Customer notification, team recognition, lessons learned'},
+  ];
+
+  render(`
+  <div class="page-header">
+    <h1>8D Corrective Action</h1>
+    <p>QP-09 · 9 auto-triggers · D1–D8 workflow · Closure sign-off</p>
+  </div>
+
+  <div class="section-grid grid-3 mb-16">
+    <div class="kpi"><div class="kpi-val ${open.length>0?'amber':'green'}">${open.length}</div><div class="kpi-label">Open CARs</div></div>
+    <div class="kpi"><div class="kpi-val">${cars.length}</div><div class="kpi-label">Total CARs</div></div>
+    <div class="kpi"><div class="kpi-val green">${cars.filter(c=>c.status==='Closed').length}</div><div class="kpi-label">Closed</div></div>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Open New CAR</span></div>
+      <label>CAR Number</label>
+      <input id="car-num" value="CAR-${String(cars.length+1).padStart(4,'0')}" placeholder="CAR-0001">
+      <label>Trigger</label>
+      <select id="car-trig">${TRIGGERS.map(t=>`<option>${t}</option>`).join('')}</select>
+      <div class="section-grid grid-2">
+        <div><label>WO # (if applicable)</label><input id="car-wo" placeholder="WO-XXXX"></div>
+        <div><label>Part # (if applicable)</label><input id="car-pn" placeholder="PRT-XXXX"></div>
+      </div>
+      <label>Customer (if applicable)</label>
+      <input id="car-cust" placeholder="Customer name">
+      <label>Opened By</label>
+      <select id="car-op">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>`<option>${o}</option>`).join('')}</select>
+      <label>Severity</label>
+      <select id="car-sev"><option>Minor</option><option>Major</option><option>Critical</option></select>
+      <div style="margin-top:14px">
+        <button class="btn btn-danger" onclick="carOpen()">Open CAR</button>
+      </div>
+    </div>
+    <div>
+      <div class="ai-box">
+        <div class="ai-label">⚡ Auto-Triggers (QP-09)</div>
+        <div class="ai-text">
+          A CAR is automatically required when any of these occur:
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+          ${TRIGGERS.map(t=>`<span class="badge badge-gray">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  ${open.length>0?`
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Open CARs — D1–D8 Workflow</span></div>
+    ${open.map(c=>`
+      <div style="border:1px solid var(--border);border-radius:var(--r2);margin-bottom:12px;overflow:hidden">
+        <div style="background:var(--bg3);padding:10px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+          <span class="badge ${c.severity==='Critical'?'badge-red':c.severity==='Major'?'badge-amber':'badge-gray'}">${c.severity}</span>
+          <span class="mono" style="font-weight:500">${c.num}</span>
+          <span class="muted">·</span>
+          <span style="font-size:13px">${c.trigger}</span>
+          ${c.wo?`<span class="badge badge-blue">${c.wo}</span>`:''}
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-green btn-sm" onclick="carClose('${c.id}')">Close CAR</button>
+          </div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+            ${DPHASES.map(p=>{
+              const done=c[p.field]&&c[p.field].trim().length>0;
+              return `<div style="background:${done?'rgba(0,201,125,0.08)':'var(--bg3)'};border:1px solid ${done?'rgba(0,201,125,0.3)':'var(--border)'};border-radius:var(--r);padding:6px 10px;font-size:11px">
+                <span class="mono" style="color:${done?'var(--green)':'var(--text3)'}">${p.d}</span>
+                <span style="color:${done?'var(--text)':'var(--text3)'}"> ${p.label}</span>
+              </div>`;
+            }).join('')}
+          </div>
+          <div id="car-detail-${c.id}" style="display:none">
+            ${DPHASES.map(p=>`
+              <label>${p.d}: ${p.label}</label>
+              <textarea id="${c.id}-${p.field}" rows="2" placeholder="${p.ph}">${c[p.field]||''}</textarea>
+            `).join('')}
+            <div style="margin-top:10px">
+              <button class="btn btn-secondary btn-sm" onclick="carSave('${c.id}')">Save Progress</button>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="toggleCarDetail('${c.id}')">Edit D1–D8 ↓</button>
+        </div>
+      </div>
+    `).join('')}
+  </div>`:''}
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">All CAR Records</span>
+      <button class="btn btn-secondary btn-sm" onclick="car()">↻</button>
+    </div>
+    <table>
+      <thead><tr><th>CAR #</th><th>Trigger</th><th>WO #</th><th>Part</th><th>Customer</th><th>Opened By</th><th>Severity</th><th>D-Phases</th><th>Status</th></tr></thead>
+      <tbody>
+        ${cars.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No CARs on file</td></tr>`:''}
+        ${[...cars].reverse().map(c=>{
+          const DPHASES2=['d1_team','d2_prob','d3_contain','d4_why','d5_pca','d6_impl','d7_prev','d8_close'];
+          const done=DPHASES2.filter(f=>c[f]&&c[f].trim()).length;
+          const stCls=c.status==='Closed'?'badge-green':done>=4?'badge-amber':'badge-red';
+          return `<tr>
+            <td class="mono">${c.num}</td>
+            <td>${c.trigger}</td>
+            <td class="mono">${c.wo||'—'}</td>
+            <td class="mono">${c.pn||'—'}</td>
+            <td>${c.customer||'—'}</td>
+            <td>${c.openedBy||'—'}</td>
+            <td><span class="badge ${c.severity==='Critical'?'badge-red':c.severity==='Major'?'badge-amber':'badge-gray'}">${c.severity}</span></td>
+            <td>
+              <div style="display:flex;gap:2px">
+                ${['D1','D2','D3','D4','D5','D6','D7','D8'].map((d,i)=>`
+                  <div style="width:18px;height:18px;border-radius:3px;background:${DPHASES2[i]&&c[DPHASES2[i]]?'var(--green2)':'var(--bg3)'};border:1px solid ${DPHASES2[i]&&c[DPHASES2[i]]?'var(--green)':'var(--border)'};font-size:8px;display:flex;align-items:center;justify-content:center;color:${DPHASES2[i]&&c[DPHASES2[i]]?'var(--green)':'var(--text3)'}">${i+1}</div>
+                `).join('')}
+              </div>
+            </td>
+            <td><span class="badge ${stCls}">${c.status||'Open'}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function carOpen(){
+  const num=document.getElementById('car-num').value.trim();
+  if(!num){ toast('Enter CAR number'); return; }
+  DB.push('car_records',{
+    num, trigger:document.getElementById('car-trig').value,
+    wo:document.getElementById('car-wo').value,
+    pn:document.getElementById('car-pn').value,
+    customer:document.getElementById('car-cust').value,
+    openedBy:document.getElementById('car-op').value,
+    severity:document.getElementById('car-sev').value,
+    status:'Open'
+  });
+  toast('CAR opened — complete D1–D8 below');
+  car();
+}
+
+function toggleCarDetail(id){
+  const el=document.getElementById('car-detail-'+id);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function carSave(id){
+  const cars=DB.get('car_records')||[];
+  const ci=cars.findIndex(c=>c.id==id||c.id===parseInt(id));
+  if(ci>=0){
+    const DPHASES=['d1_team','d2_prob','d3_contain','d4_why','d5_pca','d6_impl','d7_prev','d8_close'];
+    DPHASES.forEach(f=>{
+      const el=document.getElementById(id+'-'+f);
+      if(el) cars[ci][f]=el.value;
+    });
+    DB.set('car_records',cars);
+    toast('✓ CAR progress saved');
+  }
+}
+
+function carClose(id){
+  const cars=DB.get('car_records')||[];
+  const ci=cars.findIndex(c=>String(c.id)===String(id));
+  if(ci>=0){
+    cars[ci].status='Closed';
+    cars[ci].closedDate=todayISO();
+    DB.set('car_records',cars);
+    toast('✓ CAR closed');
+    car();
+  }
+}
+
+
+
+
+
+
+// ── MODULE 12: CASH FLOW ────────────────────────────────────
+function cashflow(){
+  const invoices = DB.get('invoices')||[];
+  const expenses = DB.get('expenses')||[];
+  const jobs = DB.get('sched_jobs')||[];
+
+  // Estimate AR from active jobs
+  const arJobs = jobs.filter(j=>j.status!=='Shipped');
+  const totalAR = arJobs.reduce((s,j)=>s+(j.value||0),0);
+  const totalInvoiced = invoices.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
+  const totalExpenses = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+
+  // 30/60/90 day buckets
+  const now = new Date();
+  const d30 = new Date(now); d30.setDate(d30.getDate()+30);
+  const d60 = new Date(now); d60.setDate(d60.getDate()+60);
+  const d90 = new Date(now); d90.setDate(d90.getDate()+90);
+
+  const ar30 = arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d30).reduce((s,j)=>s+(j.value||0),0);
+  const ar60 = arJobs.filter(j=>{const d=new Date(j.ship+'T12:00:00');return d>d30&&d<=d60;}).reduce((s,j)=>s+(j.value||0),0);
+  const ar90 = arJobs.filter(j=>{const d=new Date(j.ship+'T12:00:00');return d>d60&&d<=d90;}).reduce((s,j)=>s+(j.value||0),0);
+
+  render(`
+  <div class="page-header"><h1>Cash Flow Forecast</h1><p>AR/AP · 30/60/90-day projection · Negative flow alerts</p></div>
+
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--green)"><div class="kpi-val green">$${(totalAR/1000).toFixed(1)}k</div><div class="kpi-label">Total AR Pipeline</div></div>
+    <div class="kpi" style="border-left:3px solid var(--accent)"><div class="kpi-val">$${(ar30/1000).toFixed(1)}k</div><div class="kpi-label">Due in 30 Days</div></div>
+    <div class="kpi" style="border-left:3px solid var(--purple)"><div class="kpi-val">$${(ar60/1000).toFixed(1)}k</div><div class="kpi-label">31–60 Days</div></div>
+    <div class="kpi" style="border-left:3px solid var(--amber)"><div class="kpi-val amber">$${(ar90/1000).toFixed(1)}k</div><div class="kpi-label">61–90 Days</div></div>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Expense / AP</span></div>
+      <label>Category</label>
+      <select id="exp-cat"><option>Tooling</option><option>Material</option><option>Payroll</option><option>Utilities</option><option>Outside Processing</option><option>Equipment</option><option>Other</option></select>
+      <div class="section-grid grid-2">
+        <div><label>Amount ($)</label><input id="exp-amt" type="number" placeholder="0.00"></div>
+        <div><label>Date</label><input id="exp-date" type="date" value="${todayISO()}"></div>
+      </div>
+      <label>Description</label><input id="exp-desc" placeholder="Vendor, invoice #, notes">
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="expenseLog()">Log Expense</button></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">AR by Job — Next 90 Days</span></div>
+      ${arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d90).sort((a,b)=>new Date(a.ship)-new Date(b.ship)).slice(0,8).map(j=>{
+        const daysOut=Math.round((new Date(j.ship+'T12:00:00')-now)/86400000);
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">'
+          +'<div><div class="mono" style="font-size:12px">'+j.wo+'</div><div style="font-size:11px;color:var(--text3)">'+(j.customer||'')+'</div></div>'
+          +'<div style="text-align:right"><div class="mono" style="color:var(--green2);font-size:13px">$'+(j.value||0).toLocaleString()+'</div>'
+          +'<div style="font-size:10px;color:var(--text3)">'+daysOut+'d</div></div></div>';
+      }).join('')}
+      ${arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d90).length===0?'<div class="muted" style="font-size:13px">No jobs due in 90 days with value set.<br>Add job values in the scheduling board.</div>':''}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Recent Expenses</span><button class="btn btn-secondary btn-sm" onclick="cashflow()">↻</button></div>
+    <table>
+      <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
+      <tbody>
+        ${expenses.length===0?'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:24px">No expenses logged</td></tr>':''}
+        ${[...expenses].reverse().slice(0,20).map(e=>'<tr><td class="mono muted">'+new Date(e.ts).toLocaleDateString()+'</td><td><span class="badge badge-gray">'+e.cat+'</span></td><td class="muted">'+e.desc+'</td><td class="mono" style="color:var(--red)">-$'+parseFloat(e.amount).toLocaleString()+'</td></tr>').join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function expenseLog(){
+  const amt=document.getElementById('exp-amt').value;
+  if(!amt){toast('Enter amount');return;}
+  DB.push('expenses',{cat:document.getElementById('exp-cat').value,amount:amt,date:document.getElementById('exp-date').value,desc:document.getElementById('exp-desc').value});
+  toast('✓ Expense logged');
+  cashflow();
+}
+
+// ── MODULE 13: MATERIAL TRACEABILITY ────────────────────────
+function trace(){
+  const recvLogs = DB.get('recv_logs')||[];
+  const jobs = DB.get('sched_jobs')||[];
+
+  render(`
+  <div class="page-header"><h1>Material Traceability</h1><p>Heat # → Job → Part → Shipped · Full chain</p></div>
+
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Search by Heat / Lot Number</span></div>
+    <div style="display:flex;gap:8px">
+      <input id="tr-search" placeholder="Enter Heat #, Lot #, or PO #..." style="flex:1">
+      <button class="btn btn-primary" onclick="traceSearch()">Search</button>
+    </div>
+    <div id="tr-results" style="margin-top:16px"></div>
+  </div>
+
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Full Traceability Chain</span></div>
+    <table>
+      <thead><tr><th>Heat/Lot #</th><th>Material</th><th>Supplier</th><th>PO #</th><th>Received</th><th>WO #</th><th>Customer</th><th>Part</th><th>Status</th></tr></thead>
+      <tbody>
+        ${recvLogs.length===0?'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No receiving records — log material receipts first</td></tr>':''}
+        ${recvLogs.map(r=>{
+          const matchedJob = jobs.find(j=>j.wo===r.wo);
+          return '<tr>'
+            +'<td class="mono">'+(r.heat||'—')+'</td>'
+            +'<td>'+(r.mat||'—')+'</td>'
+            +'<td class="muted">'+(r.supplier||'—')+'</td>'
+            +'<td class="mono muted">'+(r.po||'—')+'</td>'
+            +'<td class="mono muted">'+new Date(r.ts).toLocaleDateString()+'</td>'
+            +'<td class="mono">'+(r.wo||'—')+'</td>'
+            +'<td>'+(matchedJob?matchedJob.customer||'—':'—')+'</td>'
+            +'<td class="mono">'+(matchedJob?matchedJob.part||'—':'—')+'</td>'
+            +'<td><span class="badge '+(matchedJob&&matchedJob.status==='Shipped'?'badge-green':'badge-blue')+'">'+(matchedJob?matchedJob.status||'Active':'Receiving')+'</span></td>'
+            +'</tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function traceSearch(){
+  const q=(document.getElementById('tr-search').value||'').toLowerCase().trim();
+  if(!q){toast('Enter a search term');return;}
+  const recvLogs=DB.get('recv_logs')||[];
+  const jobs=DB.get('sched_jobs')||[];
+  const results=recvLogs.filter(r=>(r.heat||'').toLowerCase().includes(q)||(r.po||'').toLowerCase().includes(q)||(r.mat||'').toLowerCase().includes(q));
+  const el=document.getElementById('tr-results');
+  if(!el) return;
+  if(results.length===0){el.innerHTML='<div class="alert alert-warn">No records found for "'+q+'"</div>';return;}
+  el.innerHTML='<div class="alert alert-success">Found '+results.length+' record(s) matching "'+q+'"</div>'
+    +results.map(r=>{
+      const j=jobs.find(x=>x.wo===r.wo);
+      return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;margin-top:8px">'
+        +'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">'
+        +'<span><strong>Heat/Lot:</strong> <span class="mono">'+(r.heat||'—')+'</span></span>'
+        +'<span><strong>Material:</strong> '+(r.mat||'—')+'</span>'
+        +'<span><strong>Supplier:</strong> '+(r.supplier||'—')+'</span>'
+        +'<span><strong>WO:</strong> <span class="mono">'+(r.wo||'—')+'</span></span>'
+        +(j?'<span><strong>Customer:</strong> '+(j.customer||'—')+'</span><span><strong>Part:</strong> <span class="mono">'+(j.part||'—')+'</span></span>':'')
+        +'</div></div>';
+    }).join('');
+}
+
+// ── MODULE 14: APPROVED SUPPLIER LIST ───────────────────────
+function suppliers(){
+  const supList = DB.get('suppliers')||getDefaultSuppliers();
+
+  render(`
+  <div class="page-header"><h1>Approved Supplier List</h1><p>QP-07 · Scorecard · AI flags unqualified suppliers</p></div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add Supplier</span></div>
+      <div class="section-grid grid-2">
+        <div><label>Supplier Name</label><input id="sup-name" placeholder="Company name"></div>
+        <div><label>Category</label>
+          <select id="sup-cat"><option>Material</option><option>Outside Processing</option><option>Tooling</option><option>Calibration Lab</option><option>Hardware</option><option>Other</option></select>
+        </div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Contact</label><input id="sup-contact" placeholder="Name / phone / email"></div>
+        <div><label>Lead Time</label><input id="sup-lead" placeholder="e.g. 2-3 days"></div>
+      </div>
+      <label>Certifications</label>
+      <input id="sup-certs" placeholder="ISO 9001, AS9100, NADCAP...">
+      <label>Initial Score (1-5)</label>
+      <select id="sup-score"><option>5</option><option>4</option><option>3 selected</option><option>2</option><option>1</option></select>
+      <label>Notes</label>
+      <textarea id="sup-notes" rows="2"></textarea>
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="supplierAdd()">+ Add Supplier</button></div>
+    </div>
+    <div>
+      <div class="ai-box mb-16">
+        <div class="ai-label">⚡ QP-07 Supplier Control</div>
+        <div class="ai-text">Per QP-07: Only approved suppliers on this list may be used. New suppliers require evaluation before first purchase. Score ≤2 triggers corrective action. ITAR-controlled work requires supplier ITAR registration verification.</div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi"><div class="kpi-val">${supList.length}</div><div class="kpi-label">Total Suppliers</div></div>
+        <div class="kpi"><div class="kpi-val green">${supList.filter(s=>s.status==='Approved').length}</div><div class="kpi-label">Approved</div></div>
+        <div class="kpi"><div class="kpi-val red">${supList.filter(s=>s.score<=2).length}</div><div class="kpi-label">Low Score</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Approved Supplier List</span><button class="btn btn-secondary btn-sm" onclick="suppliers()">↻</button></div>
+    <table>
+      <thead><tr><th>Supplier</th><th>Category</th><th>Contact</th><th>Lead Time</th><th>Certs</th><th>Score</th><th>Status</th></tr></thead>
+      <tbody>
+        ${supList.map(s=>{
+          const stars='★'.repeat(s.score||3)+'☆'.repeat(5-(s.score||3));
+          return '<tr>'
+            +'<td><strong>'+s.name+'</strong>'+(s.notes?'<br><span style="font-size:11px;color:var(--text3)">'+s.notes+'</span>':'')+'</td>'
+            +'<td><span class="badge badge-gray">'+s.cat+'</span></td>'
+            +'<td style="font-size:12px;color:var(--text3)">'+( s.contact||'—')+'</td>'
+            +'<td class="muted">'+( s.lead||'—')+'</td>'
+            +'<td style="font-size:11px">'+( s.certs||'—')+'</td>'
+            +'<td style="color:'+(s.score>=4?'var(--green2)':s.score<=2?'var(--red)':'var(--amber)')+'">'+stars+'</td>'
+            +'<td><span class="badge '+(s.status==='Approved'?'badge-green':s.status==='Probation'?'badge-amber':'badge-red')+'">'+( s.status||'Approved')+'</span></td>'
+            +'</tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function getDefaultSuppliers(){
+  const s=[
+    {id:1,name:'McMaster-Carr',cat:'Material',contact:'mcmaster.com',lead:'1-2 days',certs:'',score:5,status:'Approved',notes:'General hardware & material'},
+    {id:2,name:'Online Metals',cat:'Material',contact:'onlinemetals.com',lead:'2-3 days',certs:'',score:4,status:'Approved',notes:'Bar stock, plate'},
+    {id:3,name:'MSC Industrial',cat:'Tooling',contact:'mscdirect.com',lead:'1-2 days',certs:'',score:5,status:'Approved',notes:'Cutting tools, inserts'},
+    {id:4,name:'Fastenal',cat:'Hardware',contact:'fastenal.com',lead:'Same day',certs:'',score:4,status:'Approved',notes:'Fasteners, misc'},
+    {id:5,name:'Local Anodize Co',cat:'Outside Processing',contact:'TBD',lead:'2-3 days',certs:'',score:3,status:'Approved',notes:'Anodize'},
+  ];
+  DB.set('suppliers',s);
+  return s;
+}
+function supplierAdd(){
+  const name=document.getElementById('sup-name').value.trim();
+  if(!name){toast('Enter supplier name');return;}
+  const sups=DB.get('suppliers')||[];
+  sups.push({id:Date.now(),name,cat:document.getElementById('sup-cat').value,contact:document.getElementById('sup-contact').value,lead:document.getElementById('sup-lead').value,certs:document.getElementById('sup-certs').value,score:parseInt(document.getElementById('sup-score').value)||3,status:'Approved',notes:document.getElementById('sup-notes').value});
+  DB.set('suppliers',sups);
+  toast('✓ Supplier added');
+  suppliers();
+}
+
+// ── MODULE 15: INTERNAL AUDITS ───────────────────────────────
+function audits(){
+  const auditRecs = DB.get('audit_recs')||[];
+  const QP_LIST=['QP-01 Document Control','QP-02 Records Control','QP-03 Inspection & Testing','QP-04 First Article Inspection','QP-05 Receiving Inspection','QP-06 Nonconforming Material','QP-07 Approved Supplier','QP-08 Purchasing','QP-09 Corrective Action','QP-10 Preventive Action','QP-11 Customer Communication','QP-12 Contract Review','QP-13 Production Planning','QP-14 Work Instructions','QP-15 Shipping & Packaging','QP-16 Internal Audits','QP-17 Calibration','QP-18 Training','QP-19 Management Review'];
+
+  render(`
+  <div class="page-header"><h1>Internal Audits</h1><p>QP-16 · AI runs checklist · Findings auto-open CARs</p></div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Schedule Audit</span></div>
+      <label>Procedure to Audit</label>
+      <select id="aud-qp">${QP_LIST.map(q=>'<option>'+q+'</option>').join('')}</select>
+      <div class="section-grid grid-2">
+        <div><label>Auditor</label>
+          <select id="aud-by"><option>Hec</option>${['Lucas','Triston','Trish'].map(o=>'<option>'+o+'</option>').join('')}</select>
+        </div>
+        <div><label>Audit Date</label><input id="aud-date" type="date" value="${todayISO()}"></div>
+      </div>
+      <label>Scope / Notes</label>
+      <textarea id="aud-scope" rows="2" placeholder="Areas covered, sample size, focus..."></textarea>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="auditStart()">⚡ Start AI Audit</button>
+      </div>
+    </div>
+    <div>
+      <div class="ai-box">
+        <div class="ai-label">⚡ AI Audit Assistant</div>
+        <div class="ai-text">Select a procedure and click Start — the AI will generate a checklist of questions based on AS9100D requirements for that procedure. Any findings will prompt auto-opening a CAR per QP-09.</div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi"><div class="kpi-val">${auditRecs.length}</div><div class="kpi-label">Total Audits</div></div>
+        <div class="kpi"><div class="kpi-val green">${auditRecs.filter(a=>a.result==='Pass').length}</div><div class="kpi-label">Pass</div></div>
+        <div class="kpi"><div class="kpi-val amber">${auditRecs.filter(a=>a.findings&&a.findings>0).length}</div><div class="kpi-label">With Findings</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="audit-checklist"></div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Audit History</span><button class="btn btn-secondary btn-sm" onclick="audits()">↻</button></div>
+    <table>
+      <thead><tr><th>Date</th><th>Procedure</th><th>Auditor</th><th>Findings</th><th>Result</th><th>CAR Opened</th></tr></thead>
+      <tbody>
+        ${auditRecs.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No audits on record</td></tr>':''}
+        ${[...auditRecs].reverse().map(a=>'<tr>'
+          +'<td class="mono muted">'+new Date(a.ts).toLocaleDateString()+'</td>'
+          +'<td>'+a.qp+'</td><td>'+a.auditor+'</td>'
+          +'<td><span class="badge '+(a.findings>0?'badge-amber':'badge-green')+'">'+(a.findings||0)+' findings</span></td>'
+          +'<td><span class="badge '+(a.result==='Pass'?'badge-green':'badge-red')+'">'+a.result+'</span></td>'
+          +'<td>'+(a.carOpened?'<span class="badge badge-red">'+a.carNum+'</span>':'<span class="muted">—</span>')+'</td>'
+          +'</tr>').join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function auditStart(){
+  const qp=document.getElementById('aud-qp').value;
+  const auditor=document.getElementById('aud-by').value;
+  const date=document.getElementById('aud-date').value;
+  const scope=document.getElementById('aud-scope').value;
+
+  const checklists={
+    'QP-03 Inspection & Testing':['Are inspection plans current and approved?','Is the CMM calibrated and within due date?','Are first article requirements being met?','Are inspection records retained per retention schedule?','Are nonconforming parts properly tagged and segregated?'],
+    'QP-05 Receiving Inspection':['Are all received materials inspected before use?','Are certs verified against purchase order requirements?','Are ITAR materials documented with end-use statements?','Are hold tags used for materials pending inspection?','Is the approved supplier list being followed?'],
+    'QP-09 Corrective Action':['Are CARs opened for all required triggers?','Are root cause analyses adequate (5-Why used)?','Are corrective actions verified for effectiveness?','Are repeat escapes being tracked?','Is the CAR log current and maintained?'],
+    'QP-17 Calibration':['Are all gauges on the master list?','Are any gauges past their calibration due date?','Are calibration records retained?','Are out-of-tolerance conditions being reported?','Are gauge IDs traceable to certs?'],
+    'QP-18 Training':['Are all operators trained for their assigned machines?','Are training records current?','Are ITAR awareness trainings documented?','Is on-the-job training being documented?','Are qualifications reviewed annually?'],
+  };
+
+  const defaultChecklist=['Is the procedure documented and current?','Are records being maintained per requirements?','Are responsible parties aware of their duties?','Has the procedure been followed consistently?','Are any improvement opportunities identified?'];
+  const items=(checklists[qp]||defaultChecklist).map(q=>({q,answer:'',finding:''}));
+
+  const el=document.getElementById('audit-checklist');
+  if(!el) return;
+  el.innerHTML='<div class="card mb-16"><div class="card-header"><span class="card-title">Audit Checklist — '+qp+'</span></div>'
+    +'<div class="step-list">'
+    +items.map((item,i)=>'<div class="step active"><div class="step-num">'+(i+1)+'</div><div class="step-content">'
+      +'<div class="step-title">'+item.q+'</div>'
+      +'<div style="display:flex;gap:8px;margin-top:6px">'
+      +'<select id="aud-ans-'+i+'" style="width:120px;padding:4px 8px;font-size:12px"><option value="">Select...</option><option value="pass">✓ Conforms</option><option value="finding">⚠ Finding</option><option value="na">N/A</option></select>'
+      +'<input id="aud-note-'+i+'" placeholder="Notes..." style="flex:1;padding:4px 8px;font-size:12px">'
+      +'</div></div></div>').join('')
+    +'</div>'
+    +'<div style="margin-top:14px;display:flex;gap:8px">'
+    +'<button class="btn btn-primary" onclick="auditSubmit(''+qp.replace(/'/g,"\'")+'',' +items.length+',''+auditor+'',''+date+'')">Submit Audit</button>'
+    +'<button class="btn btn-secondary" onclick="document.getElementById('audit-checklist').innerHTML=''">Cancel</button>'
+    +'</div></div>';
+}
+
+function auditSubmit(qp,count,auditor,date){
+  let findings=0;
+  const notes=[];
+  for(let i=0;i<count;i++){
+    const ans=document.getElementById('aud-ans-'+i)?.value;
+    const note=document.getElementById('aud-note-'+i)?.value;
+    if(ans==='finding'){findings++;notes.push('Item '+(i+1)+': '+(note||'Finding noted'));}
+  }
+  const result=findings===0?'Pass':'Fail';
+  let carNum=null;
+  if(findings>0){
+    const cars=DB.get('car_records')||[];
+    const num='CAR-'+String(cars.length+1).padStart(4,'0');
+    DB.push('car_records',{num,trigger:'Internal Audit Finding',wo:'',pn:'',openedBy:auditor,severity:findings>2?'Major':'Minor',status:'Open',d2_prob:'Internal audit of '+qp+' found '+findings+' finding(s): '+notes.join('; ')});
+    carNum=num;
+    toast('⚠️ '+findings+' finding(s) — CAR '+num+' auto-opened');
+  } else {
+    toast('✓ Audit complete — no findings');
+  }
+  DB.push('audit_recs',{qp,auditor,date,findings,result,carOpened:findings>0,carNum,notes:notes.join('; ')});
+  document.getElementById('audit-checklist').innerHTML='';
+  audits();
+}
+
+// ── MODULE 11: QUOTING ──────────────────────────────────────
+function quoting(){
+  const quotes = DB.get('quotes')||[];
+
+  // Machine rates
+  const RATES = DB.get('machine_rates')||{
+    1:185, 2:145, 3:145, 4:165, 5:165, 6:155,
+    setup:95, inspection:75, programming:110
+  };
+
+  render(`
+  <div class="page-header">
+    <h1>Quoting</h1>
+    <p>AI-assisted · Check shop load · Generate real ship date with buffer</p>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">New Quote</span></div>
+      <div class="section-grid grid-2">
+        <div><label>Customer</label><input id="q-cust" placeholder="Customer name"></div>
+        <div><label>Part Number</label><input id="q-pn" placeholder="PRT-XXXX"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Part Description</label><input id="q-desc" placeholder="Description"></div>
+        <div><label>Quantity</label><input id="q-qty" type="number" placeholder="1" value="1"></div>
+      </div>
+      <label>Material</label>
+      <select id="q-mat">
+        <option>6061 Aluminum</option><option>7075 Aluminum</option>
+        <option>303 Stainless</option><option>304 Stainless</option><option>316 Stainless</option>
+        <option>4140 Steel</option><option>A36 Steel</option><option>1018/1020 Steel</option>
+        <option>Titanium Ti-6Al-4V</option><option>Inconel 625</option><option>Monel</option>
+        <option>Delrin/Acetal</option><option>Other</option>
+      </select>
+      <label>Primary Operation</label>
+      <select id="q-op">
+        <option value="1">5-Axis Mill — UMC 500SS ($${RATES[1]}/hr)</option>
+        <option value="4">5-Axis/3+2 — VF2SS+TRT160 ($${RATES[4]}/hr)</option>
+        <option value="2">3-Axis Mill — VF3 ($${RATES[2]}/hr)</option>
+        <option value="3">3-Axis Mill — VF2 ($${RATES[3]}/hr)</option>
+        <option value="6">Turning — DS-30Y ($${RATES[6]}/hr)</option>
+      </select>
+      <div class="section-grid grid-3">
+        <div><label>Setup Hrs</label><input id="q-setup" type="number" step="0.5" value="1.0"></div>
+        <div><label>Cycle Time (min)</label><input id="q-cycle" type="number" step="1" value="30"></div>
+        <div><label>Prog Hrs</label><input id="q-prog" type="number" step="0.5" value="0.5"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Material Cost ($)</label><input id="q-matcost" type="number" step="0.01" value="0"></div>
+        <div><label>Outside Proc ($)</label><input id="q-outside" type="number" step="0.01" value="0"></div>
+      </div>
+      <label>Margin %</label>
+      <select id="q-margin">
+        <option value="25">25%</option><option value="30" selected>30%</option>
+        <option value="35">35%</option><option value="40">40%</option><option value="50">50%</option>
+      </select>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="quoteCalc()">⚡ Calculate Quote</button>
+        <button class="btn btn-secondary" onclick="quoteSave()">Save Quote</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card mb-16" id="q-result" style="display:none">
+        <div class="card-header"><span class="card-title">Quote Result</span></div>
+        <div id="q-result-body"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Machine Rates</span></div>
+        <table>
+          <thead><tr><th>Machine</th><th>Rate/Hr</th></tr></thead>
+          <tbody>
+            ${[1,2,3,4,5,6].map(id=>{
+              const m=MACHINES.find(x=>x.id===id);
+              return '<tr><td>#'+id+' '+( m?m.name:'?')+'</td><td class="mono">$'+( RATES[id]||0)+'/hr</td></tr>';
+            }).join('')}
+            <tr><td>Setup</td><td class="mono">$${RATES.setup}/hr</td></tr>
+            <tr><td>Programming</td><td class="mono">$${RATES.programming}/hr</td></tr>
+            <tr><td>Inspection</td><td class="mono">$${RATES.inspection}/hr</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px">
+          <button class="btn btn-secondary btn-sm" onclick="quoteEditRates()">Edit Rates</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUOTE LOG -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Quote Log — ${quotes.length} Quotes</span>
+      <button class="btn btn-secondary btn-sm" onclick="quoting()">↻</button>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Part</th><th>Qty</th><th>Material</th><th>Unit Price</th><th>Total</th><th>Ship Date</th><th>Status</th></tr></thead>
+      <tbody>
+        ${quotes.length===0?'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No quotes yet</td></tr>':''}
+        ${[...quotes].reverse().map(q=>'<tr>'
+          +'<td class="mono muted">'+new Date(q.ts).toLocaleDateString()+'</td>'
+          +'<td>'+(q.customer||'—')+'</td>'
+          +'<td class="mono">'+(q.part||'—')+'</td>'
+          +'<td>'+( q.qty||1)+'</td>'
+          +'<td class="muted">'+(q.material||'—')+'</td>'
+          +'<td class="mono" style="color:var(--accent)">$'+( q.unitPrice||0).toLocaleString()+'</td>'
+          +'<td class="mono" style="font-weight:500">$'+(((q.unitPrice||0)*(q.qty||1)).toLocaleString())+'</td>'
+          +'<td class="mono">'+(q.shipDate||'—')+'</td>'
+          +'<td><span class="badge badge-blue">'+(q.status||'Draft')+'</span></td>'
+          +'</tr>').join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+
+function quoteCalc(){
+  const qty=parseInt(document.getElementById('q-qty').value)||1;
+  const machineId=parseInt(document.getElementById('q-op').value);
+  const RATES=DB.get('machine_rates')||{1:185,2:145,3:145,4:165,5:165,6:155,setup:95,inspection:75,programming:110};
+  const rate=RATES[machineId]||150;
+  const setupHrs=parseFloat(document.getElementById('q-setup').value)||1;
+  const cycleMins=parseFloat(document.getElementById('q-cycle').value)||30;
+  const progHrs=parseFloat(document.getElementById('q-prog').value)||0.5;
+  const matCost=parseFloat(document.getElementById('q-matcost').value)||0;
+  const outsideCost=parseFloat(document.getElementById('q-outside').value)||0;
+  const margin=parseFloat(document.getElementById('q-margin').value)/100||0.3;
+
+  const cycleHrs=cycleMins/60;
+  const machineTime=(setupHrs+(cycleHrs*qty));
+  const laborCost=(machineTime*rate)+(progHrs*110)+(0.5*75);
+  const totalCost=laborCost+matCost+outsideCost;
+  const unitCost=totalCost/qty;
+  const unitPrice=Math.ceil(unitCost/(1-margin)/5)*5;
+  const totalPrice=unitPrice*qty;
+
+  // Ship date estimate — check load, add buffer
+  const jobs=DB.get('sched_jobs')||[];
+  const machineJobs=jobs.filter(j=>j.machine===machineId&&j.status!=='Shipped').length;
+  const leadDays=5+(machineJobs*2)+(outsideCost>0?3:0);
+  const shipDate=new Date(); shipDate.setDate(shipDate.getDate()+leadDays);
+  const shipStr=shipDate.toISOString().split('T')[0];
+
+  const resultEl=document.getElementById('q-result');
+  const bodyEl=document.getElementById('q-result-body');
+  if(resultEl) resultEl.style.display='block';
+  if(bodyEl) bodyEl.innerHTML=
+    '<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">'
+    +'<div class="kpi"><div class="kpi-val green">$'+unitPrice.toLocaleString()+'</div><div class="kpi-label">Unit Price</div></div>'
+    +'<div class="kpi"><div class="kpi-val">$'+totalPrice.toLocaleString()+'</div><div class="kpi-label">Total (qty '+qty+')</div></div>'
+    +'<div class="kpi"><div class="kpi-val amber">'+leadDays+'d</div><div class="kpi-label">Lead Time</div></div>'
+    +'</div>'
+    +'<table><thead><tr><th>Component</th><th>Amount</th></tr></thead><tbody>'
+    +'<tr><td>Machine Time ('+machineTime.toFixed(1)+'h @ $'+rate+'/hr)</td><td class="mono">$'+Math.round(machineTime*rate).toLocaleString()+'</td></tr>'
+    +'<tr><td>Programming ('+progHrs+'h)</td><td class="mono">$'+Math.round(progHrs*110).toLocaleString()+'</td></tr>'
+    +'<tr><td>Inspection</td><td class="mono">$'+Math.round(0.5*75).toLocaleString()+'</td></tr>'
+    +'<tr><td>Material</td><td class="mono">$'+matCost.toLocaleString()+'</td></tr>'
+    +'<tr><td>Outside Processing</td><td class="mono">$'+outsideCost.toLocaleString()+'</td></tr>'
+    +'<tr style="border-top:2px solid var(--border2)"><td><strong>Total Cost</strong></td><td class="mono"><strong>$'+Math.round(totalCost).toLocaleString()+'</strong></td></tr>'
+    +'<tr><td>Margin ('+Math.round(margin*100)+'%)</td><td class="mono" style="color:var(--green2)">$'+Math.round(totalPrice-totalCost).toLocaleString()+'</td></tr>'
+    +'</tbody></table>'
+    +'<div class="alert alert-info" style="margin-top:12px">Ship date estimate: <strong>'+shipStr+'</strong> · '+machineJobs+' jobs ahead on this machine</div>';
+
+  // Store for save
+  window._lastQuote={
+    customer:document.getElementById('q-cust').value,
+    part:document.getElementById('q-pn').value,
+    desc:document.getElementById('q-desc').value,
+    qty, material:document.getElementById('q-mat').value,
+    unitPrice, totalPrice, leadDays, shipDate:shipStr,
+    machineId, status:'Draft'
+  };
+}
+
+function quoteSave(){
+  if(!window._lastQuote){toast('Calculate a quote first');return;}
+  DB.push('quotes',window._lastQuote);
+  toast('✓ Quote saved');
+  quoting();
+}
+
+function quoteEditRates(){
+  const RATES=DB.get('machine_rates')||{1:185,2:145,3:145,4:165,5:165,6:155,setup:95,inspection:75,programming:110};
+  const r1=prompt('Machine #1 UMC rate/hr:',RATES[1]);
+  if(r1===null) return;
+  RATES[1]=parseInt(r1)||RATES[1];
+  DB.set('machine_rates',RATES);
+  toast('✓ Rates updated');
+  quoting();
+}
+
+// ── MODULE 10: PEOPLE & TRAINING ────────────────────────────
+function people(){
+  const staff = DB.get('staff')||getDefaultStaff();
+  const trainingRecs = DB.get('training_recs')||[];
+  render(`
+  <div class="page-header">
+    <h1>People & Training</h1>
+    <p>QP-18 · Operator profiles · Training records · Certifications</p>
+  </div>
+
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Manage Operators</span></div>
+    <div id="op-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="new-op-name" placeholder="New operator name..." style="flex:1;max-width:280px">
+      <button class="btn btn-primary btn-sm" onclick="addOperator()">+ Add Operator</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3)">Changes apply immediately across all modules.</div>
+  </div>
+
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--accent)">
+      <div class="kpi-val">${staff.length}</div><div class="kpi-label">Total Operators</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--green)">
+      <div class="kpi-val green">${staff.filter(s=>s.active).length}</div><div class="kpi-label">Active</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--amber)">
+      <div class="kpi-val amber">${trainingRecs.filter(t=>{const d=new Date(t.expiry);return d>new Date()&&(d-new Date())<30*86400000;}).length}</div>
+      <div class="kpi-label">Certs Expiring Soon</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--red)">
+      <div class="kpi-val red">${trainingRecs.filter(t=>new Date(t.expiry)<new Date()).length}</div>
+      <div class="kpi-label">Certs Expired</div>
+    </div>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add / Edit Operator</span></div>
+      <div class="section-grid grid-2">
+        <div><label>Name</label><input id="p-name" placeholder="Full name"></div>
+        <div><label>Role</label>
+          <select id="p-role">
+            <option>Machinist</option><option>Setup</option><option>Inspector</option>
+            <option>Lead</option><option>Owner</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Start Date</label><input id="p-start" type="date" value="${todayISO()}"></div>
+        <div><label>Status</label>
+          <select id="p-status"><option>Active</option><option>Inactive</option></select>
+        </div>
+      </div>
+      <label>Qualified Machines</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+        ${['UMC 500SS','VF3','VF2','VF2SS+TRT160','DS-30Y','CMM'].map(m=>`
+          <label style="text-transform:none;letter-spacing:0;font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;margin-top:0">
+            <input type="checkbox" value="${m}" name="pmachine" style="width:auto"> ${m}
+          </label>`).join('')}
+      </div>
+      <label>Notes</label>
+      <textarea id="p-notes" rows="2" placeholder="Skills, restrictions, notes..."></textarea>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="peopleAdd()">+ Add Operator</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Training Record</span></div>
+      <label>Operator</label>
+      <select id="tr-op">${(DB.get('staff')||[]).map(s=>`<option>${s.name}</option>`).join('')}</select>
+      <label>Training / Certification</label>
+      <select id="tr-type">
+        <option>ITAR Awareness</option>
+        <option>AS9100D QMS Overview</option>
+        <option>5-Axis Machine Operation</option>
+        <option>3-Axis Machine Operation</option>
+        <option>Turning Operation</option>
+        <option>CMM Operation</option>
+        <option>FAI Procedure QP-04</option>
+        <option>CAR Procedure QP-09</option>
+        <option>Calibration QP-17</option>
+        <option>Foreign Object Debris (FOD)</option>
+        <option>Safety / OSHA</option>
+        <option>Custom</option>
+      </select>
+      <div id="tr-custom-wrap" style="display:none">
+        <label>Custom Training Name</label>
+        <input id="tr-custom" placeholder="Enter training name">
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Completed Date</label><input id="tr-date" type="date" value="${todayISO()}"></div>
+        <div><label>Expiry Date</label><input id="tr-expiry" type="date"></div>
+      </div>
+      <label>Trainer / Source</label>
+      <input id="tr-trainer" placeholder="Instructor name or source doc">
+      <div style="margin-top:14px">
+        <button class="btn btn-green" onclick="trainingLog()">✓ Log Training</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPERATOR CARDS -->
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Operator Roster</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+      ${staff.map(s=>{
+        const recs = trainingRecs.filter(t=>t.operator===s.name);
+        const expired = recs.filter(t=>t.expiry&&new Date(t.expiry)<new Date()).length;
+        const expiringSoon = recs.filter(t=>{const d=new Date(t.expiry);return d>new Date()&&(d-new Date())<30*86400000;}).length;
+        return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+          +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff">'
+          +s.name.charAt(0)+'</div>'
+          +'<div><div style="font-weight:500;font-size:14px">'+s.name+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">'+s.role+'</div></div>'
+          +'</div>'
+          +'<span class="badge '+(s.active?'badge-green':'badge-gray')+'">'+(s.active?'Active':'Inactive')+'</span>'
+          +'</div>'
+          +(s.machines&&s.machines.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+s.machines.map(m=>'<span class="badge badge-blue" style="font-size:9px">'+m+'</span>').join('')+'</div>':'')
+          +'<div style="font-size:11px;color:var(--text3)">'
+          +recs.length+' training records'
+          +(expired>0?' · <span style="color:var(--red)">'+expired+' expired</span>':'')
+          +(expiringSoon>0?' · <span style="color:var(--amber)">'+expiringSoon+' expiring</span>':'')
+          +'</div></div>';
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- TRAINING RECORDS TABLE -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Training Records — ${trainingRecs.length} Total</span>
+      <button class="btn btn-secondary btn-sm" onclick="people()">↻</button>
+    </div>
+    <table>
+      <thead><tr><th>Operator</th><th>Training</th><th>Completed</th><th>Expiry</th><th>Trainer</th><th>Status</th></tr></thead>
+      <tbody>
+        ${trainingRecs.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No training records yet</td></tr>':''}
+        ${[...trainingRecs].reverse().map(t=>{
+          const exp = t.expiry?new Date(t.expiry):null;
+          const now = new Date();
+          const st = !exp?'No Expiry':exp<now?'Expired':((exp-now)<30*86400000)?'Expiring Soon':'Current';
+          const stCls = st==='Current'||st==='No Expiry'?'badge-green':st==='Expired'?'badge-red':'badge-amber';
+          return '<tr><td>'+t.operator+'</td><td>'+t.training+'</td>'
+            +'<td class="mono muted">'+t.date+'</td>'
+            +'<td class="mono">'+(t.expiry||'—')+'</td>'
+            +'<td class="muted">'+( t.trainer||'—')+'</td>'
+            +'<td><span class="badge '+stCls+'">'+st+'</span></td></tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+
+  // Show custom training input
+  document.getElementById('tr-type')?.addEventListener('change',function(){
+    document.getElementById('tr-custom-wrap').style.display=this.value==='Custom'?'block':'none';
+  });
+  renderOpChips();
+}
+
+function getDefaultStaff(){
+  const staff=[
+    {id:1,name:'Hec',role:'Owner',active:true,start:'2020-01-01',machines:['UMC 500SS','VF3','VF2','VF2SS+TRT160','DS-30Y','CMM'],notes:'Owner/Operator'},
+    {id:2,name:'Lucas',role:'Machinist',active:true,start:'2023-01-01',machines:['VF3','VF2','VF2SS+TRT160'],notes:''},
+    {id:3,name:'Triston',role:'Machinist',active:true,start:'2023-06-01',machines:['VF3','VF2'],notes:''},
+    {id:4,name:'Trish',role:'Machinist',active:true,start:'2024-01-01',machines:['DS-30Y','VF2'],notes:''},
+  ];
+  DB.set('staff',staff);
+  return staff;
+}
+
+function peopleAdd(){
+  const name=document.getElementById('p-name').value.trim();
+  if(!name){toast('Enter operator name');return;}
+  const machines=[...document.querySelectorAll('input[name="pmachine"]:checked')].map(c=>c.value);
+  const staff=DB.get('staff')||[];
+  staff.push({
+    id:Date.now(),name,
+    role:document.getElementById('p-role').value,
+    active:document.getElementById('p-status').value==='Active',
+    start:document.getElementById('p-start').value,
+    machines,
+    notes:document.getElementById('p-notes').value
+  });
+  DB.set('staff',staff);
+  toast('✓ Operator added');
+  people();
+}
+
+function trainingLog(){
+  const op=document.getElementById('tr-op').value;
+  let training=document.getElementById('tr-type').value;
+  if(training==='Custom') training=document.getElementById('tr-custom')?.value||'Custom';
+  DB.push('training_recs',{
+    operator:op, training,
+    date:document.getElementById('tr-date').value,
+    expiry:document.getElementById('tr-expiry').value||null,
+    trainer:document.getElementById('tr-trainer').value
+  });
+  toast('✓ Training record logged');
+  people();
+}
+
+// ── MODULE 9: SALES PLAN VS ACTUAL ──────────────────────────
+function sales(){
+  const jobs = DB.get('sched_jobs')||getSeedJobs();
+  const salesTargets = DB.get('sales_targets')||getDefaultTargets();
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+
+  // Compute booked by month from job data
+  const booked = Array(12).fill(0);
+  const invoiced = Array(12).fill(0);
+  jobs.forEach(j=>{
+    if(j.opened){
+      const m = new Date(j.opened).getMonth();
+      const val = j.value||0;
+      booked[m] += val;
+    }
+    if(j.status==='Shipped'&&j.ship){
+      const m = new Date(j.ship).getMonth();
+      invoiced[m] += j.value||0;
+    }
+  });
+
+  const totalTarget = salesTargets.reduce((s,t)=>s+t,0);
+  const totalBooked = booked.reduce((s,v)=>s+v,0);
+  const totalInvoiced = invoiced.reduce((s,v)=>s+v,0);
+  const ytdTarget = salesTargets.slice(0,currentMonth+1).reduce((s,t)=>s+t,0);
+  const ytdBooked = booked.slice(0,currentMonth+1).reduce((s,v)=>s+v,0);
+  const paceRate = ytdTarget>0?Math.round((ytdBooked/ytdTarget)*100):0;
+
+  render(`
+  <div class="page-header">
+    <h1>Sales Plan vs Actual</h1>
+    <p>${currentYear} · Weekly & monthly targets vs booked vs invoiced</p>
+  </div>
+
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--accent)">
+      <div class="kpi-val">$${(totalTarget/1000).toFixed(0)}k</div>
+      <div class="kpi-label">${currentYear} Revenue Target</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--green)">
+      <div class="kpi-val green">$${(ytdBooked/1000).toFixed(1)}k</div>
+      <div class="kpi-label">YTD Booked</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--purple)">
+      <div class="kpi-val">$${(totalInvoiced/1000).toFixed(1)}k</div>
+      <div class="kpi-label">YTD Invoiced</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid ${paceRate>=90?'var(--green)':paceRate>=70?'var(--amber)':'var(--red)'}">
+      <div class="kpi-val ${paceRate>=90?'green':paceRate>=70?'amber':'red'}">${paceRate}%</div>
+      <div class="kpi-label">Pace vs Target</div>
+    </div>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <!-- MONTHLY CHART -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Monthly — Plan vs Booked</span></div>
+      <div style="overflow-x:auto">
+        <div style="display:flex;align-items:flex-end;gap:4px;height:140px;min-width:400px;padding-bottom:4px">
+          ${months.map((m,i)=>{
+            const target = salesTargets[i]||0;
+            const book = booked[i]||0;
+            const maxVal = Math.max(...salesTargets,...booked,1);
+            const tH = Math.max(4,Math.round((target/maxVal)*120));
+            const bH = Math.max(book>0?4:0,Math.round((book/maxVal)*120));
+            const isPast = i<=currentMonth;
+            return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:28px">'
+              +'<div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:125px">'
+              +'<div style="flex:1;background:'+(isPast?'var(--border2)':'var(--border)')+';height:'+tH+'px;border-radius:2px 2px 0 0" title="Target $'+target+'"></div>'
+              +'<div style="flex:1;background:'+(book>=target?'var(--green)':book>0?'var(--accent)':'transparent')+';height:'+bH+'px;border-radius:2px 2px 0 0" title="Booked $'+book+'"></div>'
+              +'</div>'
+              +'<span style="font-size:9px;color:var(--text3)">'+m+'</span>'
+              +'</div>';
+          }).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:11px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--border2);border-radius:2px;display:inline-block"></span>Target</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--accent);border-radius:2px;display:inline-block"></span>Booked</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>At/Over Target</span>
+      </div>
+    </div>
+
+    <!-- SET MONTHLY TARGETS -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Set Monthly Targets</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${months.map((m,i)=>`
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;color:var(--text3);width:28px">${m}</span>
+            <input id="target-${i}" type="number" value="${salesTargets[i]||0}" placeholder="0"
+              style="flex:1;padding:5px 8px;font-size:12px" onchange="salesSaveTargets()">
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="salesSaveTargets()">Save Targets</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MONTHLY TABLE -->
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Monthly Breakdown — ${currentYear}</span></div>
+    <table>
+      <thead><tr><th>Month</th><th>Target</th><th>Booked</th><th>Invoiced</th><th>Variance</th><th>Pace</th></tr></thead>
+      <tbody>
+        ${months.map((m,i)=>{
+          const t=salesTargets[i]||0;
+          const b=booked[i]||0;
+          const inv=invoiced[i]||0;
+          const variance=b-t;
+          const pace=t>0?Math.round((b/t)*100):b>0?100:0;
+          const isCurrent=i===currentMonth;
+          const isPast=i<currentMonth;
+          return '<tr style="'+(isCurrent?'background:rgba(26,111,255,0.04)':'')+'">'
+            +'<td><strong>'+m+'</strong>'+(isCurrent?' <span class="badge badge-blue">Now</span>':'')+'</td>'
+            +'<td class="mono">$'+t.toLocaleString()+'</td>'
+            +'<td class="mono" style="color:'+(b>0?'var(--accent)':'var(--text3)')+'">$'+b.toLocaleString()+'</td>'
+            +'<td class="mono" style="color:'+(inv>0?'var(--green2)':'var(--text3)')+'">$'+inv.toLocaleString()+'</td>'
+            +'<td class="mono" style="color:'+(variance>=0?'var(--green2)':'var(--red)')+'">'+(variance>=0?'+':'')+variance.toLocaleString()+'</td>'
+            +'<td>'+(t>0||b>0?'<div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.min(100,pace)+'%;background:'+(pace>=100?'var(--green)':pace>=70?'var(--accent)':'var(--red)')+';border-radius:3px"></div></div><span class="mono" style="font-size:11px">'+pace+'%</span></div>':'<span class="muted">—</span>')+'</td>'
+            +'</tr>';
+        }).join('')}
+        <tr style="border-top:2px solid var(--border2);font-weight:500">
+          <td>TOTAL</td>
+          <td class="mono">$'+totalTarget.toLocaleString()+'</td>
+          <td class="mono" style="color:var(--accent)">$'+totalBooked.toLocaleString()+'</td>
+          <td class="mono" style="color:var(--green2)">$'+totalInvoiced.toLocaleString()+'</td>
+          <td class="mono" style="color:'+(totalBooked-totalTarget>=0?'var(--green2)':'var(--red))')+'">'+(totalBooked-totalTarget>=0?'+':'')+(totalBooked-totalTarget).toLocaleString()+'</td>
+          <td><span class="badge '+(paceRate>=100?'badge-green':paceRate>=70?'badge-blue':'badge-red')+'">'+paceRate+'%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- LOG INVOICE -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Log Invoice / Payment</span></div>
+    <div class="section-grid grid-2">
+      <div>
+        <label>WO # / Job</label>
+        <select id="inv-wo">
+          ${jobs.filter(j=>j.status==='Queued'||j.status==='In Progress').map(j=>'<option value="'+j.wo+'">'+j.wo+' — '+(j.customer||'')+'</option>').join('')}
+        </select>
+        <label>Invoice Amount ($)</label>
+        <input id="inv-amt" type="number" placeholder="0.00">
+      </div>
+      <div>
+        <label>Invoice Date</label>
+        <input id="inv-date" type="date" value="${todayISO()}">
+        <label>Notes</label>
+        <input id="inv-notes" placeholder="Invoice #, PO ref...">
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" onclick="salesLogInvoice()">Log Invoice</button>
+    </div>
+  </div>
+  `);
+}
+
+function getDefaultTargets(){
+  // Default monthly targets — $50k/month = $600k/year
+  const targets = Array(12).fill(50000);
+  DB.set('sales_targets', targets);
+  return targets;
+}
+
+function salesSaveTargets(){
+  const targets = Array(12).fill(0).map((_,i)=>{
+    const el = document.getElementById('target-'+i);
+    return el?parseInt(el.value)||0:0;
+  });
+  DB.set('sales_targets', targets);
+  toast('✓ Targets saved');
+}
+
+function salesLogInvoice(){
+  const wo = document.getElementById('inv-wo')?.value;
+  const amt = parseFloat(document.getElementById('inv-amt')?.value)||0;
+  if(!amt){ toast('Enter invoice amount'); return; }
+  const jobs = DB.get('sched_jobs')||[];
+  const ji = jobs.findIndex(j=>j.wo===wo);
+  if(ji>=0){
+    jobs[ji].value = (jobs[ji].value||0)+amt;
+    jobs[ji].status = 'Shipped';
+    jobs[ji].onTime = true;
+    DB.set('sched_jobs', jobs);
+  }
+  DB.push('invoices',{
+    wo, amount:amt,
+    date:document.getElementById('inv-date')?.value,
+    notes:document.getElementById('inv-notes')?.value
+  });
+  toast('✓ Invoice logged — $'+amt.toLocaleString());
+  sales();
+}
+
+// ── MODULE 8: KPI DASHBOARD ─────────────────────────────────
+function kpi(){
+  const logs = DB.get('floor_logs')||[];
+  const jobs = DB.get('sched_jobs')||getSeedJobs();
+  const fais = DB.get('fai_records')||[];
+  const cars = DB.get('car_records')||[];
+  const gauges = DB.get('cal_gauges')||[];
+
+  // Compute metrics
+  const today_d = new Date();
+  const todayISO2 = todayISO();
+
+  // Spindle utilization — last 7 days
+  const last7 = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(today_d); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().split('T')[0];
+    const dayLogs = logs.filter(l=>l.ts&&l.ts.startsWith(ds));
+    const spin = dayLogs.reduce((s,l)=>s+(parseFloat(l.spindle)||0),0);
+    const util = Math.round((spin/(8*6))*100);
+    const label = d.toLocaleDateString('en-US',{weekday:'short'});
+    last7.push({label,spin:spin.toFixed(1),util});
+  }
+
+  // OTD - shipped jobs
+  const shipped = jobs.filter(j=>j.status==='Shipped'||j.status==='Complete');
+  const otd = shipped.length>0?Math.round((shipped.filter(j=>j.onTime!==false).length/shipped.length)*100):100;
+
+  // Active jobs by customer
+  const activeJobs = jobs.filter(j=>j.status!=='Shipped');
+  const custMap = {};
+  activeJobs.forEach(j=>{ const c=j.customer||'Unknown'; custMap[c]=(custMap[c]||0)+1; });
+  const custEntries = Object.entries(custMap).sort((a,b)=>b[1]-a[1]);
+
+  // Hot jobs
+  const hotJobs = activeJobs.filter(j=>j.priority==='Hot'||j.priority==='Rush')
+    .sort((a,b)=>new Date(a.ship)-new Date(b.ship));
+
+  // Scrap rate
+  const totalPcs = logs.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);
+  const totalGood = logs.reduce((s,l)=>s+(parseInt(l.good)||0),0);
+  const scrapRate = totalPcs>0?((totalPcs-totalGood)/totalPcs*100).toFixed(1):0;
+
+  // Open CARs
+  const openCARs = cars.filter(c=>c.status!=='Closed').length;
+
+  // Overdue gauges
+  const overdueGauges = gauges.filter(g=>new Date(g.nextCal)<today_d).length;
+
+  // FAI pass rate
+  const faiPass = fais.length>0?Math.round(fais.filter(f=>f.result==='Pass').length/fais.length*100):100;
+
+  // Jobs due this week
+  const weekOut = new Date(today_d); weekOut.setDate(weekOut.getDate()+7);
+  const dueThisWeek = activeJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=weekOut);
+
+  // Bar chart max
+  const maxUtil = Math.max(...last7.map(d=>d.util),1);
+
+  render(`
+  <div class="page-header">
+    <h1>KPI Dashboard</h1>
+    <p>Live metrics · Spindle utilization · Quality · On-time delivery · Open issues</p>
+  </div>
+
+  <!-- TOP KPI ROW -->
+  <div class="kpi-grid grid-4 mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--accent)">
+      <div class="kpi-val">${activeJobs.length}</div>
+      <div class="kpi-label">Active Work Orders</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--green)">
+      <div class="kpi-val green">${otd}%</div>
+      <div class="kpi-label">On-Time Delivery</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid ${parseFloat(scrapRate)>5?'var(--red)':parseFloat(scrapRate)>2?'var(--amber)':'var(--green)'}">
+      <div class="kpi-val ${parseFloat(scrapRate)>5?'red':parseFloat(scrapRate)>2?'amber':'green'}">${scrapRate}%</div>
+      <div class="kpi-label">Scrap Rate</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid ${openCARs>0?'var(--red)':'var(--green)'}">
+      <div class="kpi-val ${openCARs>0?'red':'green'}">${openCARs}</div>
+      <div class="kpi-label">Open CARs</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid grid-4 mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--purple)">
+      <div class="kpi-val">${faiPass}%</div>
+      <div class="kpi-label">FAI Pass Rate</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid ${overdueGauges>0?'var(--red)':'var(--green)'}">
+      <div class="kpi-val ${overdueGauges>0?'red':'green'}">${overdueGauges}</div>
+      <div class="kpi-label">Gauges Overdue</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--amber)">
+      <div class="kpi-val amber">${hotJobs.length}</div>
+      <div class="kpi-label">Hot / Rush Jobs</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--amber)">
+      <div class="kpi-val amber">${dueThisWeek.length}</div>
+      <div class="kpi-label">Due This Week</div>
+    </div>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+
+    <!-- SPINDLE UTILIZATION CHART -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Spindle Utilization — Last 7 Days</span></div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:4px">
+        ${last7.map(d=>{
+          const h = Math.max(4, Math.round((d.util/Math.max(maxUtil,1))*110));
+          const col = d.util>=70?'var(--green)':d.util>=40?'var(--amber)':'var(--red)';
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
+            +'<span style="font-size:10px;font-family:var(--mono);color:var(--text3)">'+d.util+'%</span>'
+            +'<div style="width:100%;background:'+col+';height:'+h+'px;border-radius:3px 3px 0 0;min-height:4px;transition:height 0.3s"></div>'
+            +'<span style="font-size:10px;color:var(--text3)">'+d.label+'</span>'
+            +'</div>';
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:11px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span>≥70% Good</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--amber);border-radius:2px;display:inline-block"></span>40-69% OK</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--red);border-radius:2px;display:inline-block"></span>&lt;40% Low</span>
+      </div>
+    </div>
+
+    <!-- JOBS BY CUSTOMER -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Active Jobs by Customer</span></div>
+      ${custEntries.length===0?'<div class="muted" style="font-size:13px">No active jobs</div>':''}
+      ${custEntries.map(([cust,count])=>{
+        const pct = Math.round((count/activeJobs.length)*100);
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">'
+          +'<span>'+cust+'</span>'
+          +'<span class="mono" style="color:var(--accent)">'+count+' WO</span>'
+          +'</div>'
+          +'<div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">'
+          +'<div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:3px;transition:width 0.4s"></div>'
+          +'</div>'
+          +'</div>';
+      }).join('')}
+    </div>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+
+    <!-- HOT JOBS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Hot & Rush Jobs</span>
+        <span class="badge badge-red">${hotJobs.length} Active</span>
+      </div>
+      ${hotJobs.length===0?'<div class="muted" style="font-size:13px">No hot jobs — all clear</div>':''}
+      ${hotJobs.map(j=>{
+        const daysOut=Math.round((new Date(j.ship+'T12:00:00')-today_d)/86400000);
+        const dcol=daysOut<0?'var(--red)':daysOut<=3?'var(--amber)':'var(--text)';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">'
+          +'<div>'
+          +'<div style="font-size:13px;font-weight:500" class="mono">'+j.wo+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">'+( j.customer||'')+ ' · '+(j.part||'')+'</div>'
+          +'</div>'
+          +'<div style="text-align:right">'
+          +'<div style="font-size:12px;color:'+dcol+'" class="mono">'+j.ship+'</div>'
+          +'<div style="font-size:10px;color:var(--text3)">'+( daysOut<0?Math.abs(daysOut)+'d LATE':daysOut+'d out')+'</div>'
+          +'</div>'
+          +'</div>';
+      }).join('')}
+    </div>
+
+    <!-- DUE THIS WEEK -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Due This Week</span>
+        <span class="badge badge-amber">${dueThisWeek.length} Jobs</span>
+      </div>
+      ${dueThisWeek.length===0?'<div class="muted" style="font-size:13px">Nothing due in the next 7 days</div>':''}
+      ${dueThisWeek.sort((a,b)=>new Date(a.ship)-new Date(b.ship)).map(j=>{
+        const daysOut=Math.round((new Date(j.ship+'T12:00:00')-today_d)/86400000);
+        const dcol=daysOut<0?'var(--red)':daysOut<=2?'var(--amber)':'var(--text)';
+        const mName=MACHINES.find(m=>m.id==j.machine)?MACHINES.find(m=>m.id==j.machine).name:'?';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">'
+          +'<div>'
+          +'<div style="font-size:13px;font-weight:500" class="mono">'+j.wo+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">'+(j.customer||'')+' · #'+j.machine+' '+mName+'</div>'
+          +'</div>'
+          +'<div style="text-align:right">'
+          +'<div style="font-size:12px;color:'+dcol+'" class="mono">'+j.ship+'</div>'
+          +'<div style="font-size:10px;color:var(--text3)">'+(daysOut<0?Math.abs(daysOut)+'d LATE':daysOut===0?'TODAY':daysOut+'d out')+'</div>'
+          +'</div>'
+          +'</div>';
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- MACHINE UTILIZATION TABLE -->
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Machine Load — Today</span></div>
+    <table>
+      <thead><tr><th>#</th><th>Machine</th><th>Capability</th><th>Jobs Loaded</th><th>Spindle Today</th><th>Util Today</th><th>Parts Today</th><th>Scrap Today</th></tr></thead>
+      <tbody>
+        ${MACHINES.map(m=>{
+          const todayLogs = logs.filter(l=>l.ts&&l.ts.startsWith(todayISO2)&&l.machine==m.id);
+          const spin = todayLogs.reduce((s,l)=>s+(parseFloat(l.spindle)||0),0);
+          const pcs = todayLogs.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);
+          const good = todayLogs.reduce((s,l)=>s+(parseInt(l.good)||0),0);
+          const util = Math.round((spin/8)*100);
+          const mJobs = activeJobs.filter(j=>j.machine==m.id).length;
+          const barCol = util>=70?'var(--green)':util>=40?'var(--amber)':'var(--text3)';
+          return '<tr>'
+            +'<td class="mono">#'+m.id+'</td>'
+            +'<td>'+m.name+'</td>'
+            +'<td><span class="badge badge-gray">'+m.cap+'</span></td>'
+            +'<td><span class="badge badge-blue">'+mJobs+' WO</span></td>'
+            +'<td class="mono">'+spin.toFixed(1)+'h</td>'
+            +'<td><div style="display:flex;align-items:center;gap:8px"><div class="util-bar-wrap" style="width:60px"><div class="util-bar" style="width:'+util+'%;background:'+barCol+'"></div></div><span class="mono" style="font-size:11px">'+util+'%</span></div></td>'
+            +'<td>'+pcs+'</td>'
+            +'<td style="color:'+(pcs-good>0?'var(--red)':'var(--text3)')+'">'+( pcs-good)+'</td>'
+            +'</tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- QUALITY SNAPSHOT -->
+  <div class="section-grid grid-3">
+    <div class="card">
+      <div class="card-header"><span class="card-title">FAI Summary</span></div>
+      <div class="kpi-grid grid-3" style="margin-bottom:0">
+        <div class="kpi"><div class="kpi-val">${fais.length}</div><div class="kpi-label">Total</div></div>
+        <div class="kpi"><div class="kpi-val green">${fais.filter(f=>f.result==='Pass').length}</div><div class="kpi-label">Pass</div></div>
+        <div class="kpi"><div class="kpi-val red">${fais.filter(f=>f.result==='Fail').length}</div><div class="kpi-label">Fail</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">CAR Status</span></div>
+      <div class="kpi-grid grid-3" style="margin-bottom:0">
+        <div class="kpi"><div class="kpi-val">${cars.length}</div><div class="kpi-label">Total</div></div>
+        <div class="kpi"><div class="kpi-val ${openCARs>0?'red':'green'}">${openCARs}</div><div class="kpi-label">Open</div></div>
+        <div class="kpi"><div class="kpi-val green">${cars.filter(c=>c.status==='Closed').length}</div><div class="kpi-label">Closed</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Calibration</span></div>
+      <div class="kpi-grid grid-3" style="margin-bottom:0">
+        <div class="kpi"><div class="kpi-val">${gauges.length}</div><div class="kpi-label">Gauges</div></div>
+        <div class="kpi"><div class="kpi-val ${overdueGauges>0?'red':'green'}">${overdueGauges}</div><div class="kpi-label">Overdue</div></div>
+        <div class="kpi"><div class="kpi-val amber">${gauges.filter(g=>{const d=new Date(g.nextCal);return d>=today_d&&(d-today_d)<30*86400000;}).length}</div><div class="kpi-label">Due Soon</div></div>
+      </div>
+    </div>
+  </div>
+  `);
+}
+
+
+
+
+// ── OPERATOR MANAGEMENT ──────────────────────────────────────
+function renderOpChips(){
+  const el = document.getElementById('op-chips');
+  if(!el) return;
+  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  el.innerHTML = ops.map(op=>
+    '<div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px">'
+    +'<span style="font-size:13px;font-weight:500">'+op+'</span>'
+    +'<button id="rm-'+op+'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 4px">×</button>'
+    +'</div>'
+  ).join('');
+  ops.forEach(op=>{
+    const btn = document.getElementById('rm-'+op);
+    if(btn) btn.onclick = ()=>removeOperator(op);
+  });
+}
+
+function addOperator(){
+  const name = document.getElementById('new-op-name')?.value.trim();
+  if(!name){toast('Enter operator name');return;}
+  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  if(ops.includes(name)){toast('Operator already exists');return;}
+  ops.push(name);
+  DB.set('operators',ops);
+  const staff = DB.get('staff')||[];
+  staff.push({id:Date.now(),name,role:'Machinist',active:true,start:todayISO(),machines:[],notes:''});
+  DB.set('staff',staff);
+  toast('✓ '+name+' added');
+  renderOpChips();
+}
+
+function removeOperator(name){
+  if(!confirm('Remove '+name+' from operator list?')) return;
+  const ops = (DB.get('operators')||['Hec','Lucas','Triston','Trish']).filter(o=>o!==name);
+  DB.set('operators',ops);
+  toast('✓ '+name+' removed');
+  renderOpChips();
+}
+
+// ── JOB STATUS WORKFLOW ──────────────────────────────────────
+function jobSetStatus(id, status){
+  const jobs=DB.get('sched_jobs')||[];
+  const ji=jobs.findIndex(j=>String(j.id)===String(id));
+  if(ji>=0){
+    jobs[ji].status=status;
+    if(status==='Shipped') jobs[ji].shipActual=todayISO();
+    DB.set('sched_jobs',jobs);
+    toast('✓ '+jobs[ji].wo+' → '+status);
+    refreshAlerts();
+    schedule();
+  }
+}
+
+function jobSetOperator(id, op){
+  const jobs=DB.get('sched_jobs')||[];
+  const ji=jobs.findIndex(j=>String(j.id)===String(id));
+  if(ji>=0){jobs[ji].operator=op;DB.set('sched_jobs',jobs);toast('✓ Assigned to '+op);}
+}
+
+// ── MODULE 16: NONCONFORMING MATERIAL (QP-06) ───────────────
+function ncm(){
+  const ncms=DB.get('ncm_recs')||[];
+  const jobs=DB.get('sched_jobs')||[];
+  render(`<div class="page-header"><h1>Nonconforming Material</h1><p>QP-06 · Tag · Quarantine · Disposition</p></div>
+  ${ncms.filter(n=>n.disposition==='Pending').length>0?'<div class="alert alert-danger">🔴 '+ncms.filter(n=>n.disposition==='Pending').length+' item(s) pending disposition</div>':''}
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--red)"><div class="kpi-val red">${ncms.filter(n=>n.disposition==='Pending').length}</div><div class="kpi-label">Pending</div></div>
+    <div class="kpi" style="border-left:3px solid var(--amber)"><div class="kpi-val amber">${ncms.filter(n=>n.disposition==='Rework').length}</div><div class="kpi-label">In Rework</div></div>
+    <div class="kpi" style="border-left:3px solid var(--text3)"><div class="kpi-val">${ncms.filter(n=>n.disposition==='Scrapped').length}</div><div class="kpi-label">Scrapped</div></div>
+    <div class="kpi" style="border-left:3px solid var(--green)"><div class="kpi-val green">${ncms.filter(n=>n.disposition==='Closed').length}</div><div class="kpi-label">Closed</div></div>
+  </div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Nonconformance</span></div>
+      <div class="section-grid grid-2">
+        <div><label>NCM #</label><input id="ncm-num" value="NCM-${String(ncms.length+1).padStart(4,'0')}"></div>
+        <div><label>WO #</label><select id="ncm-wo"><option value="">— Select —</option>${jobs.map(j=>'<option>'+j.wo+'</option>').join('')}</select></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Part #</label><input id="ncm-pn" placeholder="PRT-XXXX"></div>
+        <div><label>Qty Affected</label><input id="ncm-qty" type="number" value="1"></div>
+      </div>
+      <label>Type</label>
+      <select id="ncm-type"><option>Dimensional Out of Tolerance</option><option>Surface Finish</option><option>Wrong Material</option><option>Damaged</option><option>Missing Feature</option><option>Wrong Quantity</option><option>Supplier Nonconformance</option><option>Other</option></select>
+      <label>Description</label>
+      <textarea id="ncm-desc" rows="2" placeholder="Describe the nonconformance..."></textarea>
+      <div class="section-grid grid-2">
+        <div><label>Detected By</label><select id="ncm-by"><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option><option>Customer</option></select></div>
+        <div><label>Disposition</label><select id="ncm-disp"><option>Pending</option><option>Scrap</option><option>Rework</option><option>Use As-Is (UAI)</option><option>Return to Supplier</option></select></div>
+      </div>
+      <label>CAR Required?</label><select id="ncm-car"><option>Yes</option><option>No</option></select>
+      <div style="margin-top:14px"><button class="btn btn-danger" onclick="ncmLog()">🔴 Log NCM</button></div>
+    </div>
+    <div class="ai-box"><div class="ai-label">⚡ QP-06 Requirements</div><div class="ai-text">All nonconforming material must be identified, physically segregated, and dispositioned by authorized personnel. Use-As-Is requires customer or engineering approval. Scrapped parts must be rendered unusable. CAR required for repeat escapes.</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">NCM Log</span><button class="btn btn-secondary btn-sm" onclick="ncm()">↻</button></div>
+  <table><thead><tr><th>NCM #</th><th>Date</th><th>WO</th><th>Part</th><th>Type</th><th>Qty</th><th>By</th><th>Disposition</th><th>CAR</th></tr></thead><tbody>
+  ${ncms.length===0?'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No NCMs on record</td></tr>':''}
+  ${[...ncms].reverse().map(n=>'<tr><td class="mono">'+n.num+'</td><td class="mono muted">'+new Date(n.ts).toLocaleDateString()+'</td><td class="mono">'+(n.wo||'—')+'</td><td class="mono">'+(n.pn||'—')+'</td><td style="font-size:12px">'+n.type+'</td><td>'+n.qty+'</td><td>'+n.by+'</td><td><span class="badge '+(n.disposition==='Closed'?'badge-green':n.disposition==='Pending'?'badge-red':'badge-amber')+'">'+n.disposition+'</span></td><td>'+(n.carReq==='Yes'?'<span class="badge badge-red">Yes</span>':'—')+'</td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function ncmLog(){
+  const num=document.getElementById('ncm-num').value.trim();
+  if(!num){toast('Enter NCM number');return;}
+  const carReq=document.getElementById('ncm-car').value;
+  if(carReq==='Yes'){const cars=DB.get('car_records')||[];const carNum='CAR-'+String(cars.length+1).padStart(4,'0');DB.push('car_records',{num:carNum,trigger:'In-Process Nonconformance',wo:document.getElementById('ncm-wo').value,openedBy:document.getElementById('ncm-by').value,severity:'Minor',status:'Open'});toast('NCM logged — CAR '+carNum+' auto-opened');}else{toast('✓ NCM logged');}
+  DB.push('ncm_recs',{num,wo:document.getElementById('ncm-wo').value,pn:document.getElementById('ncm-pn').value,qty:document.getElementById('ncm-qty').value,type:document.getElementById('ncm-type').value,desc:document.getElementById('ncm-desc').value,by:document.getElementById('ncm-by').value,disposition:document.getElementById('ncm-disp').value,carReq});
+  ncm();
+}
+
+// ── MODULE 17: CONTRACT REVIEW (QP-12) ──────────────────────
+function crev(){
+  const reviews=DB.get('crev_recs')||[];
+  const jobs=DB.get('sched_jobs')||[];
+  const CX=[['cr-c1','Requirements clearly defined on PO?'],['cr-c2','Tier One capable of meeting all requirements?'],['cr-c3','Delivery date achievable?'],['cr-c4','ITAR applicability reviewed?'],['cr-c5','Special process requirements identified?'],['cr-c6','Material certifications required?'],['cr-c7','FAI required?'],['cr-c8','Customer flow-down requirements reviewed?'],['cr-c9','Any conflicts with existing orders?'],['cr-c10','Quality clauses reviewed?']];
+  render(`<div class="page-header"><h1>Contract Review</h1><p>QP-12 · Review every PO before accepting</p></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi"><div class="kpi-val green">${reviews.filter(r=>r.result==='Accepted').length}</div><div class="kpi-label">Accepted</div></div>
+    <div class="kpi"><div class="kpi-val amber">${reviews.filter(r=>r.result==='Accepted with Exceptions').length}</div><div class="kpi-label">With Exceptions</div></div>
+    <div class="kpi"><div class="kpi-val red">${reviews.filter(r=>r.result==='Rejected').length}</div><div class="kpi-label">Rejected</div></div>
+  </div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">New Contract Review</span></div>
+      <div class="section-grid grid-2">
+        <div><label>WO #</label><select id="cr-wo"><option>— Select —</option>${jobs.map(j=>'<option>'+j.wo+'</option>').join('')}</select></div>
+        <div><label>PO #</label><input id="cr-po" placeholder="PO-XXXX"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Customer</label><input id="cr-cust"></div>
+        <div><label>Reviewed By</label><select id="cr-by">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>'<option>'+o+'</option>').join('')}</select></div>
+      </div>
+      <hr class="divider">
+      ${CX.map(([id,label])=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">'+label+'</span><select id="'+id+'" style="width:100px;padding:4px 6px;font-size:12px"><option value="">—</option><option value="Y">✓ Yes</option><option value="N">✗ No</option><option value="NA">N/A</option></select></div>').join('')}
+      <label>Exceptions / Notes</label><textarea id="cr-notes" rows="2"></textarea>
+      <label>Result</label><select id="cr-result"><option>Accepted</option><option>Accepted with Exceptions</option><option>Rejected</option></select>
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="crevLog()">✓ Complete Review</button></div>
+    </div>
+    <div class="ai-box"><div class="ai-label">⚡ QP-12</div><div class="ai-text">Every customer PO must be reviewed before acceptance. Check: technical capability, delivery feasibility, ITAR applicability, special processes, flow-down clauses. Document and retain all reviews.</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Review Log</span><button class="btn btn-secondary btn-sm" onclick="crev()">↻</button></div>
+  <table><thead><tr><th>Date</th><th>WO #</th><th>Customer</th><th>PO #</th><th>By</th><th>Result</th><th>Notes</th></tr></thead><tbody>
+  ${reviews.length===0?'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No reviews on record</td></tr>':''}
+  ${[...reviews].reverse().map(r=>'<tr><td class="mono muted">'+new Date(r.ts).toLocaleDateString()+'</td><td class="mono">'+(r.wo||'—')+'</td><td>'+(r.customer||'—')+'</td><td class="mono muted">'+(r.po||'—')+'</td><td>'+(r.by||'—')+'</td><td><span class="badge '+(r.result==='Accepted'?'badge-green':r.result==='Rejected'?'badge-red':'badge-amber')+'">'+r.result+'</span></td><td style="font-size:12px;color:var(--text3)">'+(r.notes||'—')+'</td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function crevLog(){DB.push('crev_recs',{wo:document.getElementById('cr-wo').value,po:document.getElementById('cr-po').value,customer:document.getElementById('cr-cust').value,by:document.getElementById('cr-by').value,notes:document.getElementById('cr-notes').value,result:document.getElementById('cr-result').value});toast('✓ Contract review saved');crev();}
+
+// ── MODULE 18: SHIPPING & COC ────────────────────────────────
+function shipping(){
+  const shipRecs=DB.get('ship_recs')||[];
+  const jobs=DB.get('sched_jobs')||[];
+  render(`<div class="page-header"><h1>Shipping & Certificate of Conformance</h1><p>Log shipments · Generate COC · Close jobs</p></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-val green">${shipRecs.length}</div><div class="kpi-label">Total Shipments</div></div>
+    <div class="kpi"><div class="kpi-val">${shipRecs.filter(s=>(new Date()-new Date(s.ts))<7*86400000).length}</div><div class="kpi-label">This Week</div></div>
+    <div class="kpi"><div class="kpi-val amber">${jobs.filter(j=>j.status!=='Shipped').length}</div><div class="kpi-label">Jobs to Ship</div></div>
+    <div class="kpi"><div class="kpi-val">${shipRecs.filter(s=>s.cocGenerated).length}</div><div class="kpi-label">COCs Generated</div></div>
+  </div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Shipment</span></div>
+      <label>Work Order</label>
+      <select id="sh-wo" onchange="shFillJob()">${['<option value="">— Select WO —</option>',...jobs.filter(j=>j.status!=='Shipped').map(j=>'<option>'+j.wo+' — '+(j.customer||'')+'</option>')].join('')}</select>
+      <div id="sh-job-info" style="background:var(--bg3);border-radius:var(--r);padding:8px;margin-top:6px;font-size:12px;color:var(--text3)">Select a WO to auto-fill</div>
+      <div class="section-grid grid-2">
+        <div><label>Ship Date</label><input id="sh-date" type="date" value="${todayISO()}"></div>
+        <div><label>Qty Shipped</label><input id="sh-qty" type="number"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Carrier</label><select id="sh-carrier"><option>UPS</option><option>FedEx</option><option>Customer Pickup</option><option>Will Call</option><option>Other</option></select></div>
+        <div><label>Tracking #</label><input id="sh-track"></div>
+      </div>
+      <label>COC Required?</label><select id="sh-coc"><option>Yes</option><option>No</option></select>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="shipLog()">📦 Log Shipment</button>
+        <button class="btn btn-secondary" onclick="shipGenCOC()">Generate COC</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><span class="card-title">COC Preview</span></div><div id="coc-preview" style="font-size:12px;color:var(--text3)">Select a WO and click Generate COC</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Shipment Log</span><button class="btn btn-secondary btn-sm" onclick="shipping()">↻</button></div>
+  <table><thead><tr><th>Date</th><th>WO #</th><th>Customer</th><th>Part</th><th>Qty</th><th>Carrier</th><th>Tracking</th><th>COC</th></tr></thead><tbody>
+  ${shipRecs.length===0?'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No shipments logged</td></tr>':''}
+  ${[...shipRecs].reverse().map(s=>'<tr><td class="mono muted">'+new Date(s.ts).toLocaleDateString()+'</td><td class="mono">'+(s.wo||'—')+'</td><td>'+(s.customer||'—')+'</td><td class="mono">'+(s.part||'—')+'</td><td>'+s.qty+'</td><td>'+s.carrier+'</td><td class="mono muted">'+(s.tracking||'—')+'</td><td>'+(s.cocGenerated?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-gray">No</span>')+'</td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function shFillJob(){const wo=document.getElementById('sh-wo').value.split(' — ')[0];const j=(DB.get('sched_jobs')||[]).find(x=>x.wo===wo);const el=document.getElementById('sh-job-info');if(j&&el)el.innerHTML='<strong>'+j.customer+'</strong> · '+j.part+' · Qty: '+j.qty+' · Ship: '+j.ship;}
+function shipLog(){const wo=document.getElementById('sh-wo').value.split(' — ')[0];if(!wo){toast('Select a WO');return;}const jobs=DB.get('sched_jobs')||[];const ji=jobs.findIndex(j=>j.wo===wo);const job=jobs[ji];if(ji>=0){jobs[ji].status='Shipped';DB.set('sched_jobs',jobs);}DB.push('ship_recs',{wo,customer:job?.customer||'',part:job?.part||'',qty:document.getElementById('sh-qty').value,carrier:document.getElementById('sh-carrier').value,tracking:document.getElementById('sh-track').value,cocRequired:document.getElementById('sh-coc').value,cocGenerated:false});toast('✓ Shipment logged — job marked Shipped');shipping();}
+function shipGenCOC(){const wo=document.getElementById('sh-wo').value.split(' — ')[0];if(!wo){toast('Select a WO first');return;}const j=(DB.get('sched_jobs')||[]).find(x=>x.wo===wo);if(!j){toast('Job not found');return;}const el=document.getElementById('coc-preview');if(el)el.innerHTML='<div style="border:2px solid var(--border2);border-radius:var(--r2);padding:16px;font-size:12px;line-height:2"><div style="text-align:center;font-size:14px;font-weight:600;margin-bottom:4px">CERTIFICATE OF CONFORMANCE</div><div style="text-align:center;font-size:11px;color:var(--text2);margin-bottom:12px">Tier One Machine, LLC · 199 Printwood Dr · Dickson TN 37055</div><table style="width:100%;font-size:11px"><tbody><tr><td style="color:var(--text3)">WO:</td><td>'+wo+'</td><td style="color:var(--text3)">Date:</td><td>'+todayISO()+'</td></tr><tr><td style="color:var(--text3)">Customer:</td><td>'+(j.customer||'—')+'</td><td style="color:var(--text3)">PO:</td><td>'+(j.po||'—')+'</td></tr><tr><td style="color:var(--text3)">Part:</td><td>'+(j.part||'—')+'</td><td style="color:var(--text3)">Qty:</td><td>'+j.qty+'</td></tr><tr><td style="color:var(--text3)">Material:</td><td>'+(j.mat||'—')+'</td><td style="color:var(--text3)">Rev:</td><td>—</td></tr></tbody></table><div style="margin-top:10px;font-size:11px">We hereby certify that the above parts were manufactured in accordance with all applicable drawings, specifications, and purchase order requirements.</div><div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:16px"><div style="border-top:1px solid var(--border2);padding-top:4px;font-size:11px">Authorized Signature</div><div style="border-top:1px solid var(--border2);padding-top:4px;font-size:11px">Date</div></div><div style="margin-top:8px;font-size:10px;color:var(--text3)">AS9100D · ITAR Registered · FFL Licensed</div></div><div style="margin-top:8px"><button class="btn btn-primary btn-sm" onclick="window.print()">🖨 Print COC</button></div>';}
+
+// ── MODULE 19: CUSTOMER COMPLAINTS ──────────────────────────
+function complaints(){
+  const comps=DB.get('complaints')||[];
+  render(`<div class="page-header"><h1>Customer Complaints</h1><p>Log · Track · Respond · Auto-trigger CAR</p></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-val red">${comps.filter(c=>c.status==='Open').length}</div><div class="kpi-label">Open</div></div>
+    <div class="kpi"><div class="kpi-val amber">${comps.filter(c=>c.status==='In Progress').length}</div><div class="kpi-label">In Progress</div></div>
+    <div class="kpi"><div class="kpi-val green">${comps.filter(c=>c.status==='Closed').length}</div><div class="kpi-label">Closed</div></div>
+    <div class="kpi"><div class="kpi-val">${comps.length}</div><div class="kpi-label">Total</div></div>
+  </div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Complaint</span></div>
+      <div class="section-grid grid-2">
+        <div><label>Complaint #</label><input id="comp-num" value="COMP-${String(comps.length+1).padStart(4,'0')}"></div>
+        <div><label>Customer</label><input id="comp-cust"></div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>WO / Part Ref</label><input id="comp-wo" placeholder="WO-XXXX"></div>
+        <div><label>Date Received</label><input id="comp-date" type="date" value="${todayISO()}"></div>
+      </div>
+      <label>Type</label>
+      <select id="comp-type"><option>Dimensional Non-conformance</option><option>Wrong Part Shipped</option><option>Wrong Quantity</option><option>Surface Finish</option><option>Late Delivery</option><option>Damaged in Shipping</option><option>Missing Documentation</option><option>Other</option></select>
+      <label>Description</label><textarea id="comp-desc" rows="3"></textarea>
+      <div class="section-grid grid-2"><div><label>Severity</label><select id="comp-sev"><option>Minor</option><option>Major</option><option>Critical</option></select></div></div>
+      <div style="margin-top:14px"><button class="btn btn-danger" onclick="complaintLog()">Log Complaint</button></div>
+    </div>
+    <div class="card"><div class="card-header"><span class="card-title">Open Complaints</span></div>
+    ${comps.filter(c=>c.status!=='Closed').length===0?'<div class="muted" style="font-size:13px">No open complaints</div>':''}
+    ${comps.filter(c=>c.status!=='Closed').map(c=>{const days=Math.round((new Date()-new Date(c.ts))/86400000);return '<div style="padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px;border-left:3px solid '+(days>5?'var(--red)':'var(--border2)')+'">'+'<div style="display:flex;justify-content:space-between"><span class="mono" style="font-size:12px">'+c.num+'</span><span style="font-size:11px;color:var(--text3)">'+days+'d open</span></div>'+'<div style="font-size:12px">'+c.customer+' · '+c.type+'</div>'+'<div style="margin-top:6px;display:flex;gap:6px"><button class="btn btn-secondary btn-sm" onclick="complaintUpdate(\''+c.id+'\',\'In Progress\')">In Progress</button><button class="btn btn-green btn-sm" onclick="complaintUpdate(\''+c.id+'\',\'Closed\')">Close</button></div></div>';}).join('')}
+    </div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Complaint Log</span><button class="btn btn-secondary btn-sm" onclick="complaints()">↻</button></div>
+  <table><thead><tr><th>Comp #</th><th>Date</th><th>Customer</th><th>Type</th><th>Severity</th><th>CAR</th><th>Status</th></tr></thead><tbody>
+  ${comps.length===0?'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No complaints on record</td></tr>':''}
+  ${[...comps].reverse().map(c=>'<tr><td class="mono">'+c.num+'</td><td class="mono muted">'+new Date(c.ts).toLocaleDateString()+'</td><td>'+c.customer+'</td><td style="font-size:12px">'+c.type+'</td><td><span class="badge '+(c.severity==='Critical'?'badge-red':c.severity==='Major'?'badge-amber':'badge-gray')+'">'+c.severity+'</span></td><td>'+(c.carNum?'<span class="badge badge-red">'+c.carNum+'</span>':'—')+'</td><td><span class="badge '+(c.status==='Closed'?'badge-green':c.status==='Open'?'badge-red':'badge-amber')+'">'+c.status+'</span></td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function complaintLog(){const num=document.getElementById('comp-num').value.trim();if(!num){toast('Enter complaint number');return;}const cars=DB.get('car_records')||[];const carNum='CAR-'+String(cars.length+1).padStart(4,'0');DB.push('car_records',{num:carNum,trigger:'Customer Complaint',wo:document.getElementById('comp-wo').value,customer:document.getElementById('comp-cust').value,openedBy:'Hec',severity:document.getElementById('comp-sev').value,status:'Open',d2_prob:document.getElementById('comp-desc').value});DB.push('complaints',{num,customer:document.getElementById('comp-cust').value,wo:document.getElementById('comp-wo').value,type:document.getElementById('comp-type').value,desc:document.getElementById('comp-desc').value,severity:document.getElementById('comp-sev').value,status:'Open',carNum});toast('Complaint logged — CAR '+carNum+' auto-opened');complaints();}
+function complaintUpdate(id,status){const comps=DB.get('complaints')||[];const ci=comps.findIndex(c=>String(c.id)===String(id));if(ci>=0){comps[ci].status=status;DB.set('complaints',comps);}toast('✓ Updated to '+status);complaints();}
+
+// ── MODULE 20: RISK REGISTER ─────────────────────────────────
+function risk(){
+  const risks=DB.get('risks')||getDefaultRisks();
+  render(`<div class="page-header"><h1>Risk & Opportunity Register</h1><p>AS9100D Clause 6.1 · Identify · Assess · Mitigate</p></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-val red">${risks.filter(r=>r.type==='Risk'&&(r.likelihood*r.impact)>=12).length}</div><div class="kpi-label">High Risks</div></div>
+    <div class="kpi"><div class="kpi-val amber">${risks.filter(r=>r.type==='Risk'&&(r.likelihood*r.impact)>=6&&(r.likelihood*r.impact)<12).length}</div><div class="kpi-label">Medium Risks</div></div>
+    <div class="kpi"><div class="kpi-val green">${risks.filter(r=>r.type==='Opportunity').length}</div><div class="kpi-label">Opportunities</div></div>
+    <div class="kpi"><div class="kpi-val">${risks.length}</div><div class="kpi-label">Total Items</div></div>
+  </div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add Risk / Opportunity</span></div>
+      <div class="section-grid grid-2"><div><label>Type</label><select id="rsk-type"><option>Risk</option><option>Opportunity</option></select></div><div><label>Category</label><select id="rsk-cat"><option>Quality</option><option>Delivery</option><option>Financial</option><option>Customer</option><option>Equipment</option><option>Personnel</option><option>Supplier</option><option>Regulatory</option></select></div></div>
+      <label>Description</label><textarea id="rsk-desc" rows="2"></textarea>
+      <div class="section-grid grid-2"><div><label>Likelihood (1-5)</label><input id="rsk-like" type="number" min="1" max="5" value="3"></div><div><label>Impact (1-5)</label><input id="rsk-impact" type="number" min="1" max="5" value="3"></div></div>
+      <label>Mitigation</label><textarea id="rsk-mit" rows="2"></textarea>
+      <label>Owner</label><select id="rsk-owner"><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option></select>
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="riskAdd()">+ Add Item</button></div>
+    </div>
+    <div class="ai-box"><div class="ai-label">⚡ AS9100D Clause 6.1</div><div class="ai-text">Document risks and opportunities affecting product conformity, customer satisfaction, and QMS effectiveness. Review at management review. Score = Likelihood × Impact. High ≥12, Medium 6–11, Low ≤5.</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Register</span><button class="btn btn-secondary btn-sm" onclick="risk()">↻</button></div>
+  <table><thead><tr><th>Type</th><th>Category</th><th>Description</th><th>L</th><th>I</th><th>Score</th><th>Rating</th><th>Mitigation</th><th>Owner</th></tr></thead><tbody>
+  ${risks.map(r=>{const score=(r.likelihood||1)*(r.impact||1);const rating=score>=12?'High':score>=6?'Medium':'Low';return '<tr><td><span class="badge '+(r.type==='Risk'?'badge-red':'badge-green')+'">'+r.type+'</span></td><td><span class="badge badge-gray">'+r.cat+'</span></td><td style="font-size:12px;max-width:180px">'+r.desc+'</td><td class="mono" style="text-align:center">'+r.likelihood+'</td><td class="mono" style="text-align:center">'+r.impact+'</td><td class="mono" style="text-align:center;font-weight:600">'+score+'</td><td><span class="badge '+(rating==='High'?'badge-red':rating==='Medium'?'badge-amber':'badge-green')+'">'+rating+'</span></td><td style="font-size:11px;color:var(--text3);max-width:150px">'+(r.mitigation||'—')+'</td><td>'+r.owner+'</td></tr>';}).join('')}
+  </tbody></table></div>`);
+}
+function getDefaultRisks(){const r=[{id:1,type:'Risk',cat:'Equipment',desc:'UMC 500SS unplanned downtime — single 5-axis machine',likelihood:3,impact:5,mitigation:'PM schedule, backup ops on #4/#5',owner:'Hec'},{id:2,type:'Risk',cat:'Personnel',desc:'Key operator unavailability',likelihood:3,impact:4,mitigation:'Cross-train operators, document setups',owner:'Hec'},{id:3,type:'Risk',cat:'Supplier',desc:'Single-source material delays',likelihood:2,impact:4,mitigation:'Safety stock, qualify backup suppliers',owner:'Hec'},{id:4,type:'Opportunity',cat:'Customer',desc:'AS9100D opens aerospace market',likelihood:4,impact:5,mitigation:'Complete QMS, schedule cert audit',owner:'Hec'},{id:5,type:'Opportunity',cat:'Financial',desc:'Direct vendor replaces Xometry margin loss',likelihood:4,impact:4,mitigation:'Cold email campaign, line card',owner:'Hec'}];DB.set('risks',r);return r;}
+function riskAdd(){const desc=document.getElementById('rsk-desc').value.trim();if(!desc){toast('Enter description');return;}const risks=DB.get('risks')||[];risks.push({id:Date.now(),type:document.getElementById('rsk-type').value,cat:document.getElementById('rsk-cat').value,desc,likelihood:parseInt(document.getElementById('rsk-like').value)||3,impact:parseInt(document.getElementById('rsk-impact').value)||3,mitigation:document.getElementById('rsk-mit').value,owner:document.getElementById('rsk-owner').value});DB.set('risks',risks);toast('✓ Added');risk();}
+
+// ── MODULE 21: MANAGEMENT REVIEW ────────────────────────────
+function mgmtreview(){
+  const reviews=DB.get('mgmt_reviews')||[];
+  const logs=DB.get('floor_logs')||[];const jobs=DB.get('sched_jobs')||[];const cars=DB.get('car_records')||[];const fais=DB.get('fai_records')||[];const comps=DB.get('complaints')||[];const risks=DB.get('risks')||[];
+  const tp=logs.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);const tg=logs.reduce((s,l)=>s+(parseInt(l.good)||0),0);const scrap=tp>0?((tp-tg)/tp*100).toFixed(1):0;
+  render(`<div class="page-header"><h1>Management Review</h1><p>QP-19 · Live data · Generate report</p></div>
+  <div class="ai-box mb-16"><div class="ai-label">⚡ AS9100D Clause 9.3 Required Inputs</div><div class="ai-text">Status of previous actions · External/internal changes · Customer satisfaction · Process performance · Nonconformities & CARs · Audit results · Supplier performance · Resource adequacy · Risks & opportunities</div></div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Schedule Review</span></div>
+      <div class="section-grid grid-2"><div><label>Date</label><input id="mr-date" type="date" value="${todayISO()}"></div><div><label>Period</label><select id="mr-period"><option>Q1 2026</option><option>Q2 2026</option><option>Q3 2026</option><option>Q4 2026</option><option>Annual 2026</option></select></div></div>
+      <label>Customer Satisfaction</label><textarea id="mr-csat" rows="2" placeholder="Complaints, OTD, feedback..."></textarea>
+      <label>Actions from Previous Review</label><textarea id="mr-prev" rows="2" placeholder="Status of previous actions..."></textarea>
+      <label>Resource Adequacy</label><textarea id="mr-res" rows="2" placeholder="Staffing, equipment, training needs..."></textarea>
+      <label>Decisions & Actions</label><textarea id="mr-actions" rows="3" placeholder="Improvement actions, objectives..."></textarea>
+      <div style="margin-top:14px;display:flex;gap:8px"><button class="btn btn-primary" onclick="mgmtSave()">Save Review</button><button class="btn btn-secondary" onclick="mgmtPreview()">Preview Report</button></div>
+    </div>
+    <div class="card"><div class="card-header"><span class="card-title">Live Data</span></div>
+    <table><tbody>
+      <tr><td style="color:var(--text3)">Active Jobs</td><td class="mono">${jobs.filter(j=>j.status!=='Shipped').length}</td></tr>
+      <tr><td style="color:var(--text3)">Scrap Rate</td><td class="mono" style="color:${parseFloat(scrap)>5?'var(--red)':'var(--green2)'}">${scrap}%</td></tr>
+      <tr><td style="color:var(--text3)">FAI Pass Rate</td><td class="mono">${fais.length>0?Math.round(fais.filter(f=>f.result==='Pass').length/fais.length*100):100}%</td></tr>
+      <tr><td style="color:var(--text3)">Open CARs</td><td class="mono" style="color:${cars.filter(c=>c.status!=='Closed').length>0?'var(--red)':'var(--green2)'}">${cars.filter(c=>c.status!=='Closed').length}</td></tr>
+      <tr><td style="color:var(--text3)">Open Complaints</td><td class="mono" style="color:${comps.filter(c=>c.status==='Open').length>0?'var(--red)':'var(--green2)'}">${comps.filter(c=>c.status==='Open').length}</td></tr>
+      <tr><td style="color:var(--text3)">High Risks</td><td class="mono">${risks.filter(r=>r.type==='Risk'&&(r.likelihood||1)*(r.impact||1)>=12).length}</td></tr>
+    </tbody></table></div>
+  </div>
+  <div id="mr-preview"></div>
+  <div class="card"><div class="card-header"><span class="card-title">Review History</span></div>
+  <table><thead><tr><th>Date</th><th>Period</th><th>Actions</th></tr></thead><tbody>
+  ${reviews.length===0?'<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:24px">No reviews on record</td></tr>':''}
+  ${[...reviews].reverse().map(r=>'<tr><td class="mono muted">'+new Date(r.ts).toLocaleDateString()+'</td><td>'+r.period+'</td><td style="font-size:12px;color:var(--text3)">'+(r.actions||'—').substring(0,80)+'</td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function mgmtSave(){DB.push('mgmt_reviews',{date:document.getElementById('mr-date').value,period:document.getElementById('mr-period').value,by:'Hec',csat:document.getElementById('mr-csat').value,prev:document.getElementById('mr-prev').value,res:document.getElementById('mr-res').value,actions:document.getElementById('mr-actions').value});toast('✓ Management review saved');mgmtreview();}
+function mgmtPreview(){const el=document.getElementById('mr-preview');if(!el)return;const jobs=DB.get('sched_jobs')||[];const cars=DB.get('car_records')||[];const fais=DB.get('fai_records')||[];const logs=DB.get('floor_logs')||[];const tp=logs.reduce((s,l)=>s+(parseInt(l.pcs)||0),0);const tg=logs.reduce((s,l)=>s+(parseInt(l.good)||0),0);const scrap=tp>0?((tp-tg)/tp*100).toFixed(1):0;el.innerHTML='<div class="card mb-16"><div class="card-header"><span class="card-title">Report Preview</span><button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button></div><div style="font-size:13px;line-height:2"><strong>Tier One Machine, LLC — Management Review</strong><br>Period: '+document.getElementById('mr-period').value+' · Date: '+todayISO()+'<br><br><strong>Metrics:</strong><br>• Active Jobs: '+jobs.filter(j=>j.status!=="Shipped").length+'<br>• Scrap Rate: '+scrap+'%<br>• FAI Pass Rate: '+(fais.length>0?Math.round(fais.filter(f=>f.result==="Pass").length/fais.length*100):100)+'%<br>• Open CARs: '+cars.filter(c=>c.status!=="Closed").length+'<br><br><strong>Customer Satisfaction:</strong><br>'+(document.getElementById('mr-csat').value||'See complaint log.')+'<br><br><strong>Decisions & Actions:</strong><br>'+(document.getElementById('mr-actions').value||'None.')+'<br><br><strong>Signature:</strong> _________________________ Date: _____________</div></div>';}
+
+// ── MODULE 22: PREVENTIVE MAINTENANCE ───────────────────────
+function pm(){
+  const pmRecs=DB.get('pm_recs')||[];
+  const pmSched=DB.get('pm_schedule')||getDefaultPM();
+  const today_d=new Date();
+  render(`<div class="page-header"><h1>Preventive Maintenance</h1><p>Haas PM schedules · Log service · Due date alerts</p></div>
+  ${pmSched.filter(p=>new Date(p.nextDue)<today_d).length>0?'<div class="alert alert-danger">🔴 '+pmSched.filter(p=>new Date(p.nextDue)<today_d).length+' PM item(s) overdue</div>':''}
+  ${pmSched.filter(p=>{const d=new Date(p.nextDue);return d>=today_d&&(d-today_d)<14*86400000;}).length>0?'<div class="alert alert-warn">⚠️ '+pmSched.filter(p=>{const d=new Date(p.nextDue);return d>=today_d&&(d-today_d)<14*86400000;}).length+' PM item(s) due within 14 days</div>':''}
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log PM Completed</span></div>
+      <label>Machine</label><select id="pm-mach">${MACHINES.map(m=>'<option value="'+m.id+'">#'+m.id+' — '+m.name+'</option>').join('')}</select>
+      <label>Task</label><select id="pm-task"><option>Coolant Change</option><option>Way Lube Check</option><option>Air Filter</option><option>Chip Conveyor Clean</option><option>Hydraulic Fluid Check</option><option>Spindle Oil Change</option><option>Annual Full Service</option><option>Geometry Check</option><option>Custom</option></select>
+      <div class="section-grid grid-2"><div><label>Date</label><input id="pm-date" type="date" value="${todayISO()}"></div><div><label>By</label><select id="pm-by"><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option><option>Haas Service</option></select></div></div>
+      <label>Notes</label><textarea id="pm-notes" rows="2"></textarea>
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="pmLog()">✓ Log PM</button></div>
+    </div>
+    <div class="card"><div class="card-header"><span class="card-title">PM Schedule</span></div>
+    <table><thead><tr><th>Machine</th><th>Task</th><th>Interval</th><th>Next Due</th><th>Status</th></tr></thead><tbody>
+    ${pmSched.map(p=>{const next=new Date(p.nextDue);const diff=Math.round((next-today_d)/86400000);const st=diff<0?'OVERDUE':diff<=14?'Due Soon':'OK';const stCls=diff<0?'badge-red':diff<=14?'badge-amber':'badge-green';const mName=MACHINES.find(m=>m.id==p.machine)?.name||'?';return '<tr><td style="font-size:12px">#'+p.machine+' '+mName+'</td><td style="font-size:11px">'+p.task+'</td><td class="muted" style="font-size:11px">'+p.interval+'</td><td class="mono" style="font-size:11px">'+p.nextDue+'</td><td><span class="badge '+stCls+'">'+st+'</span></td></tr>';}).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">PM History</span><button class="btn btn-secondary btn-sm" onclick="pm()">↻</button></div>
+  <table><thead><tr><th>Date</th><th>Machine</th><th>Task</th><th>By</th><th>Notes</th></tr></thead><tbody>
+  ${pmRecs.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">No PM records yet</td></tr>':''}
+  ${[...pmRecs].reverse().slice(0,15).map(p=>{const mName=MACHINES.find(m=>m.id==p.machine)?.name||'?';return '<tr><td class="mono muted">'+new Date(p.ts).toLocaleDateString()+'</td><td style="font-size:12px">#'+p.machine+' '+mName+'</td><td style="font-size:12px">'+p.task+'</td><td>'+p.by+'</td><td style="font-size:11px;color:var(--text3)">'+(p.notes||'—')+'</td></tr>';}).join('')}
+  </tbody></table></div>`);
+}
+function getDefaultPM(){function ad(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}const s=[{id:1,machine:1,task:'Coolant Change',interval:'Monthly',lastDone:ad(-25),nextDue:ad(5)},{id:2,machine:1,task:'Way Lube Check',interval:'Weekly',lastDone:ad(-8),nextDue:ad(-1)},{id:3,machine:2,task:'Coolant Change',interval:'Monthly',lastDone:ad(-20),nextDue:ad(10)},{id:4,machine:3,task:'Air Filter',interval:'Quarterly',lastDone:ad(-80),nextDue:ad(10)},{id:5,machine:6,task:'Hydraulic Fluid',interval:'6 Months',lastDone:ad(-150),nextDue:ad(30)},{id:6,machine:1,task:'Annual Full Service',interval:'Annual',lastDone:ad(-300),nextDue:ad(65)}];DB.set('pm_schedule',s);return s;}
+function pmLog(){const machId=document.getElementById('pm-mach').value;const task=document.getElementById('pm-task').value;const date=document.getElementById('pm-date').value;DB.push('pm_recs',{machine:machId,task,date,by:document.getElementById('pm-by').value,notes:document.getElementById('pm-notes').value});const sched=DB.get('pm_schedule')||[];const si=sched.findIndex(s=>s.machine==machId&&s.task===task);if(si>=0){sched[si].lastDone=date;const iv={'Weekly':7,'Monthly':30,'Quarterly':90,'6 Months':180,'Annual':365};const days=iv[sched[si].interval]||30;const nd=new Date(date);nd.setDate(nd.getDate()+days);sched[si].nextDue=nd.toISOString().split('T')[0];DB.set('pm_schedule',sched);}toast('✓ PM logged');pm();}
+
+// ── MODULE 23: JOB COST VS QUOTE ────────────────────────────
+function jobcost(){
+  const recs=DB.get('jobcost_recs')||[];
+  const jobs=DB.get('sched_jobs')||[];
+  const avgMargin=recs.length>0?(recs.reduce((s,c)=>s+c.margin,0)/recs.length).toFixed(1):0;
+  render(`<div class="page-header"><h1>Job Cost vs Quote</h1><p>Actual spindle hours & material vs quoted · Margin analysis</p></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-val green">${recs.filter(c=>c.margin>=20).length}</div><div class="kpi-label">Profitable</div></div>
+    <div class="kpi"><div class="kpi-val red">${recs.filter(c=>c.margin<0).length}</div><div class="kpi-label">Losing Money</div></div>
+    <div class="kpi"><div class="kpi-val">${avgMargin}%</div><div class="kpi-label">Avg Margin</div></div>
+    <div class="kpi"><div class="kpi-val amber">${recs.filter(c=>c.margin>=0&&c.margin<20).length}</div><div class="kpi-label">Thin Margin</div></div>
+  </div>
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Log Actual Cost</span></div>
+    <div class="section-grid grid-2">
+      <div>
+        <label>Work Order</label><select id="jc-wo"><option value="">— Select —</option>${jobs.map(j=>'<option>'+j.wo+' — '+(j.customer||'')+'</option>').join('')}</select>
+        <label>Quoted Price ($)</label><input id="jc-quoted" type="number" step="0.01">
+        <label>Actual Spindle Hours</label><input id="jc-spin" type="number" step="0.1">
+        <label>Machine</label><select id="jc-mach">${MACHINES.map(m=>'<option value="'+m.id+'">#'+m.id+' '+m.name+'</option>').join('')}</select>
+      </div>
+      <div>
+        <label>Actual Material ($)</label><input id="jc-mat" type="number" step="0.01">
+        <label>Outside Processing ($)</label><input id="jc-out" type="number" step="0.01">
+        <label>Scrap / Rework ($)</label><input id="jc-scrap" type="number" step="0.01">
+        <label>Notes</label><textarea id="jc-notes" rows="2" placeholder="What went over/under?"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-primary" onclick="jobcostLog()">Log Actual Cost</button></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Cost Analysis</span><button class="btn btn-secondary btn-sm" onclick="jobcost()">↻</button></div>
+  <table><thead><tr><th>WO #</th><th>Quoted</th><th>Labor</th><th>Material</th><th>Outside</th><th>Scrap</th><th>Total Cost</th><th>Margin</th></tr></thead><tbody>
+  ${recs.length===0?'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No cost records yet</td></tr>':''}
+  ${[...recs].reverse().map(c=>'<tr><td class="mono">'+c.wo+'</td><td class="mono">$'+(c.quoted||0).toLocaleString()+'</td><td class="mono">$'+Math.round(c.labor||0).toLocaleString()+'</td><td class="mono">$'+(c.matCost||0).toLocaleString()+'</td><td class="mono">$'+(c.outside||0).toLocaleString()+'</td><td class="mono" style="color:'+(c.scrap>0?'var(--red)':'var(--text3)')+'">$'+(c.scrap||0).toLocaleString()+'</td><td class="mono"><strong>$'+Math.round(c.totalCost||0).toLocaleString()+'</strong></td><td><span class="badge '+(c.margin>=20?'badge-green':c.margin>=0?'badge-amber':'badge-red')+'">'+c.margin.toFixed(1)+'%</span></td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function jobcostLog(){const wo=document.getElementById('jc-wo').value.split(' — ')[0];if(!wo){toast('Select a WO');return;}const RATES=DB.get('machine_rates')||{1:185,2:145,3:145,4:165,5:165,6:155};const machId=parseInt(document.getElementById('jc-mach').value);const spin=parseFloat(document.getElementById('jc-spin').value)||0;const matCost=parseFloat(document.getElementById('jc-mat').value)||0;const outside=parseFloat(document.getElementById('jc-out').value)||0;const scrap=parseFloat(document.getElementById('jc-scrap').value)||0;const quoted=parseFloat(document.getElementById('jc-quoted').value)||0;const labor=spin*(RATES[machId]||150);const totalCost=labor+matCost+outside+scrap;const marginDollar=quoted-totalCost;const margin=quoted>0?(marginDollar/quoted)*100:0;DB.push('jobcost_recs',{wo,quoted,spin,labor,matCost,outside,scrap,totalCost,marginDollar,margin,notes:document.getElementById('jc-notes').value});toast(margin<0?'⚠️ Job lost money':'✓ Cost logged — '+margin.toFixed(1)+'% margin');jobcost();}
+
+// ── MODULE 24: TOOLING INVENTORY ────────────────────────────
+function tooling(){
+  const tools=DB.get('tools')||getDefaultTools();
+  render(`<div class="page-header"><h1>Tooling Inventory</h1><p>End mills · Inserts · Drills · Stock levels · Reorder alerts</p></div>
+  ${tools.filter(t=>(t.qty||0)<=(t.reorder||0)).length>0?'<div class="alert alert-warn">⚠️ '+tools.filter(t=>(t.qty||0)<=(t.reorder||0)).length+' tool(s) at or below reorder point</div>':''}
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add Tool</span></div>
+      <div class="section-grid grid-2"><div><label>Tool ID</label><input id="tl-id" placeholder="T-001"></div><div><label>Type</label><select id="tl-type"><option>End Mill</option><option>Insert</option><option>Drill</option><option>Tap</option><option>Boring Bar</option><option>Face Mill</option><option>Toolholder</option><option>Other</option></select></div></div>
+      <div class="section-grid grid-2"><div><label>Description</label><input id="tl-desc" placeholder='1/2" 4-fl carbide'></div><div><label>Supplier</label><input id="tl-sup"></div></div>
+      <div class="section-grid grid-3"><div><label>Qty</label><input id="tl-qty" type="number" value="0"></div><div><label>Reorder At</label><input id="tl-reorder" type="number" value="2"></div><div><label>Unit Cost</label><input id="tl-cost" type="number" step="0.01"></div></div>
+      <label>Location</label><input id="tl-loc" placeholder="Cabinet A, Drawer 3">
+      <div style="margin-top:14px;display:flex;gap:8px"><button class="btn btn-primary" onclick="toolAdd()">+ Add</button><button class="btn btn-secondary" onclick="toolUse()">- Use</button></div>
+    </div>
+    <div class="card"><div class="card-header"><span class="card-title">Reorder List</span></div>
+    ${tools.filter(t=>(t.qty||0)<=(t.reorder||0)).length===0?'<div class="muted" style="font-size:13px">All tools adequately stocked</div>':''}
+    ${tools.filter(t=>(t.qty||0)<=(t.reorder||0)).map(t=>'<div class="alert alert-warn" style="margin-bottom:6px;font-size:12px">'+t.id+' · '+t.desc+' · '+t.qty+' left (min '+t.reorder+')</div>').join('')}
+    </div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Inventory</span><button class="btn btn-secondary btn-sm" onclick="tooling()">↻</button></div>
+  <table><thead><tr><th>ID</th><th>Type</th><th>Description</th><th>Supplier</th><th>Qty</th><th>Reorder</th><th>Cost</th><th>Location</th><th>Status</th></tr></thead><tbody>
+  ${tools.map(t=>'<tr><td class="mono">'+t.id+'</td><td><span class="badge badge-gray">'+t.type+'</span></td><td style="font-size:12px">'+t.desc+'</td><td class="muted" style="font-size:12px">'+(t.supplier||'—')+'</td><td class="mono" style="color:'+(t.qty<=t.reorder?'var(--red)':'inherit')+'"><strong>'+t.qty+'</strong></td><td class="mono muted">'+t.reorder+'</td><td class="mono muted">$'+(t.cost||0)+'</td><td style="font-size:12px;color:var(--text3)">'+(t.loc||'—')+'</td><td><span class="badge '+(t.qty<=0?'badge-red':t.qty<=t.reorder?'badge-amber':'badge-green')+'">'+(t.qty<=0?'Out':t.qty<=t.reorder?'Low':'OK')+'</span></td></tr>').join('')}
+  </tbody></table></div>`);
+}
+function getDefaultTools(){const t=[{id:'T-001',type:'End Mill',desc:'1/2" 4-fl Carbide',supplier:'MSC',qty:6,reorder:2,cost:28.50,loc:'Cabinet A-1'},{id:'T-002',type:'End Mill',desc:'1/4" 4-fl Carbide',supplier:'MSC',qty:4,reorder:2,cost:18.00,loc:'Cabinet A-1'},{id:'T-003',type:'Insert',desc:'CNMG 432 Turning Insert',supplier:'MSC',qty:12,reorder:4,cost:8.50,loc:'Cabinet B-2'},{id:'T-004',type:'Drill',desc:'#7 Cobalt Drill',supplier:'Fastenal',qty:3,reorder:3,cost:5.00,loc:'Cabinet A-3'},{id:'T-005',type:'End Mill',desc:'3/8" Ball Nose Carbide',supplier:'MSC',qty:2,reorder:2,cost:32.00,loc:'Cabinet A-1'}];DB.set('tools',t);return t;}
+function toolAdd(){const id=document.getElementById('tl-id').value.trim();if(!id){toast('Enter tool ID');return;}const tools=DB.get('tools')||[];tools.push({id,type:document.getElementById('tl-type').value,desc:document.getElementById('tl-desc').value,supplier:document.getElementById('tl-sup').value,qty:parseInt(document.getElementById('tl-qty').value)||0,reorder:parseInt(document.getElementById('tl-reorder').value)||2,cost:parseFloat(document.getElementById('tl-cost').value)||0,loc:document.getElementById('tl-loc').value});DB.set('tools',tools);toast('✓ Tool added');tooling();}
+function toolUse(){const id=prompt('Enter Tool ID to use:');if(!id)return;const tools=DB.get('tools')||[];const ti=tools.findIndex(t=>t.id===id);if(ti>=0&&tools[ti].qty>0){tools[ti].qty--;DB.set('tools',tools);toast('✓ '+id+' qty: '+tools[ti].qty);if(tools[ti].qty<=tools[ti].reorder)toast('⚠️ '+id+' at reorder point');tooling();}else toast('Tool not found or out of stock');}
+
+// ── MODULE 25: CUSTOMER ORDER STATUS ────────────────────────
+function custportal(){
+  const jobs=DB.get('sched_jobs')||[];
+  const activeJobs=jobs.filter(j=>j.status!=='Shipped');
+  const customers=[...new Set(activeJobs.map(j=>j.customer).filter(Boolean))].sort();
+  render(`<div class="page-header"><h1>Customer Order Status</h1><p>Live view by customer · All active jobs</p></div>
+  <div class="ai-box mb-16"><div class="ai-label">📋 Share With Customers</div><div class="ai-text">This shows live job status. Share erp.tieronemachine.com with customers. Future update: password-protected read-only portal per customer.</div></div>
+  ${customers.map(cust=>{
+    const cj=activeJobs.filter(j=>j.customer===cust).sort((a,b)=>new Date(a.ship)-new Date(b.ship));
+    return '<div class="card mb-16"><div class="card-header"><span class="card-title">'+cust+'</span><span class="badge badge-blue">'+cj.length+' Active WOs</span></div>'
+      +'<table><thead><tr><th>WO #</th><th>Part</th><th>Description</th><th>Qty</th><th>Ship Date</th><th>Days Out</th><th>Status</th><th>Machine</th></tr></thead><tbody>'
+      +cj.map(j=>{const d=Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000);const dc=d<0?'var(--red)':d<=7?'var(--amber)':'var(--green2)';const mn=MACHINES.find(m=>m.id==j.machine)?.name||'?';return '<tr><td class="mono"><strong>'+j.wo+'</strong></td><td class="mono">'+(j.part||'—')+'</td><td style="font-size:12px">'+(j.desc||'—')+'</td><td>'+j.qty+'</td><td class="mono" style="color:'+dc+'">'+j.ship+'</td><td style="color:'+dc+';font-size:12px">'+(d<0?Math.abs(d)+'d LATE':d===0?'TODAY':d+'d')+'</td><td><span class="badge '+(j.status==='In Progress'?'badge-green':'badge-blue')+'">'+j.status+'</span>'+(j.fai?'<span class="badge badge-purple" style="margin-left:4px">FAI</span>':'')+'</td><td style="font-size:12px">#'+j.machine+' '+mn+'</td></tr>';}).join('')
+      +'</tbody></table></div>';
+  }).join('')}
+  ${customers.length===0?'<div class="card"><div style="text-align:center;color:var(--text3);padding:32px">No active jobs</div></div>':''}`);
+}
+
+// ── ALERTS BAR ───────────────────────────────────────────────
+function refreshAlerts(){
+  const bar=document.getElementById('alerts-bar');
+  if(!bar)return;
+  const alerts=[];
+  const gauges=DB.get('cal_gauges')||[];
+  const og=gauges.filter(g=>new Date(g.nextCal)<new Date());
+  if(og.length>0)alerts.push({cls:'danger',icon:'🔴',text:og.length+' gauge(s) OVERDUE',page:'calibration'});
+  const cars=DB.get('car_records')||[];
+  const oc=cars.filter(c=>c.status!=='Closed');
+  if(oc.length>0)alerts.push({cls:'danger',icon:'⚠️',text:oc.length+' open CAR(s)',page:'car'});
+  const pmSched=DB.get('pm_schedule')||[];
+  const opm=pmSched.filter(p=>new Date(p.nextDue)<new Date());
+  if(opm.length>0)alerts.push({cls:'warn',icon:'🔧',text:opm.length+' PM overdue',page:'pm'});
+  const jobs=DB.get('sched_jobs')||[];
+  const st=jobs.filter(j=>j.ship===todayISO()&&j.status!=='Shipped');
+  if(st.length>0)alerts.push({cls:'info',icon:'📦',text:st.length+' job(s) ship TODAY',page:'shipping'});
+  const oj=jobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<new Date()&&j.status!=='Shipped');
+  if(oj.length>0)alerts.push({cls:'danger',icon:'🚨',text:oj.length+' job(s) past ship date',page:'schedule'});
+  const ncms=DB.get('ncm_recs')||[];
+  const pn=ncms.filter(n=>n.disposition==='Pending');
+  if(pn.length>0)alerts.push({cls:'warn',icon:'🔶',text:pn.length+' NCM(s) need disposition',page:'ncm'});
+  const comps=DB.get('complaints')||[];
+  const ocomp=comps.filter(c=>c.status==='Open');
+  if(ocomp.length>0)alerts.push({cls:'warn',icon:'📞',text:ocomp.length+' open complaint(s)',page:'complaints'});
+  const tools=DB.get('tools')||[];
+  const rt=tools.filter(t=>(t.qty||0)<=(t.reorder||0));
+  if(rt.length>0)alerts.push({cls:'warn',icon:'🔩',text:rt.length+' tool(s) need reorder',page:'tooling'});
+  bar.className=alerts.length>0?'has-alerts':'';
+  if(alerts.length===0){bar.innerHTML='';return;}
+  bar.innerHTML='<span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-right:4px">Alerts:</span>'
+    +alerts.map(a=>'<span class="alert-chip '+a.cls+'" onclick="nav(''+a.page+'')" title="Click to navigate">'+a.icon+' '+a.text+'</span>').join('')
+    +'<span style="margin-left:auto;font-size:10px;color:var(--text3);cursor:pointer" onclick="refreshAlerts()">↻</span>';
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+const DATA_VERSION='2026-04-30-v1';
+if(DB.get('data_version')!==DATA_VERSION){DB.set('sched_jobs',null);DB.set('data_version',DATA_VERSION);}
+document.getElementById('topbar-date').textContent = today();
+refreshAlerts();
+floor();
+</script>
+</body>
+</html>
