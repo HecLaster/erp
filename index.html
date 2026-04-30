@@ -403,6 +403,76 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
   .kpi-val { font-size: 22px; }
 }
 
+
+/* ── TRAVELER MODAL ─────────────────────────────────────────── */
+#traveler-modal {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#traveler-modal.open { display: flex; }
+#traveler-box {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 14px; width: 100%; max-width: 760px;
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+#traveler-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg2); z-index: 1;
+}
+#traveler-header h2 { font-size: 16px; font-weight: 600; margin: 0; }
+#traveler-close {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 4px 12px; cursor: pointer;
+  font-size: 13px; color: var(--text2);
+}
+#traveler-close:hover { color: var(--red); border-color: var(--red); }
+#traveler-body { padding: 24px; }
+.traveler-section { margin-bottom: 20px; }
+.traveler-section-title {
+  font-size: 10px; color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 500;
+}
+.traveler-field {
+  display: grid; grid-template-columns: 130px 1fr;
+  gap: 0; border-bottom: 1px solid var(--border); padding: 7px 0;
+  align-items: center;
+}
+.traveler-field:last-child { border-bottom: none; }
+.traveler-field label {
+  font-size: 11px; color: var(--text3); text-transform: none;
+  letter-spacing: 0; margin: 0;
+}
+.traveler-field .tf-val {
+  font-size: 13px; color: var(--text); font-family: var(--mono);
+}
+.traveler-field input, .traveler-field select {
+  padding: 5px 8px; font-size: 13px;
+}
+.op-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 12px 14px; margin-bottom: 8px;
+}
+.op-card-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.op-number {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  background: var(--accent); color: #fff; border-radius: 4px;
+  padding: 2px 8px;
+}
+.sign-off-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px; margin-top: 16px;
+}
+.sign-off-box {
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px; text-align: center;
+}
+.sign-off-box .so-label { font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+.sign-off-box .so-line { border-top: 1px solid var(--border2); padding-top: 6px; font-size: 11px; color: var(--text3); }
+
 </style>
 </head>
 <body>
@@ -554,7 +624,65 @@ function toast(msg, type='info'){
 }
 
 // ── SHARED HELPERS ──────────────────────────────────────────
-function render(html){ document.getElementById('content').innerHTML = html; }
+function render(html){ 
+  document.getElementById('content').innerHTML = html;
+  // Wire data-attribute buttons after every render
+  setTimeout(wireDataButtons, 30);
+}
+
+function wireDataButtons(){
+  // Status buttons
+  document.querySelectorAll('[data-st][data-id]').forEach(el=>{
+    if(el._wired) return;
+    el._wired = true;
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      schedSetStatus(this.dataset.id, this.dataset.st);
+    });
+  });
+  // Lock buttons
+  document.querySelectorAll('[data-lockid]').forEach(el=>{
+    if(el._wired) return;
+    el._wired = true;
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      schedLock(this.dataset.lockid);
+    });
+  });
+  // Traveler links
+  document.querySelectorAll('[data-traveler]').forEach(el=>{
+    if(el._wired) return;
+    el._wired = true;
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      openTraveler(this.dataset.traveler);
+    });
+  });
+  // Table status buttons (from schedWireTableButtons)
+  const jobs = DB.get('sched_jobs')||[];
+  const statuses = ['Queued','Setup','Running','Complete','Shipped'];
+  jobs.filter(j=>j.status!=='Shipped').forEach(j=>{
+    const sbEl = document.getElementById('sb-'+j.id);
+    const lkEl = document.getElementById('lk-'+j.id);
+    if(sbEl && !sbEl._wired){
+      sbEl._wired = true;
+      sbEl.innerHTML = statuses.map(s=>
+        '<span class="status-btn'+(j.status===s?' active-status':'')+'" data-id="'+j.id+'" data-st="'+s+'">'+s+'</span>'
+      ).join('');
+      sbEl.querySelectorAll('.status-btn').forEach(btn=>{
+        btn.onclick = ()=>jobSetStatus(btn.dataset.id, btn.dataset.status||btn.dataset.st);
+      });
+    }
+    if(lkEl && !lkEl._wired){
+      lkEl._wired = true;
+      lkEl.textContent = j.locked ? '🔒 Locked' : 'Lock';
+      lkEl.style.background = j.locked ? 'rgba(155,89,255,0.1)' : 'var(--bg3)';
+      lkEl.style.border = '1px solid '+(j.locked?'var(--purple)':'var(--border2)');
+      lkEl.style.color = j.locked ? 'var(--purple)' : 'var(--text3)';
+      lkEl.onclick = ()=>schedLock(j.id);
+    }
+  });
+}
 
 // ── MODULE 1: SHOP FLOOR ENTRY ──────────────────────────────
 function floor(){
@@ -1045,7 +1173,7 @@ function schedule(){
             +'<span style="margin-left:auto;font-size:11px;color:var(--text3)">'+(activeJob.operator||'')+'</span>'
             +'</div>'
             +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">'
-            +'<span class="mono" style="font-size:15px;font-weight:600">'+activeJob.wo+'</span>'
+            +'<span class="mono" style="font-size:15px;font-weight:600;cursor:pointer;color:var(--accent2);text-decoration:underline;text-underline-offset:3px" data-traveler="'+activeJob.id+'">'+activeJob.wo+'</span>'
             +'<span style="font-size:12px;color:var(--text2)">'+(activeJob.part||'')+'</span>'
             +'<span style="font-size:12px;color:var(--text3)">'+(activeJob.customer||'')+'</span>'
             +'</div>'
@@ -1074,7 +1202,7 @@ function schedule(){
             +'<button data-lockid="'+nextJob.id+'" style="background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text3)">'+( nextJob.locked?'🔒':'🔓')+'</button>'
             +'</span></div>'
             +'<div style="display:flex;align-items:baseline;gap:8px">'
-            +'<span class="mono" style="font-size:14px;font-weight:600">'+nextJob.wo+'</span>'
+            +'<span class="mono" style="font-size:14px;font-weight:600;cursor:pointer;color:var(--accent2);text-decoration:underline;text-underline-offset:3px" data-traveler="'+nextJob.id+'">'+nextJob.wo+'</span>'
             +'<span style="font-size:12px;color:var(--text2)">'+(nextJob.part||'')+'</span>'
             +'<span style="font-size:12px;color:var(--text3)">'+(nextJob.customer||'')+'</span>'
             +'<span class="mono" style="margin-left:auto;font-size:11px;color:var(--text3)">Ship: '+nextJob.ship+'</span>'
@@ -1089,7 +1217,7 @@ function schedule(){
             +'<span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Next:</span>'
             +(nextJob.priority==='Hot'||nextJob.priority==='Rush'?'🔴 ':'')
             +(nextJob.locked?'🔒 ':'')
-            +'<span class="mono" style="font-size:13px;font-weight:500">'+nextJob.wo+'</span>'
+            +'<span class="mono" style="font-size:13px;font-weight:500;cursor:pointer;color:var(--accent2)" data-traveler="'+nextJob.id+'">'+nextJob.wo+'</span>'
             +'<span style="font-size:12px;color:var(--text3)">'+(nextJob.part||'')+'</span>'
             +'<span class="mono" style="margin-left:auto;font-size:11px;color:var(--text3)">'+nextJob.ship+'</span>'
             +'</div></div>'
@@ -1105,7 +1233,7 @@ function schedule(){
               return '<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer" data-id="'+j.id+'" data-st="Setup" title="Click to start setup">'
                 +(j.priority==='Hot'||j.priority==='Rush'?'🔴 ':'')
                 +(j.locked?'🔒 ':'')
-                +'<span class="mono">'+j.wo+'</span>'
+                +'<span class="mono" data-traveler="'+j.id+'">'+j.wo+'</span>'
                 +'<span style="color:'+dc+';font-family:var(--mono)"> '+j.ship+'</span>'
                 +'</div>';
             }).join('')
@@ -1146,7 +1274,7 @@ function schedule(){
             ? j.operations.map((op,i)=>`<span class="badge badge-gray" style="font-size:9px">Op ${(i+1)*10}: #${op.machine} ${op.desc||''}</span>`).join(' ')
             : `<span class="badge badge-gray" style="font-size:9px">#${j.machine}</span>`;
           return '<tr>'
-            +'<td class="mono" style="white-space:nowrap">'+(j.priority==='Hot'||j.priority==='Rush'?'🔴 ':'')+( j.locked?'🔒 ':'')+'<strong>'+j.wo+'</strong></td>'
+            +'<td class="mono" style="white-space:nowrap">'+(j.priority==='Hot'||j.priority==='Rush'?'🔴 ':'')+( j.locked?'🔒 ':'')+'<strong style="cursor:pointer;color:var(--accent2);text-decoration:underline;text-underline-offset:3px" data-traveler="'+j.id+'">'+j.wo+'</strong></td>'
             +'<td style="font-size:12px">'+(j.customer||'—')+'</td>'
             +'<td class="mono" style="font-size:12px">'+(j.part||'—')+'</td>'
             +'<td>'+opList+'</td>'
@@ -3611,6 +3739,196 @@ window.nav = function(page){
   if(window.innerWidth <= 768) closeSidebar();
 };
 
+
+// ── TRAVELER MODAL ────────────────────────────────────────────
+let _travelerJobId = null;
+
+function openTraveler(id){
+  const jobs = DB.get('sched_jobs')||[];
+  const j = jobs.find(x=>String(x.id)===String(id));
+  if(!j){ toast('Job not found'); return; }
+  _travelerJobId = id;
+
+  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const statusBadge = {Queued:'badge-blue',Setup:'badge-blue',Running:'badge-green',Complete:'badge-green',Shipped:'badge-gray'};
+  const daysOut = j.ship ? Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000) : null;
+  const mName = MACHINES.find(m=>m.id==j.machine)?.name||'?';
+
+  document.getElementById('t-title').textContent = j.wo + ' — Job Traveler';
+  document.getElementById('t-badge').className = 'badge ' + (statusBadge[j.status]||'badge-gray');
+  document.getElementById('t-badge').textContent = j.status||'Queued';
+
+  const opCards = (j.operations&&j.operations.length>0 ? j.operations : [{machine:j.machine,desc:'Primary Operation',opNum:10}])
+    .map((op,i)=>`
+      <div class="op-card">
+        <div class="op-card-header">
+          <span class="op-number">Op ${op.opNum||(i+1)*10}</span>
+          <span style="font-size:13px;font-weight:500">${op.desc||'Operation'}</span>
+          ${op.locked?'<span style="font-size:12px">🔒 Locked</span>':''}
+          <span style="margin-left:auto;font-size:12px;color:var(--text3)">#${op.machine} ${MACHINES.find(m=>m.id==op.machine)?.name||''}</span>
+        </div>
+        <div class="section-grid grid-3" style="gap:8px">
+          <div>
+            <label>Setup Hrs</label>
+            <input id="op-setup-${i}" type="number" step="0.5" value="${op.setupHrs||''}" placeholder="0.0">
+          </div>
+          <div>
+            <label>Cycle Time (min)</label>
+            <input id="op-cycle-${i}" type="number" value="${op.cycleMin||''}" placeholder="0">
+          </div>
+          <div>
+            <label>Operator</label>
+            <select id="op-oper-${i}">
+              ${ops.map(o=>`<option ${(op.operator||j.operator)===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <label>Notes / Special Instructions</label>
+          <textarea id="op-notes-${i}" rows="2" placeholder="Offsets, fixturing, tooling, special requirements...">${op.notes||''}</textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <label style="margin:0;font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="op-complete-${i}" ${op.complete?'checked':''} style="width:auto">
+            Op Complete
+          </label>
+          <span style="font-size:11px;color:var(--text3)">${op.completedBy?'Completed by '+op.completedBy+' on '+op.completedDate:''}</span>
+        </div>
+      </div>`).join('');
+
+  document.getElementById('traveler-body').innerHTML = `
+    <div class="traveler-section">
+      <div class="traveler-section-title">Job Information</div>
+      <div style="background:var(--bg3);border-radius:var(--r2);padding:14px;margin-bottom:4px">
+        <div class="traveler-field"><label>Work Order</label><span class="tf-val">${j.wo}</span></div>
+        <div class="traveler-field"><label>Customer</label><input id="t-customer" value="${j.customer||''}" placeholder="Customer name"></div>
+        <div class="traveler-field"><label>Part Number</label><input id="t-part" value="${j.part||''}" placeholder="PRT-XXXX"></div>
+        <div class="traveler-field"><label>Description</label><input id="t-desc" value="${j.desc||''}" placeholder="Part description"></div>
+        <div class="traveler-field"><label>PO Number</label><input id="t-po" value="${j.po||''}" placeholder="PO-XXXX"></div>
+        <div class="traveler-field"><label>Quantity</label><input id="t-qty" type="number" value="${j.qty||1}"></div>
+        <div class="traveler-field"><label>Material</label><input id="t-mat" value="${j.mat||''}" placeholder="6061 Al"></div>
+        <div class="traveler-field"><label>Ship Date</label><input id="t-ship" type="date" value="${j.ship||''}"></div>
+        <div class="traveler-field"><label>Priority</label>
+          <select id="t-pri"><option ${j.priority==='Normal'?'selected':''}>Normal</option><option ${j.priority==='Hot'?'selected':''}>Hot</option><option ${j.priority==='Rush'?'selected':''}>Rush</option></select>
+        </div>
+        <div class="traveler-field"><label>Assigned Op</label>
+          <select id="t-op">${ops.map(o=>`<option ${j.operator===o?'selected':''}>${o}</option>`).join('')}</select>
+        </div>
+        <div class="traveler-field"><label>Job Value</label><input id="t-value" type="number" step="0.01" value="${j.value||0}"></div>
+        <div class="traveler-field"><label>Status</label>
+          <select id="t-status"><option ${j.status==='Queued'?'selected':''}>Queued</option><option ${j.status==='Setup'?'selected':''}>Setup</option><option ${j.status==='Running'?'selected':''}>Running</option><option ${j.status==='Complete'?'selected':''}>Complete</option><option ${j.status==='Shipped'?'selected':''}>Shipped</option></select>
+        </div>
+        ${daysOut!==null?`<div class="traveler-field"><label>Days to Ship</label><span class="tf-val" style="color:${daysOut<0?'var(--red)':daysOut<=7?'var(--amber)':'var(--green2)'}">${daysOut<0?Math.abs(daysOut)+'d LATE':daysOut+'d out'}</span></div>`:''}
+      </div>
+    </div>
+
+    <div class="traveler-section">
+      <div class="traveler-section-title">Operations</div>
+      ${opCards}
+    </div>
+
+    <div class="traveler-section">
+      <div class="traveler-section-title">Quality & Inspection</div>
+      <div style="background:var(--bg3);border-radius:var(--r2);padding:14px">
+        <div class="traveler-field"><label>FAI Required</label>
+          <select id="t-fai"><option value="false" ${!j.fai?'selected':''}>No</option><option value="true" ${j.fai?'selected':''}>Yes</option></select>
+        </div>
+        <div class="traveler-field"><label>Cert Required</label>
+          <select id="t-cert"><option>No</option><option ${j.certRequired?'selected':''}>Yes — Material Cert</option><option>Yes — Process Cert</option></select>
+        </div>
+        <div class="traveler-field"><label>Special Notes</label>
+          <textarea id="t-qnotes" rows="2" placeholder="Special inspection requirements, customer notes...">${j.qnotes||''}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="sign-off-row">
+      <div class="sign-off-box">
+        <div class="so-label">Setup Approved By</div>
+        <input id="t-so-setup" placeholder="Initials" value="${j.signSetup||''}" style="text-align:center;font-size:13px">
+        <div class="so-line">${j.signSetupDate||'Date'}</div>
+      </div>
+      <div class="sign-off-box">
+        <div class="so-label">First Article By</div>
+        <input id="t-so-fai" placeholder="Initials" value="${j.signFAI||''}" style="text-align:center;font-size:13px">
+        <div class="so-line">${j.signFAIDate||'Date'}</div>
+      </div>
+      <div class="sign-off-box">
+        <div class="so-label">Final Inspection By</div>
+        <input id="t-so-final" placeholder="Initials" value="${j.signFinal||''}" style="text-align:center;font-size:13px">
+        <div class="so-line">${j.signFinalDate||'Date'}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="window.print()">🖨 Print Traveler</button>
+      <button class="btn btn-primary" onclick="saveTraveler()">Save Changes</button>
+    </div>
+  `;
+
+  document.getElementById('traveler-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTraveler(){
+  document.getElementById('traveler-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _travelerJobId = null;
+}
+
+function saveTraveler(){
+  if(!_travelerJobId){ toast('No job loaded'); return; }
+  const jobs = DB.get('sched_jobs')||[];
+  const ji = jobs.findIndex(j=>String(j.id)===String(_travelerJobId));
+  if(ji<0){ toast('Job not found'); return; }
+
+  // Save main fields
+  jobs[ji].customer = document.getElementById('t-customer')?.value||'';
+  jobs[ji].part = document.getElementById('t-part')?.value||'';
+  jobs[ji].desc = document.getElementById('t-desc')?.value||'';
+  jobs[ji].po = document.getElementById('t-po')?.value||'';
+  jobs[ji].qty = parseInt(document.getElementById('t-qty')?.value)||1;
+  jobs[ji].mat = document.getElementById('t-mat')?.value||'';
+  jobs[ji].ship = document.getElementById('t-ship')?.value||'';
+  jobs[ji].priority = document.getElementById('t-pri')?.value||'Normal';
+  jobs[ji].operator = document.getElementById('t-op')?.value||'';
+  jobs[ji].value = parseFloat(document.getElementById('t-value')?.value)||0;
+  jobs[ji].status = document.getElementById('t-status')?.value||'Queued';
+  jobs[ji].fai = document.getElementById('t-fai')?.value==='true';
+  jobs[ji].certRequired = document.getElementById('t-cert')?.value!=='No';
+  jobs[ji].qnotes = document.getElementById('t-qnotes')?.value||'';
+
+  // Save sign-offs
+  const soSetup = document.getElementById('t-so-setup')?.value;
+  const soFAI = document.getElementById('t-so-fai')?.value;
+  const soFinal = document.getElementById('t-so-final')?.value;
+  if(soSetup && !jobs[ji].signSetup){ jobs[ji].signSetup=soSetup; jobs[ji].signSetupDate=todayISO(); }
+  if(soFAI && !jobs[ji].signFAI){ jobs[ji].signFAI=soFAI; jobs[ji].signFAIDate=todayISO(); }
+  if(soFinal && !jobs[ji].signFinal){ jobs[ji].signFinal=soFinal; jobs[ji].signFinalDate=todayISO(); }
+
+  // Save operation details
+  const ops = jobs[ji].operations||[{machine:jobs[ji].machine,desc:'Primary Operation',opNum:10}];
+  ops.forEach((op,i)=>{
+    op.setupHrs = parseFloat(document.getElementById('op-setup-'+i)?.value)||0;
+    op.cycleMin = parseInt(document.getElementById('op-cycle-'+i)?.value)||0;
+    op.operator = document.getElementById('op-oper-'+i)?.value||'';
+    op.notes = document.getElementById('op-notes-'+i)?.value||'';
+    const completeChk = document.getElementById('op-complete-'+i);
+    if(completeChk?.checked && !op.complete){
+      op.complete = true;
+      op.completedBy = jobs[ji].operator||'Hec';
+      op.completedDate = todayISO();
+    }
+  });
+  jobs[ji].operations = ops;
+
+  DB.set('sched_jobs', jobs);
+  toast('✓ Traveler saved — '+jobs[ji].wo);
+  closeTraveler();
+  if(currentPage==='schedule') schedule();
+  refreshAlerts();
+}
+
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
   const bar=document.getElementById('alerts-bar');
@@ -3672,5 +3990,23 @@ floor();
       <span class="bn-icon">☰</span><span>More</span>
     </button>
   </nav>
+
+<!-- TRAVELER MODAL -->
+<div id="traveler-modal" onclick="if(event.target===this)closeTraveler()">
+  <div id="traveler-box">
+    <div id="traveler-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="t-badge" class="badge badge-blue">Queued</span>
+        <h2 id="t-title">WO-XXXX — Traveler</h2>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="saveTraveler()">Save Changes</button>
+        <button id="traveler-close" onclick="closeTraveler()">✕ Close</button>
+      </div>
+    </div>
+    <div id="traveler-body">Loading...</div>
+  </div>
+</div>
+
 </body>
 </html>
