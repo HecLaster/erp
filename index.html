@@ -1768,9 +1768,10 @@ function auditStart(){
       +'</div></div></div>').join('')
     +'</div>'
     +'<div style="margin-top:14px;display:flex;gap:8px">'
-    +'<button class="btn btn-primary" onclick="auditSubmit(''+qp.replace(/'/g,"\'")+'',' +items.length+',''+auditor+'',''+date+'')">Submit Audit</button>'
-    +'<button class="btn btn-secondary" onclick="document.getElementById('audit-checklist').innerHTML=''">Cancel</button>'
+    +'<button class="btn btn-primary" id="audit-submit-btn">Submit Audit</button>'
+    +'<button class="btn btn-secondary" onclick="document.getElementById(\'audit-checklist\').innerHTML=\'\'">Cancel</button>'
     +'</div></div>';
+  setTimeout(()=>{const btn=document.getElementById('audit-submit-btn');if(btn)btn.onclick=()=>auditSubmit(qp,items.length,auditor,date);},50);
 }
 
 function auditSubmit(qp,count,auditor,date){
@@ -3100,7 +3101,7 @@ function refreshAlerts(){
   bar.className=alerts.length>0?'has-alerts':'';
   if(alerts.length===0){bar.innerHTML='';return;}
   bar.innerHTML='<span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-right:4px">Alerts:</span>'
-    +alerts.map(a=>'<span class="alert-chip '+a.cls+'" onclick="nav(''+a.page+'')" title="Click to navigate">'+a.icon+' '+a.text+'</span>').join('')
+    +alerts.map(a=>'<span class="alert-chip '+a.cls+'" onclick="nav(a.page)" title="Click to navigate">'+a.icon+' '+a.text+'</span>').join('')
     +'<span style="margin-left:auto;font-size:10px;color:var(--text3);cursor:pointer" onclick="refreshAlerts()">↻</span>';
 }
 
