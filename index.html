@@ -276,6 +276,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
+/* TRAVELER PRINT - see below */
 @media print {
   #sidebar, #topbar, #alerts-bar, .btn, button, nav { display: none !important; }
   #main { width: 100%; }
@@ -473,6 +474,88 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 .sign-off-box .so-label { font-size: 10px; color: var(--text3); margin-bottom: 6px; }
 .sign-off-box .so-line { border-top: 1px solid var(--border2); padding-top: 6px; font-size: 11px; color: var(--text3); }
 
+
+@media print {
+  /* Hide everything except traveler modal content */
+  #sidebar, #topbar, #alerts-bar, #bottom-nav,
+  #traveler-header .btn, #traveler-header button,
+  #traveler-close { display: none !important; }
+
+  #traveler-modal {
+    position: static !important; background: none !important;
+    display: block !important; padding: 0 !important;
+  }
+  #traveler-box {
+    max-height: none !important; box-shadow: none !important;
+    border: none !important; border-radius: 0 !important;
+    width: 100% !important;
+  }
+  #traveler-header {
+    position: static !important;
+    border-bottom: 2px solid #000 !important;
+    padding: 12px 0 !important;
+  }
+  #traveler-body { padding: 16px 0 !important; }
+
+  .traveler-print-header {
+    display: block !important;
+  }
+  .op-card { break-inside: avoid; }
+  .sign-off-row { break-inside: avoid; }
+
+  body { background: #fff !important; color: #000 !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+.traveler-print-header {
+  display: none;
+  text-align: center;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #000;
+}
+.traveler-print-header .shop-name {
+  font-size: 20px; font-weight: 700; letter-spacing: 0.05em;
+}
+.traveler-print-header .shop-sub {
+  font-size: 11px; color: #444; margin-top: 2px;
+}
+.traveler-print-header .doc-title {
+  font-size: 15px; font-weight: 600; margin-top: 8px;
+  border: 1px solid #000; display: inline-block;
+  padding: 3px 20px; border-radius: 4px;
+}
+
+
+/* DAILY BRIEFING MODAL */
+#briefing-modal {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#briefing-modal.open { display: flex; }
+#briefing-box {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 14px; width: 100%; max-width: 600px;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+}
+#briefing-header {
+  padding: 20px 24px 0;
+}
+#briefing-body { padding: 16px 24px 24px; }
+.briefing-section { margin-bottom: 16px; }
+.briefing-section-title {
+  font-size: 10px; color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.1em; margin-bottom: 8px;
+}
+.briefing-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--r);
+  background: var(--bg3); margin-bottom: 4px; font-size: 13px;
+}
+.briefing-item .bi-icon { font-size: 15px; flex-shrink:0; }
+
 </style>
 </head>
 <body>
@@ -548,6 +631,8 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
       <span class="topbar-chip as9100">AS9100D</span>
       
       <span class="topbar-chip mono" id="topbar-date"></span>
+      <button onclick="exportBackup()" class="topbar-chip" style="cursor:pointer;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:11px;color:var(--text2)" title="Download backup now">💾 Backup</button>
+      <button onclick="importBackup()" class="topbar-chip" style="cursor:pointer;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:11px;color:var(--text2)" title="Restore from backup">↑ Restore</button>
     </div>
   </div>
   <div id="alerts-bar"></div>
@@ -580,7 +665,7 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 
 // ── NAVIGATION ──────────────────────────────────────────────
-const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal};
+const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal,customers,assignments,shiftnotes,certtracker,scraplog,jobsearch,prodplan};
 let currentPage = 'floor';
 
 function nav(page){
@@ -609,7 +694,14 @@ function nav(page){
     pm:'Preventive Maintenance',
     jobcost:'Job Cost vs Quote',
     tooling:'Tooling Inventory',
-    custportal:'Customer Order Status'
+    custportal:'Customer Order Status',
+    customers:'Customer Profiles',
+    assignments:'Operator Assignment Board',
+    shiftnotes:'Shift Notes & Handoff',
+    certtracker:'Material Cert Tracker',
+    scraplog:'Scrap & Rework Log',
+    jobsearch:'Job Search',
+    prodplan:'Production Planning — QP-13'
   };
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if(PAGES[page]) PAGES[page]();
@@ -740,9 +832,13 @@ function floor(){
       <div class="card-header"><span class="card-title">Log Machine Run</span></div>
 
       <label>Machine</label>
-      <select id="fl-machine">
+      <select id="fl-machine" onchange="floorAutoFill()">
         ${MACHINES.map(m=>`<option value="${m.id}">#${m.id} — ${m.name} (${m.cap})</option>`).join('')}
       </select>
+      <div id="fl-suggestion" style="display:none;background:rgba(26,111,255,0.06);border:1px solid rgba(26,111,255,0.2);border-radius:var(--r);padding:8px 10px;margin-top:6px;font-size:12px">
+        <span style="color:var(--accent)">⚡ Scheduled:</span> <span id="fl-suggest-text"></span>
+        <button onclick="floorApplySuggestion()" class="btn btn-secondary btn-sm" style="margin-left:8px">Use This</button>
+      </div>
 
       <div class="section-grid grid-2">
         <div>
@@ -915,6 +1011,43 @@ function floorDeleteLog(id){
   DB.set('floor_logs', logs.filter(l=>String(l.id)!==String(id)));
   toast('Entry deleted');
   floor();
+}
+
+function floorAutoFill(){
+  const machId = document.getElementById('fl-machine')?.value;
+  if(!machId) return;
+  const jobs = DB.get('sched_jobs')||[];
+  // Find active or next job on this machine
+  const mJobs = jobs.filter(j=>{
+    if(j.status==='Shipped') return false;
+    if(j.operations&&j.operations.length>0) return j.operations.some(op=>op.machine==machId);
+    return j.machine==machId;
+  }).sort((a,b)=>{
+    const st={Running:0,Setup:1,Queued:2,Complete:3};
+    return (st[a.status]||2)-(st[b.status]||2);
+  });
+  const job = mJobs[0];
+  const sugEl = document.getElementById('fl-suggestion');
+  const sugText = document.getElementById('fl-suggest-text');
+  if(job && sugEl && sugText){
+    sugEl.style.display='block';
+    sugText.textContent = job.wo + (job.part?' · '+job.part:'') + (job.customer?' · '+job.customer:'') + ' ['+job.status+']';
+    window._flSuggestion = job;
+  } else if(sugEl){
+    sugEl.style.display='none';
+    window._flSuggestion = null;
+  }
+}
+
+function floorApplySuggestion(){
+  const job = window._flSuggestion;
+  if(!job) return;
+  const woEl = document.getElementById('fl-wo');
+  const pnEl = document.getElementById('fl-pn');
+  if(woEl) woEl.value = job.wo;
+  if(pnEl) pnEl.value = job.part||'';
+  document.getElementById('fl-suggestion').style.display='none';
+  toast('✓ WO and part filled from schedule');
 }
 
 
@@ -1218,7 +1351,8 @@ function schedule(){
             +(nextJob.priority==='Hot'||nextJob.priority==='Rush'?'🔴 ':'')
             +(nextJob.locked?'🔒 ':'')
             +'<span class="mono" style="font-size:13px;font-weight:500;cursor:pointer;color:var(--accent2)" data-traveler="'+nextJob.id+'">'+nextJob.wo+'</span>'
-            +'<span style="font-size:12px;color:var(--text3)">'+(nextJob.part||'')+'</span>'
+            +'<span style="font-size:12px;color:var(--text2)"> '+(nextJob.customer||'')+'</span>'
+            +'<span style="font-size:12px;color:var(--text3)"> · '+(nextJob.part||'')+'</span>'
             +'<span class="mono" style="margin-left:auto;font-size:11px;color:var(--text3)">'+nextJob.ship+'</span>'
             +'</div></div>'
           :'')
@@ -3068,6 +3202,15 @@ function kpi(){
   const shipped = jobs.filter(j=>j.status==='Shipped'||j.status==='Complete');
   const otd = shipped.length>0?Math.round((shipped.filter(j=>j.onTime!==false).length/shipped.length)*100):100;
 
+  // Revenue calculations
+  const thisWeekStart = new Date(); thisWeekStart.setDate(thisWeekStart.getDate()-thisWeekStart.getDay());
+  const thisMonthStart = new Date(today_d.getFullYear(), today_d.getMonth(), 1);
+  const weekShipped = shipped.filter(j=>j.shipActual&&new Date(j.shipActual)>=thisWeekStart);
+  const monthShipped = shipped.filter(j=>j.shipActual&&new Date(j.shipActual)>=thisMonthStart);
+  const weekRevenue = weekShipped.reduce((s,j)=>s+(parseFloat(j.value)||0),0);
+  const monthRevenue = monthShipped.reduce((s,j)=>s+(parseFloat(j.value)||0),0);
+  const pipelineValue = jobs.filter(j=>j.status!=='Shipped').reduce((s,j)=>s+(parseFloat(j.value)||0),0);
+
   // Active jobs by customer
   const activeJobs = jobs.filter(j=>j.status!=='Shipped');
   const custMap = {};
@@ -3797,6 +3940,12 @@ function openTraveler(id){
       </div>`).join('');
 
   document.getElementById('traveler-body').innerHTML = `
+    <!-- Print header - only shows when printing -->
+    <div class="traveler-print-header">
+      <div class="shop-name">TIER ONE MACHINE, LLC</div>
+      <div class="shop-sub">199 Printwood Dr · Dickson, TN 37055 · tieronemachine.com · AS9100D · FFL</div>
+      <div class="doc-title">JOB TRAVELER</div>
+    </div>
     <div class="traveler-section">
       <div class="traveler-section-title">Job Information</div>
       <div style="background:var(--bg3);border-radius:var(--r2);padding:14px;margin-bottom:4px">
@@ -3929,6 +4078,880 @@ function saveTraveler(){
   refreshAlerts();
 }
 
+
+// ── AUTO BACKUP ───────────────────────────────────────────────
+function exportBackup(silent=false){
+  const allData = {};
+  const keys = ['floor_logs','sched_jobs','recv_logs','cal_gauges','cal_records',
+    'fai_records','car_records','ncm_recs','crev_recs','ship_recs','complaints',
+    'risks','mgmt_reviews','pm_recs','pm_schedule','jobcost_recs','tools',
+    'suppliers','staff','operators','training_recs','audit_recs','invoices',
+    'expenses','quotes','sales_targets','data_version','shift_notes_'+todayISO()];
+  
+  // Grab all localStorage keys that start with t1_
+  for(let i=0; i<localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('t1_')){
+      try{ allData[k.replace('t1_','')] = JSON.parse(localStorage.getItem(k)); }
+      catch(e){ allData[k.replace('t1_','')] = localStorage.getItem(k); }
+    }
+  }
+
+  const blob = new Blob([JSON.stringify({
+    exportDate: new Date().toISOString(),
+    shop: 'Tier One Machine',
+    version: '1.0',
+    data: allData
+  }, null, 2)], {type:'application/json'});
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'TierOne-ERP-Backup-' + todayISO() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  DB.set('last_backup', new Date().toISOString());
+  if(!silent) toast('✓ Backup downloaded — save to Google Drive');
+}
+
+function importBackup(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const backup = JSON.parse(ev.target.result);
+        if(!backup.data){ toast('Invalid backup file'); return; }
+        if(!confirm('This will REPLACE all current ERP data with the backup from ' + backup.exportDate.split('T')[0] + '. Are you sure?')) return;
+        Object.entries(backup.data).forEach(([k,v])=>{
+          DB.set(k, v);
+        });
+        toast('✓ Backup restored — reloading...');
+        setTimeout(()=>window.location.reload(), 1500);
+      } catch(err){
+        toast('Error reading backup file');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function checkAutoBackup(){
+  const last = DB.get('last_backup');
+  if(!last){
+    // First time — set the clock but don't back up yet
+    DB.set('last_backup', new Date().toISOString());
+    return;
+  }
+  const daysSince = Math.round((new Date() - new Date(last)) / 86400000);
+  if(daysSince >= 7){
+    exportBackup(true); // silent auto-backup
+    toast('📦 Weekly auto-backup downloaded — save to Google Drive');
+  }
+}
+
+
+// ── DAILY BRIEFING ────────────────────────────────────────────
+function showBriefing(){
+  const lastBriefing = DB.get('last_briefing');
+  const todayStr = todayISO();
+  // Only show once per day
+  if(lastBriefing === todayStr) return;
+  DB.set('last_briefing', todayStr);
+
+  const jobs = DB.get('sched_jobs')||[];
+  const gauges = DB.get('cal_gauges')||[];
+  const cars = DB.get('car_records')||[];
+  const pmSched = DB.get('pm_schedule')||[];
+  const ncms = DB.get('ncm_recs')||[];
+  const tools = DB.get('tools')||[];
+  const now = new Date();
+
+  // Greeting based on time
+  const hr = now.getHours();
+  const greeting = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('briefing-greeting').textContent = greeting + ', Hec';
+  document.getElementById('briefing-date').textContent = now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Due this week
+  const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate()+7);
+  const dueThisWeek = jobs.filter(j=>j.ship&&j.status!=='Shipped'&&new Date(j.ship+'T12:00:00')<=weekEnd).sort((a,b)=>new Date(a.ship)-new Date(b.ship));
+  
+  // Overdue jobs
+  const overdueJobs = jobs.filter(j=>j.ship&&j.status!=='Shipped'&&new Date(j.ship+'T12:00:00')<now);
+  
+  // Shipping today
+  const shippingToday = jobs.filter(j=>j.ship===todayStr&&j.status!=='Shipped');
+  
+  // Open CARs
+  const openCARs = cars.filter(c=>c.status!=='Closed');
+  
+  // Overdue gauges
+  const overdueGauges = gauges.filter(g=>new Date(g.nextCal)<now);
+  
+  // PM due this week
+  const pmDue = pmSched.filter(p=>new Date(p.nextDue)<=weekEnd);
+  
+  // Pending NCMs
+  const pendingNCM = ncms.filter(n=>n.disposition==='Pending');
+
+  // Low tooling
+  const lowTools = tools.filter(t=>(t.qty||0)<=(t.reorder||0));
+
+  let html = '';
+
+  // URGENT section
+  const urgentItems = [];
+  overdueJobs.forEach(j=>urgentItems.push({icon:'🚨',text:'<strong>'+j.wo+'</strong> — '+( j.customer||'')+' is <span style="color:var(--red)">PAST DUE</span> (was '+j.ship+')',page:'schedule'}));
+  shippingToday.forEach(j=>urgentItems.push({icon:'📦',text:'<strong>'+j.wo+'</strong> — '+(j.customer||'')+' ships <strong>TODAY</strong>',page:'shipping'}));
+  overdueGauges.forEach(g=>urgentItems.push({icon:'🔴',text:'<strong>'+g.id+'</strong> — '+g.desc+' calibration is <span style="color:var(--red)">OVERDUE</span>',page:'calibration'}));
+  pendingNCM.forEach(n=>urgentItems.push({icon:'🔶',text:'<strong>'+n.num+'</strong> — NCM needs disposition',page:'ncm'}));
+
+  if(urgentItems.length>0){
+    html += '<div class="briefing-section">';
+    html += '<div class="briefing-section-title" style="color:var(--red)">⚠ Needs Attention Today</div>';
+    urgentItems.forEach(item=>{
+      html += '<div class="briefing-item" style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.15);cursor:pointer" data-navpage="'+item.page+'" id="bi-'+i+'">';
+      html += '<span class="bi-icon">'+item.icon+'</span><span>'+item.text+'</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // THIS WEEK section
+  if(dueThisWeek.length>0){
+    html += '<div class="briefing-section">';
+    html += '<div class="briefing-section-title">📅 Due This Week ('+dueThisWeek.length+' jobs)</div>';
+    dueThisWeek.slice(0,5).forEach(j=>{
+      const d=Math.round((new Date(j.ship+'T12:00:00')-now)/86400000);
+      const dc=d<=2?'var(--amber)':'var(--text2)';
+      html += '<div class="briefing-item" style="cursor:pointer" data-bpage="schedule">';
+      html += '<span class="bi-icon">'+(j.priority==='Hot'||j.priority==='Rush'?'🔴':'📋')+'</span>';
+      html += '<span><strong>'+j.wo+'</strong> — '+(j.customer||'')+' · '+(j.part||'')+'</span>';
+      html += '<span style="margin-left:auto;font-size:11px;color:'+dc+';font-family:var(--mono)">'+j.ship+'</span></div>';
+    });
+    if(dueThisWeek.length>5) html += '<div style="font-size:11px;color:var(--text3);padding:4px 10px">...and '+(dueThisWeek.length-5)+' more</div>';
+    html += '</div>';
+  }
+
+  // OPEN CARs
+  if(openCARs.length>0){
+    html += '<div class="briefing-section">';
+    html += '<div class="briefing-section-title">📋 Open CARs ('+openCARs.length+')</div>';
+    openCARs.slice(0,3).forEach(c=>{
+      html += '<div class="briefing-item" style="cursor:pointer" data-bpage="car">';
+      html += '<span class="bi-icon">⚠️</span><span><strong>'+c.num+'</strong> — '+c.trigger+'</span>';
+      html += '<span class="badge badge-red" style="margin-left:auto;font-size:9px">Open</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // PM DUE
+  if(pmDue.length>0){
+    html += '<div class="briefing-section">';
+    html += '<div class="briefing-section-title">🔧 PM Due This Week</div>';
+    pmDue.forEach(p=>{
+      const mn=MACHINES.find(m=>m.id==p.machine)?.name||'?';
+      html += '<div class="briefing-item" style="cursor:pointer" data-bpage="pm">';
+      html += '<span class="bi-icon">🔧</span><span>#'+p.machine+' '+mn+' — '+p.task+'</span>';
+      html += '<span class="mono" style="margin-left:auto;font-size:11px;color:var(--amber)">'+p.nextDue+'</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // LOW TOOLS
+  if(lowTools.length>0){
+    html += '<div class="briefing-section">';
+    html += '<div class="briefing-section-title">🔩 Tooling — Reorder Needed</div>';
+    lowTools.slice(0,3).forEach(t=>{
+      html += '<div class="briefing-item" style="cursor:pointer" data-bpage="tooling">';
+      html += '<span class="bi-icon">🔩</span><span><strong>'+t.id+'</strong> — '+t.desc+'</span>';
+      html += '<span class="mono" style="margin-left:auto;font-size:11px;color:var(--red)">'+t.qty+' left</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // ALL CLEAR
+  if(urgentItems.length===0&&openCARs.length===0&&overdueGauges.length===0){
+    html += '<div class="briefing-item" style="background:rgba(14,158,106,0.06);border:1px solid rgba(14,158,106,0.2)">';
+    html += '<span class="bi-icon">✅</span><span style="color:var(--green2)">All clear — no urgent items today. Have a great shift.</span></div>';
+  }
+
+  html += '<div style="margin-top:20px;text-align:center">';
+  html += '<button class="btn btn-primary" onclick="closeBriefing()">Start the Day →</button>';
+  html += '</div>';
+
+  document.getElementById('briefing-body').innerHTML = html;
+  // Wire briefing nav clicks via delegation
+  setTimeout(()=>{
+    document.querySelectorAll('[data-navpage],[data-bpage]').forEach(el=>{
+      el.onclick = ()=>{ closeBriefing(); nav(el.dataset.navpage||el.dataset.bpage); };
+    });
+    document.querySelectorAll('[id^="bi-"]').forEach(el=>{
+      el.onclick = ()=>{ closeBriefing(); nav(el.dataset.navpage); };
+    });
+  }, 50);
+  document.getElementById('briefing-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBriefing(){
+  document.getElementById('briefing-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+
+// ── CUSTOMER PROFILES ────────────────────────────────────────
+function getCustomers(){
+  return DB.get('customers')||[
+    {id:1,name:'Scientific Instruments',contact:'',email:'',phone:'',address:'',notes:'Material certs required on all jobs. FAI on first run.'},
+    {id:2,name:'JC Ford',contact:'',email:'',phone:'',address:'',notes:''},
+    {id:3,name:'SXS',contact:'',email:'',phone:'',address:'',notes:''},
+    {id:4,name:'Walor NA / TSM Corp',contact:'',email:'',phone:'',address:'Ship to TSM Corp Auburn Hills MI.',notes:'Black oxide finish required.'},
+  ];
+}
+
+function customers(){
+  const custs = getCustomers();
+  render(`
+  <div class="page-header"><h1>Customer Profiles</h1><p>Save customer info · Auto-fill on new jobs · Notes & requirements</p></div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Add Customer</span></div>
+      <label>Company Name</label><input id="cu-name" placeholder="Customer name">
+      <div class="section-grid grid-2">
+        <div><label>Contact</label><input id="cu-contact" placeholder="Contact name"></div>
+        <div><label>Phone</label><input id="cu-phone" placeholder="555-555-5555"></div>
+      </div>
+      <label>Email</label><input id="cu-email" placeholder="email@company.com" type="email">
+      <label>Ship-To Address</label>
+      <textarea id="cu-addr" rows="2" placeholder="Shipping address"></textarea>
+      <label>Default Requirements / Notes</label>
+      <textarea id="cu-notes" rows="2" placeholder="Cert requirements, finish specs, special handling..."></textarea>
+      <div style="margin-top:14px"><button class="btn btn-primary" onclick="customerAdd()">+ Add Customer</button></div>
+    </div>
+    <div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+        <div class="kpi"><div class="kpi-val">${custs.length}</div><div class="kpi-label">Customers</div></div>
+        <div class="kpi"><div class="kpi-val accent">${[...new Set((DB.get('sched_jobs')||[]).map(j=>j.customer).filter(Boolean))].length}</div><div class="kpi-label">Active Jobs</div></div>
+        <div class="kpi"><div class="kpi-val green">${(DB.get('sched_jobs')||[]).filter(j=>j.status==='Shipped').length}</div><div class="kpi-label">Shipped Jobs</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Customer List</span><button class="btn btn-secondary btn-sm" onclick="customers()">↻</button></div>
+    <table>
+      <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th>Notes</th><th></th></tr></thead>
+      <tbody>
+        ${custs.map(c=>'<tr><td><strong>'+c.name+'</strong></td><td class="muted">'+( c.contact||'—')+'</td><td class="mono muted">'+( c.phone||'—')+'</td><td class="muted" style="font-size:12px">'+( c.email||'—')+'</td><td style="font-size:12px;color:var(--text3);max-width:200px">'+( c.notes||'—')+'</td><td><button onclick="customerDelete('+c.id+')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">×</button></td></tr>').join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function customerAdd(){
+  const name=document.getElementById('cu-name').value.trim();
+  if(!name){toast('Enter company name');return;}
+  const custs=getCustomers();
+  custs.push({id:Date.now(),name,contact:document.getElementById('cu-contact').value,phone:document.getElementById('cu-phone').value,email:document.getElementById('cu-email').value,addr:document.getElementById('cu-addr').value,notes:document.getElementById('cu-notes').value});
+  DB.set('customers',custs);
+  toast('✓ Customer added');
+  customers();
+}
+function customerDelete(id){
+  if(!confirm('Remove this customer?'))return;
+  const custs=getCustomers().filter(c=>c.id!==id);
+  DB.set('customers',custs);
+  toast('✓ Removed');
+  customers();
+}
+
+// ── OPERATOR ASSIGNMENT BOARD ─────────────────────────────────
+function assignments(){
+  const ops=DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const jobs=DB.get('sched_jobs')||[];
+  const assigns=DB.get('op_assignments_'+todayISO())||{};
+
+  render(`
+  <div class="page-header"><h1>Operator Assignment Board</h1><p>Who's on what machine today · One-click assign · ${todayISO()}</p></div>
+  <div class="section-grid grid-2 mb-16">
+    ${MACHINES.map(m=>{
+      const assigned=assigns[m.id]||'';
+      const activeJob=jobs.find(j=>{
+        if(j.status==='Shipped')return false;
+        if(j.operations&&j.operations.length>0)return j.operations.some(op=>op.machine==m.id);
+        return j.machine==m.id;
+      });
+      return '<div class="card" style="border-left:4px solid '+(assigned?'var(--green)':'var(--border)')+'">'
+        +'<div class="card-header"><span class="card-title">#'+m.id+' '+m.name+'</span><span class="badge badge-gray">'+m.cap+'</span></div>'
+        +'<label>Assigned Operator</label>'
+        +'<select id="assign-'+m.id+'" onchange="saveAssignment('+m.id+',this.value)">'
+        +'<option value="">— Unassigned —</option>'
+        +ops.map(o=>'<option '+(assigned===o?'selected':'')+'>'+o+'</option>').join('')
+        +'</select>'
+        +(activeJob?'<div style="margin-top:10px;padding:8px;background:var(--bg3);border-radius:var(--r);font-size:12px"><span class="badge badge-blue" style="font-size:9px">Active Job</span> <span class="mono">'+activeJob.wo+'</span> · '+(activeJob.customer||'')+'</div>':'<div style="margin-top:10px;font-size:12px;color:var(--text3)">No active job</div>')
+        +'</div>';
+    }).join('')}
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Today's Assignments — ${todayISO()}</span></div>
+    <table>
+      <thead><tr><th>Operator</th><th>Machine</th><th>Active Job</th><th>Status</th></tr></thead>
+      <tbody>
+        ${ops.map(op=>{
+          const machId=Object.entries(assigns).find(([k,v])=>v===op)?.[0];
+          const mach=machId?MACHINES.find(m=>m.id==machId):null;
+          const job=machId?jobs.find(j=>{
+            if(j.status==='Shipped')return false;
+            if(j.operations&&j.operations.length>0)return j.operations.some(o=>o.machine==machId);
+            return j.machine==machId;
+          }):null;
+          return '<tr><td><strong>'+op+'</strong></td><td>'+(mach?'#'+mach.id+' '+mach.name:'<span class="muted">Unassigned</span>')+'</td><td class="mono">'+(job?job.wo:'<span class="muted">—</span>')+'</td><td>'+(job?'<span class="badge badge-blue">'+job.status+'</span>':'<span class="muted">—</span>')+'</td></tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function saveAssignment(machId,op){
+  const key='op_assignments_'+todayISO();
+  const assigns=DB.get(key)||{};
+  assigns[machId]=op;
+  DB.set(key,assigns);
+  toast('✓ '+(op||'Unassigned')+' → Machine #'+machId);
+}
+
+// ── SHIFT NOTES / HANDOFF ────────────────────────────────────
+function shiftnotes(){
+  const notes=DB.get('shift_notes_all')||[];
+  const ops=DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+
+  render(`
+  <div class="page-header"><h1>Shift Notes & Handoff</h1><p>End-of-shift notes per machine · Carries to morning briefing</p></div>
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Log Shift Note</span></div>
+    <div class="section-grid grid-3">
+      <div>
+        <label>Machine</label>
+        <select id="sn-mach">
+          <option value="">All Machines</option>
+          ${MACHINES.map(m=>'<option value="'+m.id+'">#'+m.id+' '+m.name+'</option>').join('')}
+        </select>
+      </div>
+      <div>
+        <label>Operator</label>
+        <select id="sn-op">${ops.map(o=>'<option>'+o+'</option>').join('')}</select>
+      </div>
+      <div>
+        <label>Shift</label>
+        <select id="sn-shift"><option>Day</option><option>Night</option><option>Lights Out</option></select>
+      </div>
+    </div>
+    <label>Note</label>
+    <textarea id="sn-note" rows="3" placeholder="Tool offsets changed, program issues, fixture notes, hand off to next shift, quality concerns..."></textarea>
+    <div style="margin-top:14px"><button class="btn btn-primary" onclick="shiftNoteLog()">Log Note</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Recent Shift Notes</span><button class="btn btn-secondary btn-sm" onclick="shiftnotes()">↻</button></div>
+    <table>
+      <thead><tr><th>Date/Time</th><th>Machine</th><th>Operator</th><th>Shift</th><th>Note</th></tr></thead>
+      <tbody>
+        ${notes.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">No shift notes yet</td></tr>':''}
+        ${[...notes].reverse().slice(0,30).map(n=>{
+          const mn=n.machine?MACHINES.find(m=>m.id==n.machine)?.name:'All';
+          return '<tr><td class="mono muted" style="white-space:nowrap">'+new Date(n.ts).toLocaleDateString()+' '+new Date(n.ts).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+'</td><td>'+(n.machine?'#'+n.machine+' '+mn:'All')+'</td><td>'+n.op+'</td><td><span class="badge badge-gray">'+n.shift+'</span></td><td style="font-size:13px">'+n.note+'</td></tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function shiftNoteLog(){
+  const note=document.getElementById('sn-note').value.trim();
+  if(!note){toast('Enter a note');return;}
+  DB.push('shift_notes_all',{machine:document.getElementById('sn-mach').value,op:document.getElementById('sn-op').value,shift:document.getElementById('sn-shift').value,note});
+  toast('✓ Shift note logged');
+  shiftnotes();
+}
+
+// ── JOB COMPLETION CHECKLIST ──────────────────────────────────
+function jobComplete(id){
+  const jobs=DB.get('sched_jobs')||[];
+  const j=jobs.find(x=>String(x.id)===String(id));
+  if(!j){toast('Job not found');return;}
+
+  const fais=DB.get('fai_records')||[];
+  const recvLogs=DB.get('recv_logs')||[];
+
+  const checks=[
+    {id:'jc-qty',label:'Quantity confirmed — '+j.qty+' pieces',auto:true,pass:true},
+    {id:'jc-fai',label:'First Article Inspection completed',auto:true,pass:j.fai?fais.some(f=>f.wo===j.wo&&f.result==='Pass'):true,note:j.fai?'FAI required':'FAI not required'},
+    {id:'jc-cert',label:'Material cert on file',auto:true,pass:j.certRequired?recvLogs.some(r=>r.wo===j.wo&&r.cert==='Yes — On File'):true,note:j.certRequired?'Cert required':'Not required'},
+    {id:'jc-insp',label:'Final inspection completed',auto:false,pass:false},
+    {id:'jc-clean',label:'Parts cleaned and deburred',auto:false,pass:false},
+    {id:'jc-pack',label:'Parts packaged per customer requirements',auto:false,pass:false},
+    {id:'jc-coc',label:'Certificate of Conformance prepared',auto:false,pass:false},
+  ];
+
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML='<div style="background:var(--bg2);border-radius:14px;width:100%;max-width:500px;padding:24px;border:1px solid var(--border2)">'
+    +'<div style="font-size:16px;font-weight:600;margin-bottom:4px">Job Completion Checklist</div>'
+    +'<div class="mono" style="font-size:13px;color:var(--accent);margin-bottom:16px">'+j.wo+' — '+(j.part||'')+'</div>'
+    +checks.map(c=>'<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--r);background:var(--bg3);margin-bottom:6px">'
+      +'<input type="checkbox" id="'+c.id+'" '+(c.pass?'checked':'')+' style="width:18px;height:18px;cursor:pointer">'
+      +'<div><div style="font-size:13px">'+c.label+'</div>'+(c.note?'<div style="font-size:11px;color:var(--text3)">'+c.note+'</div>':'')+'</div>'
+      +(c.pass?'<span style="margin-left:auto;color:var(--green2);font-size:12px">✓ Auto</span>':'')
+      +'</div>').join('')
+    +'<div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">'
+    +'<button id="jc-cancel-btn" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 16px;cursor:pointer;font-size:13px">Cancel</button>'
+    +'<button id="jc-confirm" style="background:var(--green2);color:#fff;border:none;border-radius:var(--r);padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500">✓ Mark Complete</button>'
+    +'</div></div>';
+
+  document.body.appendChild(modal);
+  const _cb=document.getElementById('jc-cancel-btn');if(_cb)_cb.onclick=()=>modal.remove();
+  document.getElementById('jc-confirm').onclick=()=>{
+    const allChecked=checks.every(c=>document.getElementById(c.id)?.checked);
+    if(!allChecked){toast('Complete all checklist items before marking done');return;}
+    jobSetStatus(id,'Complete');
+    modal.remove();
+    toast('✓ '+j.wo+' marked Complete');
+  };
+}
+
+// ── MATERIAL CERT TRACKER ──────────────────────────────────────
+function certtracker(){
+  const jobs=DB.get('sched_jobs')||[];
+  const recvLogs=DB.get('recv_logs')||[];
+  const activeJobs=jobs.filter(j=>j.status!=='Shipped');
+
+  render(`
+  <div class="page-header"><h1>Material Cert Tracker</h1><p>Per-job cert verification · Heat number match · Receiving cross-check</p></div>
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Log Cert for Job</span></div>
+    <div class="section-grid grid-2">
+      <div>
+        <label>Work Order</label>
+        <select id="ct-wo"><option value="">— Select —</option>${activeJobs.map(j=>'<option>'+j.wo+' — '+(j.customer||'')+'</option>').join('')}</select>
+        <label>Cert Number</label>
+        <input id="ct-cert" placeholder="CERT-XXXX or Lab ID">
+        <label>Heat / Lot Number</label>
+        <input id="ct-heat" placeholder="HEAT-XXXX">
+      </div>
+      <div>
+        <label>Material</label>
+        <input id="ct-mat" placeholder="6061 Al, 316SS...">
+        <label>Cert Type</label>
+        <select id="ct-type"><option>Material Mill Cert</option><option>Process Cert</option><option>Calibration Cert</option><option>NADCAP</option><option>Other</option></select>
+        <label>Notes</label>
+        <textarea id="ct-notes" rows="2" placeholder="Any discrepancies or notes..."></textarea>
+      </div>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-primary" onclick="certLog()">Log Cert</button></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Cert Status by Job</span></div>
+    <table>
+      <thead><tr><th>WO #</th><th>Customer</th><th>Material</th><th>Cert #</th><th>Heat #</th><th>Type</th><th>Recv Match</th><th>Status</th></tr></thead>
+      <tbody>
+        ${activeJobs.map(j=>{
+          const certs=DB.get('certs_'+j.wo)||[];
+          const recv=recvLogs.filter(r=>r.wo===j.wo);
+          if(certs.length===0) return '<tr style="background:rgba(220,38,38,0.03)"><td class="mono">'+j.wo+'</td><td>'+( j.customer||'—')+'</td><td class="muted">'+( j.mat||'—')+'</td><td colspan="4" class="muted" style="font-size:12px">No cert logged</td><td><span class="badge badge-'+(j.certRequired?'red':'gray')+'">'+( j.certRequired?'Missing':'N/A')+'</span></td></tr>';
+          return certs.map(c=>{
+            const matchingRecv=recv.find(r=>r.heat&&c.heat&&r.heat.toLowerCase()===c.heat.toLowerCase());
+            return '<tr><td class="mono">'+j.wo+'</td><td>'+( j.customer||'—')+'</td><td class="muted">'+( c.mat||j.mat||'—')+'</td><td class="mono">'+c.cert+'</td><td class="mono">'+( c.heat||'—')+'</td><td style="font-size:12px">'+c.type+'</td><td>'+(matchingRecv?'<span class="badge badge-green">✓ Match</span>':recv.length?'<span class="badge badge-amber">No Match</span>':'<span class="badge badge-gray">—</span>')+'</td><td><span class="badge badge-green">On File</span></td></tr>';
+          }).join('');
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function certLog(){
+  const wo=document.getElementById('ct-wo').value.split(' — ')[0];
+  if(!wo){toast('Select a WO');return;}
+  const existing=DB.get('certs_'+wo)||[];
+  existing.push({cert:document.getElementById('ct-cert').value,heat:document.getElementById('ct-heat').value,mat:document.getElementById('ct-mat').value,type:document.getElementById('ct-type').value,notes:document.getElementById('ct-notes').value,date:todayISO()});
+  DB.set('certs_'+wo,existing);
+  toast('✓ Cert logged for '+wo);
+  certtracker();
+}
+
+// ── SCRAP / REWORK QUICK LOG ──────────────────────────────────
+function scraplog(){
+  const scraps=DB.get('scrap_log')||[];
+  const jobs=DB.get('sched_jobs')||[];
+  const ops=DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const totalScrapped=scraps.filter(s=>s.action==='Scrap').reduce((sum,s)=>sum+(parseInt(s.qty)||0),0);
+  const totalRework=scraps.filter(s=>s.action==='Rework').reduce((sum,s)=>sum+(parseInt(s.qty)||0),0);
+
+  render(`
+  <div class="page-header"><h1>Scrap & Rework Log</h1><p>Quick log · Auto-triggers NCM at threshold · Tied to job</p></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--red)"><div class="kpi-val red">${totalScrapped}</div><div class="kpi-label">Total Scrapped</div></div>
+    <div class="kpi" style="border-left:3px solid var(--amber)"><div class="kpi-val amber">${totalRework}</div><div class="kpi-label">Total Rework</div></div>
+    <div class="kpi" style="border-left:3px solid var(--accent)"><div class="kpi-val">${scraps.length}</div><div class="kpi-label">Events</div></div>
+    <div class="kpi" style="border-left:3px solid var(--text3)"><div class="kpi-val">${[...new Set(scraps.map(s=>s.wo).filter(Boolean))].length}</div><div class="kpi-label">Jobs Affected</div></div>
+  </div>
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Log Scrap / Rework</span></div>
+      <div class="section-grid grid-2">
+        <div>
+          <label>Work Order</label>
+          <select id="sl-wo"><option value="">— Select —</option>${jobs.filter(j=>j.status!=='Shipped').map(j=>'<option>'+j.wo+' — '+(j.customer||'')+'</option>').join('')}</select>
+        </div>
+        <div>
+          <label>Machine</label>
+          <select id="sl-mach">${MACHINES.map(m=>'<option value="'+m.id+'">#'+m.id+' '+m.name+'</option>').join('')}</select>
+        </div>
+      </div>
+      <div class="section-grid grid-2">
+        <div><label>Qty</label><input id="sl-qty" type="number" value="1" min="1"></div>
+        <div><label>Action</label><select id="sl-action"><option>Scrap</option><option>Rework</option></select></div>
+      </div>
+      <label>Operator</label>
+      <select id="sl-op">${ops.map(o=>'<option>'+o+'</option>').join('')}</select>
+      <label>Cause</label>
+      <select id="sl-cause">
+        <option>Setup Error</option><option>Programming Error</option><option>Tool Failure</option>
+        <option>Material Defect</option><option>Operator Error</option><option>Fixture Issue</option>
+        <option>Measurement Error</option><option>Other</option>
+      </select>
+      <label>Description</label>
+      <textarea id="sl-desc" rows="2" placeholder="What happened, what dimension was off..."></textarea>
+      <div style="margin-top:14px"><button class="btn btn-danger" onclick="scrapLogEntry()">Log Scrap / Rework</button></div>
+    </div>
+    <div>
+      <div class="ai-box mb-16">
+        <div class="ai-label">⚡ Auto NCM Trigger</div>
+        <div class="ai-text">If scrapped qty exceeds 10% of job qty, or any single event scraps 3+ pieces, an NCM is automatically opened per QP-06. Rework events are tracked but don't auto-trigger unless repeated.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Scrap / Rework Log</span><button class="btn btn-secondary btn-sm" onclick="scraplog()">↻</button></div>
+    <table>
+      <thead><tr><th>Date</th><th>WO #</th><th>Machine</th><th>Qty</th><th>Action</th><th>Cause</th><th>Operator</th><th>NCM</th></tr></thead>
+      <tbody>
+        ${scraps.length===0?'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No events logged</td></tr>':''}
+        ${[...scraps].reverse().map(s=>{
+          const mn=MACHINES.find(m=>m.id==s.machine)?.name||'?';
+          return '<tr><td class="mono muted">'+new Date(s.ts).toLocaleDateString()+'</td><td class="mono">'+( s.wo||'—')+'</td><td style="font-size:12px">#'+s.machine+' '+mn+'</td><td class="mono" style="color:'+(s.action==='Scrap'?'var(--red)':'var(--amber)')+'">'+s.qty+'</td><td><span class="badge '+(s.action==='Scrap'?'badge-red':'badge-amber')+'">'+s.action+'</span></td><td style="font-size:12px">'+s.cause+'</td><td>'+s.op+'</td><td>'+(s.ncmOpened?'<span class="badge badge-red">'+s.ncmNum+'</span>':'<span class="muted">—</span>')+'</td></tr>';
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `);
+}
+function scrapLogEntry(){
+  const wo=document.getElementById('sl-wo').value.split(' — ')[0];
+  const qty=parseInt(document.getElementById('sl-qty').value)||1;
+  const action=document.getElementById('sl-action').value;
+  const jobs=DB.get('sched_jobs')||[];
+  const job=jobs.find(j=>j.wo===wo);
+
+  // Auto-trigger NCM?
+  let ncmOpened=false, ncmNum='';
+  const threshold=job?Math.ceil((job.qty||1)*0.1):0;
+  if(action==='Scrap'&&(qty>=3||qty>=threshold)){
+    const ncms=DB.get('ncm_recs')||[];
+    ncmNum='NCM-'+String(ncms.length+1).padStart(4,'0');
+    DB.push('ncm_recs',{num:ncmNum,wo,pn:job?.part||'',qty,type:'In-Process Scrap',desc:document.getElementById('sl-desc').value,by:document.getElementById('sl-op').value,disposition:'Pending',carReq:'Yes'});
+    ncmOpened=true;
+    toast('⚠️ '+qty+' scrapped — NCM '+ncmNum+' auto-opened');
+  } else {
+    toast('✓ '+action+' logged'+(ncmOpened?' — NCM opened':''));
+  }
+
+  DB.push('scrap_log',{wo,machine:document.getElementById('sl-mach').value,qty,action,op:document.getElementById('sl-op').value,cause:document.getElementById('sl-cause').value,desc:document.getElementById('sl-desc').value,ncmOpened,ncmNum});
+  scraplog();
+}
+
+// ── JOB SEARCH ───────────────────────────────────────────────
+function jobsearch(){
+  const jobs=DB.get('sched_jobs')||[];
+  render(`
+  <div class="page-header"><h1>Job Search</h1><p>Search across all jobs · Filter by customer, status, machine, date</p></div>
+  <div class="card mb-16">
+    <div class="section-grid grid-2">
+      <div>
+        <label>Search</label>
+        <input id="js-q" placeholder="WO#, part#, customer, PO#..." oninput="jobSearchRun()">
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div style="flex:1"><label>Status</label>
+          <select id="js-status" onchange="jobSearchRun()">
+            <option value="">All Statuses</option>
+            <option>Queued</option><option>Setup</option><option>Running</option><option>Complete</option><option>Shipped</option>
+          </select>
+        </div>
+        <div style="flex:1"><label>Customer</label>
+          <select id="js-cust" onchange="jobSearchRun()">
+            <option value="">All Customers</option>
+            ${[...new Set(jobs.map(j=>j.customer).filter(Boolean))].sort().map(c=>'<option>'+c+'</option>').join('')}
+          </select>
+        </div>
+        <div style="flex:1"><label>Machine</label>
+          <select id="js-mach" onchange="jobSearchRun()">
+            <option value="">All Machines</option>
+            ${MACHINES.map(m=>'<option value="'+m.id+'">#'+m.id+' '+m.name+'</option>').join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="js-results">
+    <div style="text-align:center;color:var(--text3);padding:24px">Type to search or use filters above</div>
+  </div>
+  `);
+  // Auto-run with empty search to show all
+  setTimeout(jobSearchRun, 50);
+}
+
+function jobSearchRun(){
+  const q=(document.getElementById('js-q')?.value||'').toLowerCase();
+  const status=document.getElementById('js-status')?.value||'';
+  const cust=document.getElementById('js-cust')?.value||'';
+  const machId=document.getElementById('js-mach')?.value||'';
+  const jobs=DB.get('sched_jobs')||[];
+
+  let results=jobs.filter(j=>{
+    if(status&&j.status!==status)return false;
+    if(cust&&j.customer!==cust)return false;
+    if(machId&&j.machine!=machId&&!(j.operations&&j.operations.some(op=>op.machine==machId)))return false;
+    if(q){
+      const searchable=(j.wo+' '+(j.part||'')+' '+(j.customer||'')+' '+(j.po||'')+' '+(j.desc||'')+' '+(j.mat||'')).toLowerCase();
+      if(!searchable.includes(q))return false;
+    }
+    return true;
+  }).sort((a,b)=>new Date(b.ship||0)-new Date(a.ship||0));
+
+  const el=document.getElementById('js-results');
+  if(!el)return;
+  if(results.length===0){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px">No jobs found</div>';return;}
+
+  el.innerHTML='<div class="card-header"><span class="card-title">'+results.length+' result(s)</span></div>'
+    +'<div style="overflow-x:auto"><table style="min-width:700px"><thead><tr><th>WO #</th><th>Customer</th><th>Part</th><th>PO</th><th>Qty</th><th>Material</th><th>Ship Date</th><th>Machine</th><th>Status</th><th>Value</th></tr></thead><tbody>'
+    +results.map(j=>{
+      const d=j.ship?Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000):null;
+      const dc=d===null?'var(--text3)':d<0?'var(--red)':d<=7?'var(--amber)':'var(--green2)';
+      const mn=MACHINES.find(m=>m.id==j.machine)?.name||'?';
+      return '<tr style="cursor:pointer" data-traveler="'+j.id+'">'
+        +'<td class="mono" style="color:var(--accent2);text-decoration:underline">'+j.wo+'</td>'
+        +'<td>'+( j.customer||'—')+'</td><td class="mono">'+( j.part||'—')+'</td>'
+        +'<td class="mono muted">'+( j.po||'—')+'</td><td>'+j.qty+'</td>'
+        +'<td class="muted">'+( j.mat||'—')+'</td>'
+        +'<td class="mono" style="color:'+dc+'">'+( j.ship||'—')+(d!==null?'<br><span style="font-size:10px">'+(d<0?Math.abs(d)+'d late':d+'d out')+'</span>':'')+'</td>'
+        +'<td style="font-size:12px">#'+j.machine+' '+mn+'</td>'
+        +'<td><span class="badge '+(j.status==='Shipped'?'badge-gray':j.status==='Running'?'badge-green':'badge-blue')+'">'+j.status+'</span></td>'
+        +'<td class="mono" style="color:var(--green2)">'+(j.value?'$'+parseFloat(j.value).toLocaleString():'—')+'</td>'
+        +'</tr>';
+    }).join('')
+    +'</tbody></table></div>';
+}
+
+
+
+// ── MODULE: PRODUCTION PLANNING (QP-13) ─────────────────────
+function prodplan(){
+  const plans = DB.get('prod_plans')||[];
+  const jobs = DB.get('sched_jobs')||[];
+  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const activeJobs = jobs.filter(j=>j.status!=='Shipped');
+  const missingPlan = activeJobs.filter(j=>!plans.find(p=>p.wo===j.wo));
+
+  // Build missing jobs HTML without nested quotes
+  let missingHTML = '';
+  if(missingPlan.length===0){
+    missingHTML = '<div class="alert alert-success">✓ All active jobs have production plans</div>';
+  } else {
+    missingPlan.sort((a,b)=>new Date(a.ship)-new Date(b.ship)).slice(0,8).forEach(j=>{
+      const d=Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000);
+      const dc=d<0?'var(--red)':d<=7?'var(--amber)':'var(--text3)';
+      missingHTML += '<div class="pp-job-row" data-ppwo="'+j.wo+'" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+        +'<div><span class="mono" style="font-size:13px;color:var(--accent2)">'+j.wo+'</span>'
+        +' <span style="font-size:12px;color:var(--text3)">'+(j.customer||'')+'</span></div>'
+        +'<span class="mono" style="font-size:11px;color:'+dc+'">'+j.ship+'</span></div>';
+    });
+  }
+
+  // Build plans table HTML
+  let plansHTML = '';
+  if(plans.length===0){
+    plansHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No production plans yet — create one above for each active job</td></tr>';
+  } else {
+    [...plans].reverse().forEach(p=>{
+      const jobMatch = jobs.find(j=>j.wo===p.wo)||{};
+      plansHTML += '<tr>'
+        +'<td class="mono plan-wo" data-tid="'+(jobMatch.id||'')+'" style="cursor:pointer;color:var(--accent2)">'+p.wo+'</td>'
+        +'<td style="font-size:12px">'+(p.customer||'—')+'</td>'
+        +'<td class="mono muted">'+(p.startDate||'—')+'</td>'
+        +'<td class="mono muted">'+(p.endDate||'—')+'</td>'
+        +'<td style="font-size:11px;max-width:180px;color:var(--text3)">'+(p.ops||'—').substring(0,60)+(p.ops&&p.ops.length>60?'...':'')+'</td>'
+        +'<td style="font-size:11px">'+(p.inspPlan||'—')+'</td>'
+        +'<td>'+(p.plannedBy||'—')+'</td>'
+        +'<td>'+(p.approved?'<span class="badge badge-green">'+p.approvedBy+' · '+p.approvedDate+'</span>':'<span class="badge badge-amber">Pending</span>')+'</td>'
+        +'<td><span class="badge '+(p.approved?'badge-green':'badge-amber')+'">'+(p.approved?'Approved':'Draft')+'</span></td>'
+        +'</tr>';
+    });
+  }
+
+  const woOptions = activeJobs.map(j=>{
+    const hasPlan=plans.find(p=>p.wo===j.wo);
+    return '<option value="'+j.wo+'">'+(hasPlan?'✓ ':'⚠ ')+j.wo+' — '+(j.customer||'')+(hasPlan?' (plan exists)':'')+'</option>';
+  }).join('');
+
+  const opsOptions = ops.map(o=>'<option>'+o+'</option>').join('');
+
+  render(`
+  <div class="page-header">
+    <h1>Production Planning</h1>
+    <p>QP-13 · Formal planning record · Sign-off · Links to schedule · Audit-ready</p>
+  </div>
+
+  <div class="ai-box mb-16">
+    <div class="ai-label">⚡ QP-13 Requirement</div>
+    <div class="ai-text">AS9100D requires documented production planning for each job — confirming capability, resource availability, sequence of operations, inspection points, and special process requirements before production begins. Auditors look for this between contract review and production start.</div>
+  </div>
+
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--accent)"><div class="kpi-val">${plans.length}</div><div class="kpi-label">Plans Created</div></div>
+    <div class="kpi" style="border-left:3px solid var(--green)"><div class="kpi-val green">${plans.filter(p=>p.approved).length}</div><div class="kpi-label">Approved</div></div>
+    <div class="kpi" style="border-left:3px solid var(--red)"><div class="kpi-val red">${missingPlan.length}</div><div class="kpi-label">Jobs Missing Plan</div></div>
+    <div class="kpi" style="border-left:3px solid var(--amber)"><div class="kpi-val amber">${plans.filter(p=>!p.approved).length}</div><div class="kpi-label">Pending Approval</div></div>
+  </div>
+
+  ${missingPlan.length>0?'<div class="alert alert-warn mb-16">⚠️ '+missingPlan.length+' active job(s) have no production plan — required before production starts per QP-13</div>':''}
+
+  <div class="section-grid grid-2 mb-16">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Create Production Plan</span></div>
+      <label>Work Order</label>
+      <select id="pp-wo" onchange="ppAutoFill()"><option value="">— Select WO —</option>${woOptions}</select>
+      <div id="pp-job-info" style="background:var(--bg3);border-radius:var(--r);padding:10px;margin:8px 0;font-size:12px;color:var(--text3)">Select a WO to auto-fill job details</div>
+      <label>Planned Start Date</label><input id="pp-start" type="date" value="${todayISO()}">
+      <label>Planned Completion Date</label><input id="pp-end" type="date">
+      <label>Sequence of Operations</label>
+      <textarea id="pp-ops" rows="3" placeholder="Op 10: Turn OD — #6 DS-30Y&#10;Op 20: Mill profile — #3 VF2&#10;Op 30: CMM inspection"></textarea>
+      <label>Special Process Requirements</label>
+      <textarea id="pp-special" rows="2" placeholder="Anodize, heat treat, tight tolerances, customer flow-downs..."></textarea>
+      <label>Tooling / Fixturing Required</label>
+      <textarea id="pp-tooling" rows="2" placeholder="Custom fixture, specific tooling, program number..."></textarea>
+      <label>Inspection Plan</label>
+      <select id="pp-insp">
+        <option>100% — Every piece (≤5 pcs)</option>
+        <option>Every 5th + FA + last (6–25 pcs)</option>
+        <option>Every 10th + FA + last (>25 pcs)</option>
+        <option>First article only</option>
+        <option>Customer-specified plan</option>
+      </select>
+      <div class="section-grid grid-2">
+        <div><label>Resources Confirmed</label>
+          <select id="pp-res"><option>Yes — all available</option><option>Partial — noted below</option><option>No — on order</option></select>
+        </div>
+        <div><label>Planned By</label><select id="pp-by">${opsOptions}</select></div>
+      </div>
+      <label>Notes</label><textarea id="pp-notes" rows="2" placeholder="Constraints, lead times, capability concerns..."></textarea>
+      <label>Approved By (initials)</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <input id="pp-approve" placeholder="Initials" style="width:80px">
+        <span style="font-size:12px;color:var(--text3);align-self:center">Sign to approve before production starts</span>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="prodplanSave()">Save Plan</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Jobs Needing Plans</span></div>
+      <div id="pp-missing">${missingHTML}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Production Plan Log — ${plans.length} Plans</span><button class="btn btn-secondary btn-sm" onclick="prodplan()">↻</button></div>
+    <div style="overflow-x:auto">
+    <table style="min-width:800px">
+      <thead><tr><th>WO #</th><th>Customer</th><th>Start</th><th>End</th><th>Operations</th><th>Insp Plan</th><th>Planned By</th><th>Approved</th><th>Status</th></tr></thead>
+      <tbody>${plansHTML}</tbody>
+    </table>
+    </div>
+  </div>
+  `);
+
+  // Wire missing job clicks
+  document.querySelectorAll('.pp-job-row').forEach(el=>{
+    el.onclick = ()=>{ const s=document.getElementById('pp-wo'); if(s){s.value=el.dataset.ppwo; ppAutoFill();} };
+  });
+  // Wire plan WO clicks to traveler
+  document.querySelectorAll('.plan-wo').forEach(el=>{
+    el.onclick = ()=>{ if(el.dataset.tid) openTraveler(el.dataset.tid); };
+  });
+}
+
+function ppAutoFill(){
+  const wo = document.getElementById('pp-wo')?.value;
+  if(!wo) return;
+  const jobs = DB.get('sched_jobs')||[];
+  const j = jobs.find(x=>x.wo===wo);
+  const el = document.getElementById('pp-job-info');
+  if(j && el){
+    el.innerHTML = '<strong>'+j.wo+'</strong> · '+(j.customer||'')
+      +' · Part: <span class="mono">'+(j.part||'—')+'</span>'
+      +' · Qty: '+j.qty+' · Material: '+(j.mat||'TBD')
+      +' · Ship: <span class="mono" style="color:var(--amber)">'+j.ship+'</span>';
+    const opsEl = document.getElementById('pp-ops');
+    if(opsEl && j.operations && j.operations.length>0 && !opsEl.value){
+      opsEl.value = j.operations.map(function(op,i){
+        return 'Op '+((op.opNum)||(i+1)*10)+': '+(op.desc||'Operation')+' - #'+op.machine;
+      }).join('\n');
+    }
+    const endEl = document.getElementById('pp-end');
+    if(endEl && j.ship && !endEl.value) endEl.value = j.ship;
+  }
+}
+
+function prodplanSave(){
+  const wo = document.getElementById('pp-wo')?.value;
+  if(!wo){ toast('Select a WO'); return; }
+  const approveBy = document.getElementById('pp-approve')?.value.trim();
+  const jobs = DB.get('sched_jobs')||[];
+  const j = jobs.find(x=>x.wo===wo);
+  const plans = DB.get('prod_plans')||[];
+  const existing = plans.findIndex(p=>p.wo===wo);
+  const plan = {
+    wo, customer:j?.customer||'', part:j?.part||'',
+    startDate:document.getElementById('pp-start')?.value||'',
+    endDate:document.getElementById('pp-end')?.value||'',
+    ops:document.getElementById('pp-ops')?.value||'',
+    special:document.getElementById('pp-special')?.value||'',
+    tooling:document.getElementById('pp-tooling')?.value||'',
+    inspPlan:document.getElementById('pp-insp')?.value||'',
+    resources:document.getElementById('pp-res')?.value||'',
+    plannedBy:document.getElementById('pp-by')?.value||'',
+    notes:document.getElementById('pp-notes')?.value||'',
+    approved:!!approveBy, approvedBy:approveBy||'',
+    approvedDate:approveBy?todayISO():'',
+    createdDate:todayISO(),
+    id:existing>=0?plans[existing].id:Date.now(),
+    ts:new Date().toISOString()
+  };
+  if(existing>=0) plans[existing]=plan; else plans.push(plan);
+  DB.set('prod_plans', plans);
+  toast(approveBy?'✓ Plan saved & approved — QP-13 satisfied':'✓ Plan saved — add initials to approve');
+  prodplan();
+}
+
+
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
   const bar=document.getElementById('alerts-bar');
@@ -3968,8 +4991,10 @@ function refreshAlerts(){
 const DATA_VERSION='2026-04-30-v1';
 if(DB.get('data_version')!==DATA_VERSION){DB.set('sched_jobs',null);DB.set('data_version',DATA_VERSION);}
 document.getElementById('topbar-date').textContent = today();
+checkAutoBackup();
 refreshAlerts();
 floor();
+setTimeout(showBriefing, 800);
 </script>
 
   <!-- BOTTOM NAV (mobile only) -->
@@ -3990,6 +5015,24 @@ floor();
       <span class="bn-icon">☰</span><span>More</span>
     </button>
   </nav>
+
+
+<!-- DAILY BRIEFING MODAL -->
+<div id="briefing-modal" onclick="if(event.target===this)closeBriefing()">
+  <div id="briefing-box">
+    <div id="briefing-header">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em">Daily Briefing</div>
+          <div style="font-size:20px;font-weight:600;margin-top:2px" id="briefing-greeting">Good morning</div>
+        </div>
+        <button onclick="closeBriefing()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px;color:var(--text2)">Start Day →</button>
+      </div>
+      <div style="font-size:13px;color:var(--text3);margin-top:4px" id="briefing-date"></div>
+    </div>
+    <div id="briefing-body"></div>
+  </div>
+</div>
 
 <!-- TRAVELER MODAL -->
 <div id="traveler-modal" onclick="if(event.target===this)closeTraveler()">
