@@ -5108,20 +5108,23 @@ function logout() {
   var er = document.getElementById('li-err');  if (er) er.style.display = 'none';
 }
 
-// Wire login button - works whether DOM is ready or not
-function wireLoginBtn() {
+// Wire login button and init app on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Wire login button
   var btn = document.getElementById('li-btn');
   var pass = document.getElementById('li-pass');
-  if (btn) {
-    btn.onclick = doLogin;
+  if (btn) btn.onclick = doLogin;
+  if (pass) pass.onkeydown = function(e) { if (e.key === 'Enter') doLogin(); };
+
+  // Check session and init
+  if (checkSession()) {
+    refreshAlerts();
+    floor();
+    setTimeout(function(){ showBriefing(); }, 800);
   }
-  if (pass) {
-    pass.onkeydown = function(e) { if (e.key === 'Enter') doLogin(); };
-  }
-}
-// Try immediately and also on DOMContentLoaded
-wireLoginBtn();
-document.addEventListener('DOMContentLoaded', wireLoginBtn);
+  checkAutoBackup();
+  DB.loadAll().catch(function(e){ console.warn('Supabase:', e); });
+});
 
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
@@ -5171,14 +5174,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(pass) pass.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 });
 
-// Init - check session or show login
-if (checkSession()) {
-  refreshAlerts();
-  floor();
-  setTimeout(function(){ showBriefing(); }, 800);
-}
-checkAutoBackup();// Sync from Supabase in background
-DB.loadAll().catch(e=>console.warn('Supabase sync:', e));
+// Init handled in DOMContentLoaded above
 </script>
 
   <!-- BOTTOM NAV (mobile only) -->
