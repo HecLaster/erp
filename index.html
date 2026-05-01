@@ -556,6 +556,31 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 }
 .briefing-item .bi-icon { font-size: 15px; flex-shrink:0; }
 
+
+/* ── LOGIN SCREEN ─────────────────────────────────────────── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg); display: flex;
+  align-items: center; justify-content: center;
+}
+#login-box {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 40px; width: 100%;
+  max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  text-align: center;
+}
+#login-box .login-logo {
+  font-size: 22px; font-weight: 700; letter-spacing: 0.05em;
+  color: var(--accent); margin-bottom: 4px;
+}
+#login-box .login-sub {
+  font-size: 12px; color: var(--text3); margin-bottom: 28px;
+}
+#login-error {
+  color: var(--red); font-size: 12px; margin-top: 10px;
+  display: none;
+}
+
 </style>
 </head>
 <body>
@@ -621,7 +646,41 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 
 <!-- MAIN -->
 <div id="main">
-  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+  
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div id="login-box">
+    <div class="login-logo">TIER ONE MACHINE</div>
+    <div class="login-sub">ERP · V1.0 · erp.tieronemachine.com</div>
+    <label style="text-align:left;display:block">Email</label>
+    <input id="login-email" type="email" placeholder="your@email.com" style="margin-bottom:12px">
+    <label style="text-align:left;display:block">Password</label>
+    <input id="login-pass" type="password" placeholder="Password" style="margin-bottom:16px"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Sign In</button>
+    <div id="login-error">Invalid email or password. Try again.</div>
+    <div style="margin-top:20px;font-size:11px;color:var(--text3)">
+      AS9100D · FFL · Dickson, TN
+    </div>
+  </div>
+</div>
+
+
+<div id="login-screen" style="position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:40px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.2);text-align:center">
+    <div style="font-size:20px;font-weight:700;letter-spacing:0.05em;color:var(--accent);margin-bottom:4px">TIER ONE MACHINE</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:28px">ERP · V1.0 · Dickson, TN</div>
+    <label style="text-align:left;display:block;margin-bottom:4px">Email</label>
+    <input id="login-email" type="email" placeholder="your@email.com" style="margin-bottom:12px">
+    <label style="text-align:left;display:block;margin-bottom:4px">Password</label>
+    <input id="login-pass" type="password" placeholder="Password" style="margin-bottom:16px" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="doLogin()">Sign In</button>
+    <div id="login-error" style="color:var(--red);font-size:12px;margin-top:10px;display:none">Invalid email or password</div>
+    <div style="margin-top:24px;font-size:10px;color:var(--text3)">AS9100D · FFL Licensed</div>
+  </div>
+</div>
+
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
   <div id="topbar">
     <button id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -633,6 +692,8 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
       <span class="topbar-chip mono" id="topbar-date"></span>
       <button onclick="exportBackup()" class="topbar-chip" style="cursor:pointer;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:11px;color:var(--text2)" title="Download backup now">💾 Backup</button>
       <button onclick="importBackup()" class="topbar-chip" style="cursor:pointer;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:11px;color:var(--text2)" title="Restore from backup">↑ Restore</button>
+      <button onclick="logout()" class="topbar-chip" style="cursor:pointer;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:11px;color:var(--text2)">⎋ Out</button>
+      <button onclick="logout()" class="topbar-chip" style="cursor:pointer;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:11px;color:var(--text2)" title="Sign out">⎋ Sign Out</button>
     </div>
   </div>
   <div id="alerts-bar"></div>
@@ -641,11 +702,23 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 
 <div id="toast"></div>
 
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://bmludwssiaavmiweflaw.supabase.co";
+const SUPABASE_KEY="sb_publishable_ZC0OdpDAZCQWO-fLDIBlpA__QevTMKf";
+let _sb;
+try{_sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){console.warn("Supabase init failed",e);}
+</script>
 <script>
 // ── DATA LAYER ──────────────────────────────────────────────
 const DB = {
-  get(k){ try{ return JSON.parse(localStorage.getItem('t1_'+k)||'null'); }catch(e){ return null; } },
-  set(k,v){ localStorage.setItem('t1_'+k, JSON.stringify(v)); },
+  _c:{},
+  get(k){ if(this._c[k]!==undefined)return this._c[k]; try{ const v=JSON.parse(localStorage.getItem('t1_'+k)||'null'); this._c[k]=v; return v; }catch(e){return null;} },
+  set(k,v){ this._c[k]=v; localStorage.setItem('t1_'+k,JSON.stringify(v)); this._sync(k,v); },
+  _sync(k,v){ if(!_sb)return; _sb.from('erp_data').upsert({key:k,value:JSON.stringify(v),updated_at:new Date().toISOString()},{onConflict:'key'}).then(({error})=>{if(error)console.warn('Sync:',error.message);}); },
+  async loadAll(){ if(!_sb)return; const{data,error}=await _sb.from('erp_data').select('key,value'); if(!error&&data&&data.length){data.forEach(r=>{try{const v=JSON.parse(r.value);this._c[r.key]=v;localStorage.setItem('t1_'+r.key,r.value);}catch(e){}});console.log('✓ Loaded',data.length,'from Supabase');} },
   push(k,v){ const a=DB.get(k)||[]; a.push({...v, id:Date.now(), ts: new Date().toISOString()}); DB.set(k,a); return a; }
 };
 
@@ -4952,6 +5025,82 @@ function prodplanSave(){
 }
 
 
+
+// ── AUTH & LOGIN ─────────────────────────────────────────────
+const USERS = {
+  'hlaster@tieronemachine.com': { pass: 'TierOne2026!', role: 'owner',    name: 'Hec' },
+  'lucas@tieronemachine.com':   { pass: 'Shop2026!',    role: 'operator', name: 'Lucas' },
+  'triston@tieronemachine.com': { pass: 'Shop2026!',    role: 'operator', name: 'Triston' },
+  'trish@tieronemachine.com':   { pass: 'Shop2026!',    role: 'operator', name: 'Trish' },
+};
+
+// Owner-only pages
+const OWNER_ONLY = ['cashflow','sales','quoting','mgmtreview','risk','jobcost','custportal','customers'];
+
+let currentUser = null;
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const user = USERS[email];
+  if(user && user.pass === pass){
+    currentUser = {email, role: user.role, name: user.name};
+    DB.set('current_user', currentUser);
+    document.getElementById('login-screen').style.display = 'none';
+    // Update topbar with user name
+    const dateEl = document.getElementById('topbar-date');
+    if(dateEl) dateEl.textContent = user.name + ' · ' + dateEl.textContent;
+    // Hide owner-only nav items for operators
+    if(user.role === 'operator'){
+      OWNER_ONLY.forEach(page=>{
+        const el = document.getElementById('nav-'+page);
+        if(el) el.style.display = 'none';
+      });
+    }
+    toast('Welcome, ' + user.name + '!');
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function checkExistingSession(){
+  // Check if already logged in this session
+  const saved = sessionStorage.getItem('t1_session');
+  if(saved){
+    try {
+      currentUser = JSON.parse(saved);
+      document.getElementById('login-screen').style.display = 'none';
+      if(currentUser.role === 'operator'){
+        OWNER_ONLY.forEach(page=>{
+          const el = document.getElementById('nav-'+page);
+          if(el) el.style.display = 'none';
+        });
+      }
+      return true;
+    } catch(e){}
+  }
+  return false;
+}
+
+function logout(){
+  currentUser = null;
+  sessionStorage.removeItem('t1_session');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// Save session on login
+const _origDoLogin = doLogin;
+window.doLogin = function(){
+  _origDoLogin();
+  if(currentUser) sessionStorage.setItem('t1_session', JSON.stringify(currentUser));
+};
+
+
+// ── AUTH ──────────────────────────────────────────────────────
+
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
   const bar=document.getElementById('alerts-bar');
@@ -4991,10 +5140,14 @@ function refreshAlerts(){
 const DATA_VERSION='2026-04-30-v1';
 if(DB.get('data_version')!==DATA_VERSION){DB.set('sched_jobs',null);DB.set('data_version',DATA_VERSION);}
 document.getElementById('topbar-date').textContent = today();
-checkAutoBackup();
+// Load Supabase data then check session
+DB.loadAll().catch(e=>console.warn(e)).finally(()=>{
+  checkSession();
+  checkAutoBackup();
+  floor();
+  setTimeout(showBriefing, 800);
+});
 refreshAlerts();
-floor();
-setTimeout(showBriefing, 800);
 </script>
 
   <!-- BOTTOM NAV (mobile only) -->
