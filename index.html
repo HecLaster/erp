@@ -5069,7 +5069,9 @@ function doLogin() {
   if (u && u.pass === pass) {
     currentUser = { email: email, role: u.role, name: u.name };
     try { sessionStorage.setItem('t1_session', JSON.stringify(currentUser)); } catch(e) {}
-    hideLogin();
+    // Force hide login screen completely
+    var ls = document.getElementById('login-screen');
+    if (ls) { ls.style.display = 'none'; ls.style.visibility = 'hidden'; ls.style.zIndex = '-1'; }
     applyRole(u.role);
     refreshAlerts();
     floor();
