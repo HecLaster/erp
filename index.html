@@ -647,11 +647,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 <!-- MAIN -->
 <div id="main">
   
-<!-- LOGIN SCREEN -->
-<div id="login-screen">
-  <div id="login-box">
-    <div class="login-logo">TIER ONE MACHINE</div>
-    <div class="login-sub">ERP · V1.0 · erp.tieronemachine.com</div>
+
     <label style="text-align:left;display:block">Email</label>
     <input id="login-email" type="email" placeholder="your@email.com" style="margin-bottom:12px">
     <label style="text-align:left;display:block">Password</label>
@@ -730,7 +726,7 @@ const MACHINES = [
   {id:5, name:'VF2SS+TRT160', cap:'5-axis/3+2', color:'#9b59ff'},
   {id:6, name:'DS-30Y',    cap:'Turning', color:'#f5a623'},
 ];
-const OPERATORS = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+const OPERATORS = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
 
 function today(){ return new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'}); }
 function nowStr(){ return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); }
@@ -852,7 +848,7 @@ function wireDataButtons(){
 // ── MODULE 1: SHOP FLOOR ENTRY ──────────────────────────────
 function floor(){
   const logs = DB.get('floor_logs')||[];
-  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
 
   // Default date = yesterday
   const yesterday = new Date();
@@ -1216,7 +1212,7 @@ function saveShiftNotes(){
 // ── MODULE 3: SCHEDULING BOARD ──────────────────────────────
 function schedule(){
   const jobs = DB.get('sched_jobs')||getSeedJobs();
-  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   const today_d = new Date();
 
   // Stats
@@ -2000,7 +1996,7 @@ function fai(){
       </div>
       <div class="section-grid grid-2">
         <div><label>Material Cert</label><select id="fai-mat"><option>On File</option><option>Missing</option><option>N/A</option></select></div>
-        <div><label>Operator</label><select id="fai-op">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div><label>Operator</label><select id="fai-op">${(DB.get('operators')||['Hec','Lucas','Tristan','Trish']).map(o=>`<option>${o}</option>`).join('')}</select></div>
       </div>
       <label>Dimensions Checked</label>
       <input id="fai-dims" type="number" placeholder="# of ballooned dimensions">
@@ -2145,7 +2141,7 @@ function car(){
       <label>Customer (if applicable)</label>
       <input id="car-cust" placeholder="Customer name">
       <label>Opened By</label>
-      <select id="car-op">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>`<option>${o}</option>`).join('')}</select>
+      <select id="car-op">${(DB.get('operators')||['Hec','Lucas','Tristan','Trish']).map(o=>`<option>${o}</option>`).join('')}</select>
       <label>Severity</label>
       <select id="car-sev"><option>Minor</option><option>Major</option><option>Critical</option></select>
       <div style="margin-top:14px">
@@ -2544,7 +2540,7 @@ function audits(){
       <select id="aud-qp">${QP_LIST.map(q=>'<option>'+q+'</option>').join('')}</select>
       <div class="section-grid grid-2">
         <div><label>Auditor</label>
-          <select id="aud-by"><option>Hec</option>${['Lucas','Triston','Trish'].map(o=>'<option>'+o+'</option>').join('')}</select>
+          <select id="aud-by"><option>Hec</option>${['Lucas','Tristan','Trish'].map(o=>'<option>'+o+'</option>').join('')}</select>
         </div>
         <div><label>Audit Date</label><input id="aud-date" type="date" value="${todayISO()}"></div>
       </div>
@@ -3007,7 +3003,7 @@ function getDefaultStaff(){
   const staff=[
     {id:1,name:'Hec',role:'Owner',active:true,start:'2020-01-01',machines:['UMC 500SS','VF3','VF2','VF2SS+TRT160','DS-30Y','CMM'],notes:'Owner/Operator'},
     {id:2,name:'Lucas',role:'Machinist',active:true,start:'2023-01-01',machines:['VF3','VF2','VF2SS+TRT160'],notes:''},
-    {id:3,name:'Triston',role:'Machinist',active:true,start:'2023-06-01',machines:['VF3','VF2'],notes:''},
+    {id:3,name:'Tristan',role:'Machinist',active:true,start:'2023-06-01',machines:['VF3','VF2'],notes:''},
     {id:4,name:'Trish',role:'Machinist',active:true,start:'2024-01-01',machines:['DS-30Y','VF2'],notes:''},
   ];
   DB.set('staff',staff);
@@ -3518,7 +3514,7 @@ function kpi(){
 function renderOpChips(){
   const el = document.getElementById('op-chips');
   if(!el) return;
-  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   el.innerHTML = ops.map(op=>
     '<div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px">'
     +'<span style="font-size:13px;font-weight:500">'+op+'</span>'
@@ -3534,7 +3530,7 @@ function renderOpChips(){
 function addOperator(){
   const name = document.getElementById('new-op-name')?.value.trim();
   if(!name){toast('Enter operator name');return;}
-  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   if(ops.includes(name)){toast('Operator already exists');return;}
   ops.push(name);
   DB.set('operators',ops);
@@ -3547,7 +3543,7 @@ function addOperator(){
 
 function removeOperator(name){
   if(!confirm('Remove '+name+' from operator list?')) return;
-  const ops = (DB.get('operators')||['Hec','Lucas','Triston','Trish']).filter(o=>o!==name);
+  const ops = (DB.get('operators')||['Hec','Lucas','Tristan','Trish']).filter(o=>o!==name);
   DB.set('operators',ops);
   toast('✓ '+name+' removed');
   renderOpChips();
@@ -3601,7 +3597,7 @@ function ncm(){
       <label>Description</label>
       <textarea id="ncm-desc" rows="2" placeholder="Describe the nonconformance..."></textarea>
       <div class="section-grid grid-2">
-        <div><label>Detected By</label><select id="ncm-by"><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option><option>Customer</option></select></div>
+        <div><label>Detected By</label><select id="ncm-by"><option>Hec</option><option>Lucas</option><option>Tristan</option><option>Trish</option><option>Customer</option></select></div>
         <div><label>Disposition</label><select id="ncm-disp"><option>Pending</option><option>Scrap</option><option>Rework</option><option>Use As-Is (UAI)</option><option>Return to Supplier</option></select></div>
       </div>
       <label>CAR Required?</label><select id="ncm-car"><option>Yes</option><option>No</option></select>
@@ -3644,7 +3640,7 @@ function crev(){
       </div>
       <div class="section-grid grid-2">
         <div><label>Customer</label><input id="cr-cust"></div>
-        <div><label>Reviewed By</label><select id="cr-by">${(DB.get('operators')||['Hec','Lucas','Triston','Trish']).map(o=>'<option>'+o+'</option>').join('')}</select></div>
+        <div><label>Reviewed By</label><select id="cr-by">${(DB.get('operators')||['Hec','Lucas','Tristan','Trish']).map(o=>'<option>'+o+'</option>').join('')}</select></div>
       </div>
       <hr class="divider">
       ${CX.map(([id,label])=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">'+label+'</span><select id="'+id+'" style="width:100px;padding:4px 6px;font-size:12px"><option value="">—</option><option value="Y">✓ Yes</option><option value="N">✗ No</option><option value="NA">N/A</option></select></div>').join('')}
@@ -3763,7 +3759,7 @@ function risk(){
       <label>Description</label><textarea id="rsk-desc" rows="2"></textarea>
       <div class="section-grid grid-2"><div><label>Likelihood (1-5)</label><input id="rsk-like" type="number" min="1" max="5" value="3"></div><div><label>Impact (1-5)</label><input id="rsk-impact" type="number" min="1" max="5" value="3"></div></div>
       <label>Mitigation</label><textarea id="rsk-mit" rows="2"></textarea>
-      <label>Owner</label><select id="rsk-owner"><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option></select>
+      <label>Owner</label><select id="rsk-owner"><option>Hec</option><option>Lucas</option><option>Tristan</option><option>Trish</option></select>
       <div style="margin-top:14px"><button class="btn btn-primary" onclick="riskAdd()">+ Add Item</button></div>
     </div>
     <div class="ai-box"><div class="ai-label">⚡ AS9100D Clause 6.1</div><div class="ai-text">Document risks and opportunities affecting product conformity, customer satisfaction, and QMS effectiveness. Review at management review. Score = Likelihood × Impact. High ≥12, Medium 6–11, Low ≤5.</div></div>
@@ -3826,7 +3822,7 @@ function pm(){
       <div class="card-header"><span class="card-title">Log PM Completed</span></div>
       <label>Machine</label><select id="pm-mach">${MACHINES.map(m=>'<option value="'+m.id+'">#'+m.id+' — '+m.name+'</option>').join('')}</select>
       <label>Task</label><select id="pm-task"><option>Coolant Change</option><option>Way Lube Check</option><option>Air Filter</option><option>Chip Conveyor Clean</option><option>Hydraulic Fluid Check</option><option>Spindle Oil Change</option><option>Annual Full Service</option><option>Geometry Check</option><option>Custom</option></select>
-      <div class="section-grid grid-2"><div><label>Date</label><input id="pm-date" type="date" value="${todayISO()}"></div><div><label>By</label><select id="pm-by"><option>Hec</option><option>Lucas</option><option>Triston</option><option>Trish</option><option>Haas Service</option></select></div></div>
+      <div class="section-grid grid-2"><div><label>Date</label><input id="pm-date" type="date" value="${todayISO()}"></div><div><label>By</label><select id="pm-by"><option>Hec</option><option>Lucas</option><option>Tristan</option><option>Trish</option><option>Haas Service</option></select></div></div>
       <label>Notes</label><textarea id="pm-notes" rows="2"></textarea>
       <div style="margin-top:14px"><button class="btn btn-primary" onclick="pmLog()">✓ Log PM</button></div>
     </div>
@@ -3965,7 +3961,7 @@ function openTraveler(id){
   if(!j){ toast('Job not found'); return; }
   _travelerJobId = id;
 
-  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   const statusBadge = {Queued:'badge-blue',Setup:'badge-blue',Running:'badge-green',Complete:'badge-green',Shipped:'badge-gray'};
   const daysOut = j.ship ? Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000) : null;
   const mName = MACHINES.find(m=>m.id==j.machine)?.name||'?';
@@ -4448,7 +4444,7 @@ function customerDelete(id){
 
 // ── OPERATOR ASSIGNMENT BOARD ─────────────────────────────────
 function assignments(){
-  const ops=DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops=DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   const jobs=DB.get('sched_jobs')||[];
   const assigns=DB.get('op_assignments_'+todayISO())||{};
 
@@ -4504,7 +4500,7 @@ function saveAssignment(machId,op){
 // ── SHIFT NOTES / HANDOFF ────────────────────────────────────
 function shiftnotes(){
   const notes=DB.get('shift_notes_all')||[];
-  const ops=DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops=DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
 
   render(`
   <div class="page-header"><h1>Shift Notes & Handoff</h1><p>End-of-shift notes per machine · Carries to morning briefing</p></div>
@@ -4662,7 +4658,7 @@ function certLog(){
 function scraplog(){
   const scraps=DB.get('scrap_log')||[];
   const jobs=DB.get('sched_jobs')||[];
-  const ops=DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops=DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   const totalScrapped=scraps.filter(s=>s.action==='Scrap').reduce((sum,s)=>sum+(parseInt(s.qty)||0),0);
   const totalRework=scraps.filter(s=>s.action==='Rework').reduce((sum,s)=>sum+(parseInt(s.qty)||0),0);
 
@@ -4838,7 +4834,7 @@ function jobSearchRun(){
 function prodplan(){
   const plans = DB.get('prod_plans')||[];
   const jobs = DB.get('sched_jobs')||[];
-  const ops = DB.get('operators')||['Hec','Lucas','Triston','Trish'];
+  const ops = DB.get('operators')||['Hec','Lucas','Tristan','Trish'];
   const activeJobs = jobs.filter(j=>j.status!=='Shipped');
   const missingPlan = activeJobs.filter(j=>!plans.find(p=>p.wo===j.wo));
 
@@ -5029,8 +5025,9 @@ function prodplanSave(){
 // ── AUTH & LOGIN ─────────────────────────────────────────────
 const USERS = {
   'hlaster@tieronemachine.com': { pass: 'TierOne2026!', role: 'owner',    name: 'Hec' },
+  'gina@tieronemachine.com':    { pass: 'Shop2026!',    role: 'owner',    name: 'Gina' },
   'lucas@tieronemachine.com':   { pass: 'Shop2026!',    role: 'operator', name: 'Lucas' },
-  'triston@tieronemachine.com': { pass: 'Shop2026!',    role: 'operator', name: 'Triston' },
+  'tristan@tieronemachine.com': { pass: 'Shop2026!',    role: 'operator', name: 'Tristan' },
   'trish@tieronemachine.com':   { pass: 'Shop2026!',    role: 'operator', name: 'Trish' },
 };
 
