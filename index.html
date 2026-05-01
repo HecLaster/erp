@@ -584,6 +584,23 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 </style>
 </head>
 <body>
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="position:fixed;inset:0;z-index:9999;background:#f0f2f5;display:flex;align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid #d0d5dd;border-radius:12px;padding:40px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.12);text-align:center">
+    <div style="font-size:18px;font-weight:700;color:#1a6fff;letter-spacing:0.05em;margin-bottom:4px">TIER ONE MACHINE</div>
+    <div style="font-size:11px;color:#888;margin-bottom:28px">ERP · V1.0 · Dickson, TN</div>
+    <div style="text-align:left;font-size:12px;font-weight:500;margin-bottom:4px">Email</div>
+    <input id="li-email" type="email" placeholder="your@tieronemachine.com"
+      style="width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:12px;outline:none">
+    <div style="text-align:left;font-size:12px;font-weight:500;margin-bottom:4px">Password</div>
+    <input id="li-pass" type="password" placeholder="Password"
+      style="width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;outline:none">
+    <button id="li-btn" style="width:100%;padding:12px;background:#1a6fff;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Sign In</button>
+    <div id="li-err" style="color:#dc3545;font-size:12px;margin-top:10px;display:none">Invalid email or password</div>
+    <div style="margin-top:20px;font-size:10px;color:#aaa">AS9100D · FFL Licensed</div>
+  </div>
+</div>
+
 
 <!-- SIDEBAR -->
 <aside id="sidebar">
@@ -646,43 +663,6 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 
 <!-- MAIN -->
 <div id="main">
-  
-
-    <label style="text-align:left;display:block">Email</label>
-    <input id="login-email" type="email" placeholder="your@email.com" style="margin-bottom:12px">
-    <label style="text-align:left;display:block">Password</label>
-    <input id="login-pass" type="password" placeholder="Password" style="margin-bottom:16px"
-      id="login-pass-input">
-    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Sign In</button>
-    <div id="login-error">Invalid email or password. Try again.</div>
-    <div style="margin-top:20px;font-size:11px;color:var(--text3)">
-      AS9100D · FFL · Dickson, TN
-    </div>
-  </div>
-</div>
-
-
-<!-- LOGIN SCREEN -->
-<div id="login-screen" style="position:fixed;inset:0;z-index:9999;background:#f0f2f5;display:flex;align-items:center;justify-content:center">
-  <div style="background:#fff;border:1px solid #d0d5dd;border-radius:12px;padding:40px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.12);text-align:center">
-    <div style="font-size:18px;font-weight:700;color:#1a6fff;letter-spacing:0.05em;margin-bottom:4px">TIER ONE MACHINE</div>
-    <div style="font-size:11px;color:#888;margin-bottom:28px">ERP · V1.0 · Dickson, TN</div>
-    <div style="text-align:left;font-size:12px;font-weight:500;margin-bottom:4px">Email</div>
-    <input id="li-email" type="email" placeholder="your@tieronemachine.com"
-      style="width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:12px;outline:none">
-    <div style="text-align:left;font-size:12px;font-weight:500;margin-bottom:4px">Password</div>
-    <input id="li-pass" type="password" placeholder="Password"
-      style="width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;outline:none">
-    <button id="li-btn"
-      style="width:100%;padding:12px;background:#1a6fff;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.02em">
-      Sign In
-    </button>
-    <div id="li-err" style="color:#dc3545;font-size:12px;margin-top:10px;display:none">Invalid email or password</div>
-    <div style="margin-top:20px;font-size:10px;color:#aaa">AS9100D · FFL Licensed</div>
-  </div>
-</div>
-
-<div id="sidebar-overlay" onclick="closeSidebar()"></div>
   <div id="topbar">
     <button id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
       <span></span><span></span><span></span>
