@@ -652,7 +652,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
     <input id="login-email" type="email" placeholder="your@email.com" style="margin-bottom:12px">
     <label style="text-align:left;display:block">Password</label>
     <input id="login-pass" type="password" placeholder="Password" style="margin-bottom:16px"
-      onkeydown="if(event.key==='Enter')doLogin()">
+      id="login-pass-input">
     <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Sign In</button>
     <div id="login-error">Invalid email or password. Try again.</div>
     <div style="margin-top:20px;font-size:11px;color:var(--text3)">
@@ -669,8 +669,8 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
     <label style="text-align:left;display:block;margin-bottom:4px">Email</label>
     <input id="login-email" type="email" placeholder="your@email.com" style="margin-bottom:12px">
     <label style="text-align:left;display:block;margin-bottom:4px">Password</label>
-    <input id="login-pass" type="password" placeholder="Password" style="margin-bottom:16px" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="doLogin()">Sign In</button>
+    <input id="login-pass" type="password" placeholder="Password" style="margin-bottom:16px">
+    <button class="btn btn-primary" style="width:100%;padding:12px" id="login-btn">Sign In</button>
     <div id="login-error" style="color:var(--red);font-size:12px;margin-top:10px;display:none">Invalid email or password</div>
     <div style="margin-top:24px;font-size:10px;color:var(--text3)">AS9100D · FFL Licensed</div>
   </div>
@@ -5131,6 +5131,14 @@ const DATA_VERSION='2026-04-30-v1';
 if(DB.get('data_version')!==DATA_VERSION){DB.set('sched_jobs',null);DB.set('data_version',DATA_VERSION);}
 document.getElementById('topbar-date').textContent = today();
 // Load Supabase data then check session
+// Wire login button via JS (not inline onclick)
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('login-btn');
+  if(btn) btn.addEventListener('click', doLogin);
+  const pass = document.getElementById('login-pass');
+  if(pass) pass.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+});
+
 DB.loadAll().catch(e=>console.warn(e)).finally(()=>{
   checkSession();
   checkAutoBackup();
