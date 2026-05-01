@@ -5041,7 +5041,7 @@ var currentUser = null;
 
 function hideLogin() {
   var ls = document.getElementById('login-screen');
-  if (ls) ls.style.display = 'none';
+  if (ls) ls.parentNode.removeChild(ls);
 }
 
 function showLogin() {
@@ -5071,7 +5071,7 @@ function doLogin() {
     try { sessionStorage.setItem('t1_session', JSON.stringify(currentUser)); } catch(e) {}
     // Force hide login screen completely
     var ls = document.getElementById('login-screen');
-    if (ls) { ls.style.display = 'none'; ls.style.visibility = 'hidden'; ls.style.zIndex = '-1'; }
+    if (ls) ls.parentNode.removeChild(ls);
     applyRole(u.role);
     refreshAlerts();
     floor();
@@ -5089,7 +5089,8 @@ function checkSession() {
       var u = JSON.parse(s);
       if (u && u.email && USERS[u.email]) {
         currentUser = u;
-        hideLogin();
+        var ls2 = document.getElementById('login-screen');
+        if(ls2) ls2.parentNode.removeChild(ls2);
         applyRole(u.role);
         return true;
       }
