@@ -5091,13 +5091,6 @@ function logout(){
   document.getElementById('login-error').style.display = 'none';
 }
 
-// Save session on login
-const _origDoLogin = doLogin;
-window.doLogin = function(){
-  _origDoLogin();
-  if(currentUser) sessionStorage.setItem('t1_session', JSON.stringify(currentUser));
-};
-
 
 // ── AUTH ──────────────────────────────────────────────────────
 
