@@ -5030,66 +5030,69 @@ const USERS = {
   'tristan@tieronemachine.com': { pass: 'Shop2026!',    role: 'operator', name: 'Tristan' },
   'trish@tieronemachine.com':   { pass: 'Shop2026!',    role: 'operator', name: 'Trish' },
 };
-
-// Owner-only pages
 const OWNER_ONLY = ['cashflow','sales','quoting','mgmtreview','risk','jobcost','custportal','customers'];
-
 let currentUser = null;
 
 function doLogin(){
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const user = USERS[email];
-  if(user && user.pass === pass){
-    currentUser = {email, role: user.role, name: user.name};
-    DB.set('current_user', currentUser);
-    document.getElementById('login-screen').style.display = 'none';
-    // Update topbar with user name
-    const dateEl = document.getElementById('topbar-date');
-    if(dateEl) dateEl.textContent = user.name + ' · ' + dateEl.textContent;
-    // Hide owner-only nav items for operators
-    if(user.role === 'operator'){
-      OWNER_ONLY.forEach(page=>{
-        const el = document.getElementById('nav-'+page);
-        if(el) el.style.display = 'none';
-      });
+  const emailEl = document.getElementById('login-email');
+  const passEl  = document.getElementById('login-pass');
+  const errEl   = document.getElementById('login-error');
+  if(!emailEl||!passEl) return;
+  const email = emailEl.value.trim().toLowerCase();
+  const pass  = passEl.value;
+  const u = USERS[email];
+  if(u && u.pass === pass){
+    currentUser = {email, role:u.role, name:u.name};
+    try{ sessionStorage.setItem('t1_session', JSON.stringify(currentUser)); }catch(e){}
+    if(errEl) errEl.style.display='none';
+    const ls = document.getElementById('login-screen');
+    if(ls) ls.style.display='none';
+    if(u.role==='operator'){
+      OWNER_ONLY.forEach(p=>{ const el=document.getElementById('nav-'+p); if(el) el.style.display='none'; });
     }
-    toast('Welcome, ' + user.name + '!');
+    toast('Welcome, '+u.name+'!');
+    refreshAlerts();
   } else {
-    document.getElementById('login-error').style.display = 'block';
+    if(errEl){ errEl.style.display='block'; errEl.textContent='Invalid email or password'; }
   }
 }
 
-function checkExistingSession(){
-  // Check if already logged in this session
-  const saved = sessionStorage.getItem('t1_session');
-  if(saved){
-    try {
-      currentUser = JSON.parse(saved);
-      document.getElementById('login-screen').style.display = 'none';
-      if(currentUser.role === 'operator'){
-        OWNER_ONLY.forEach(page=>{
-          const el = document.getElementById('nav-'+page);
-          if(el) el.style.display = 'none';
-        });
+function checkSession(){
+  try{
+    const s = sessionStorage.getItem('t1_session');
+    if(s){
+      const u = JSON.parse(s);
+      if(u && USERS[u.email] && USERS[u.email].role === u.role){
+        currentUser = u;
+        const ls = document.getElementById('login-screen');
+        if(ls) ls.style.display='none';
+        if(u.role==='operator'){
+          OWNER_ONLY.forEach(p=>{ const el=document.getElementById('nav-'+p); if(el) el.style.display='none'; });
+        }
+        return true;
       }
-      return true;
-    } catch(e){}
-  }
+    }
+  }catch(e){}
   return false;
 }
 
 function logout(){
   currentUser = null;
-  sessionStorage.removeItem('t1_session');
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-error').style.display = 'none';
+  try{ sessionStorage.removeItem('t1_session'); }catch(e){}
+  const ls = document.getElementById('login-screen');
+  if(ls) ls.style.display='flex';
+  const e = document.getElementById('login-email'); if(e) e.value='';
+  const p = document.getElementById('login-pass');  if(p) p.value='';
+  const er = document.getElementById('login-error'); if(er) er.style.display='none';
 }
 
-
-// ── AUTH ──────────────────────────────────────────────────────
+// Wire login button after DOM ready
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('login-btn');
+  if(btn) btn.addEventListener('click', doLogin);
+  const pass = document.getElementById('login-pass');
+  if(pass) pass.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+});
 
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
@@ -5139,13 +5142,19 @@ document.addEventListener('DOMContentLoaded', function(){
   if(pass) pass.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 });
 
-DB.loadAll().catch(e=>console.warn(e)).finally(()=>{
-  checkSession();
-  checkAutoBackup();
+// Check session first - show login or go straight in
+if(!checkSession()){
+  // Not logged in - login screen is already visible
+  // Wire it up and wait
+} else {
+  // Already logged in - start the app
+  refreshAlerts();
   floor();
   setTimeout(showBriefing, 800);
-});
-refreshAlerts();
+}
+checkAutoBackup();
+// Sync from Supabase in background
+DB.loadAll().catch(e=>console.warn('Supabase sync:', e));
 </script>
 
   <!-- BOTTOM NAV (mobile only) -->
