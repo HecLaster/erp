@@ -2296,8 +2296,8 @@ function cashflow(){
   const d90 = new Date(now); d90.setDate(d90.getDate()+90);
 
   const ar30 = arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d30).reduce((s,j)=>s+(j.value||0),0);
-  const ar60 = arJobs.filter(j=>{const d=new Date(j.ship+'T12:00:00');return d>d30&&d<=d60;}).reduce((s,j)=>s+(j.value||0),0);
-  const ar90 = arJobs.filter(j=>{const d=new Date(j.ship+'T12:00:00');return d>d60&&d<=d90;}).reduce((s,j)=>s+(j.value||0),0);
+  const ar60 = arJobs.filter(j=>j.payDue>d30&&j.payDue<=d60).reduce((s,j)=>s+(j.value||0),0);
+  const ar90 = arJobs.filter(j=>j.payDue>d60&&j.payDue<=d90).reduce((s,j)=>s+(j.value||0),0);
 
   render(`
   <div class="page-header"><h1>Cash Flow Forecast</h1><p>AR/AP · 30/60/90-day projection · Negative flow alerts</p></div>
