@@ -6321,6 +6321,31 @@ function newjob(){
   `);
 }
 
+// ── PDF TEXT EXTRACTION (pdfjs) ─────────────────────────────
+async function njExtractPDFText(b64){
+  // Lazy-load pdfjs from CDN
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload=()=>{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
+      s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+  let text = '';
+  for(let p=1;p<=Math.min(pdf.numPages,8);p++){
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    text += tc.items.map(i=>i.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
 // ── DRAG & DROP HANDLERS ─────────────────────────────────────
 function njDragOver(e){
   e.preventDefault();
@@ -6366,36 +6391,31 @@ async function njExtract(){
   }
   status.textContent = '🤖 Reading your files — this takes about 10 seconds...';
 
-  // Build message content with uploaded PDFs
-  const msgContent = [];
-  if(_njFiles.po){
-    msgContent.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:_njFiles.po.b64 } });
-    msgContent.push({ type:'text', text:'This is the Purchase Order (PO).' });
-  }
-  if(_njFiles.print){
-    msgContent.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:_njFiles.print.b64 } });
-    msgContent.push({ type:'text', text:'This is the engineering drawing / CAD print.' });
-  }
-  msgContent.push({ type:'text', text:`Extract all job information from these documents and return ONLY a JSON object with these exact keys (no markdown, no explanation, just the JSON):
-{
-  "customer": "",
-  "po": "",
-  "partnum": "",
-  "partname": "",
-  "qty": 1,
-  "material": "",
-  "ship": "",
-  "value": 0,
-  "notes": ""
-}
-For "ship": use YYYY-MM-DD format if you can find a due date or required delivery date. For "value": extract the dollar amount from the PO line item. For "notes": include any special requirements, tolerances, finish specs, or certifications required. If a field is not found leave it empty string or 0.` });
+  // Extract text from PDFs using pdfjs, then send as text to /api/claude
+  status.textContent = '🤖 Reading PDF text...';
+  let poText = '', printText = '';
+  try {
+    if(_njFiles.po)    poText    = await njExtractPDFText(_njFiles.po.b64);
+    if(_njFiles.print) printText = await njExtractPDFText(_njFiles.print.b64);
+  } catch(pdfErr){ console.warn('PDF text extraction:', pdfErr); }
+
+  if(!poText && !printText){ throw new Error('Could not read text from PDFs. Make sure they are not scanned images.'); }
+
+  status.textContent = '🤖 Asking AI to extract job info...';
+  const prompt = 'Extract all job information from the following documents and return ONLY a JSON object with these exact keys (no markdown, no explanation, raw JSON only):\n'
+    + '{"customer":"","po":"","partnum":"","partname":"","qty":1,"material":"","ship":"","value":0,"notes":""}\n\n'
+    + 'Rules: "ship" = YYYY-MM-DD format due/delivery date. "value" = PO line item dollar amount as number. "notes" = special requirements, tolerances, finish, certs. Empty string or 0 if not found.\n\n'
+    + (poText ? '=== PURCHASE ORDER ===\n'+poText.slice(0,4000) : '')
+    + (printText ? '\n=== ENGINEERING DRAWING ===\n'+printText.slice(0,4000) : '');
+
+  const msgContent = [{ type:'text', text: prompt }];
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'claude-sonnet-4-6',
         max_tokens:1000,
         messages:[{ role:'user', content:msgContent }]
       })
@@ -6429,7 +6449,8 @@ For "ship": use YYYY-MM-DD format if you can find a due date or required deliver
     });
 
   } catch(err){
-    status.textContent = '⚠️ Could not auto-read files: '+err.message+' — fill in manually below.';
+    console.error('njExtract error:', err);
+    status.innerHTML = '<span style="color:#dc2626">⚠️ '+err.message+'</span><br><span style="font-size:12px;color:#888">Check browser console for details. Form is ready — fill in manually.</span>';
     njSkipToManual();
   }
 }
