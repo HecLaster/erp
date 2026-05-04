@@ -2575,20 +2575,58 @@ function auditStart(){
   const auditor=document.getElementById('aud-by').value;
   const date=document.getElementById('aud-date').value;
   const scope=document.getElementById('aud-scope').value;
-
-  const checklists={
-    'QP-03 Inspection & Testing':['Are inspection plans current and approved?','Is the CMM calibrated and within due date?','Are first article requirements being met?','Are inspection records retained per retention schedule?','Are nonconforming parts properly tagged and segregated?'],
-    'QP-05 Receiving Inspection':['Are all received materials inspected before use?','Are certs verified against purchase order requirements?','Are material certifications on file?','Are hold tags used for materials pending inspection?','Is the approved supplier list being followed?'],
-    'QP-09 Corrective Action':['Are CARs opened for all required triggers?','Are root cause analyses adequate (5-Why used)?','Are corrective actions verified for effectiveness?','Are repeat escapes being tracked?','Is the CAR log current and maintained?'],
-    'QP-17 Calibration':['Are all gauges on the master list?','Are any gauges past their calibration due date?','Are calibration records retained?','Are out-of-tolerance conditions being reported?','Are gauge IDs traceable to certs?'],
-    'QP-18 Training':['Are all operators trained for their assigned machines?','Are training records current?','Are AS9100D awareness trainings documented?','Is on-the-job training being documented?','Are qualifications reviewed annually?'],
-  };
-
-  const defaultChecklist=['Is the procedure documented and current?','Are records being maintained per requirements?','Are responsible parties aware of their duties?','Has the procedure been followed consistently?','Are any improvement opportunities identified?'];
-  const items=(checklists[qp]||defaultChecklist).map(q=>({q,answer:'',finding:''}));
-
   const el=document.getElementById('audit-checklist');
   if(!el) return;
+
+  // Show loading state
+  el.innerHTML='<div class="card mb-16"><div class="card-header"><span class="card-title">⚡ AI generating checklist for '+qp+'...</span></div>'
+    +'<div style="padding:20px;text-align:center;color:var(--text3)"><div style="font-size:24px;margin-bottom:8px">⚙️</div>Generating AS9100D checklist...</div></div>';
+
+  // Call Anthropic API to generate checklist
+  fetch('/api/claude', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: 'Generate a 10-item internal audit checklist for ' + qp + ' based on AS9100D requirements for a precision CNC machine shop. Scope: ' + (scope||'Full procedure audit') + '. Return ONLY a JSON array of strings, no other text. Example: ["Item 1", "Item 2"]'
+      }]
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    let items = [];
+    try {
+      const text = data.content[0].text;
+      const clean = text.replace(/```json|```/g, '').trim();
+      items = JSON.parse(clean).map(q => ({q, answer:'', finding:''}));
+    } catch(e) {
+      // Fallback to static checklist if AI fails
+      items = getStaticChecklist(qp).map(q => ({q, answer:'', finding:''}));
+    }
+    renderAuditChecklist(qp, auditor, date, items, el);
+  })
+  .catch(() => {
+    // Fallback to static checklist
+    const items = getStaticChecklist(qp).map(q => ({q, answer:'', finding:''}));
+    renderAuditChecklist(qp, auditor, date, items, el);
+  });
+}
+
+function getStaticChecklist(qp){
+  const checklists={
+    'QP-03 Inspection & Testing':['Are inspection plans current and approved?','Is the CMM calibrated and within due date?','Are first article requirements being met?','Are inspection records retained per retention schedule?','Are nonconforming parts properly tagged and segregated?','Are sampling frequencies being followed per QP-03?','Are inspection results being recorded for every job?','Are customer-specific requirements flowing down to inspection?','Are in-process checks happening at correct intervals?','Are final inspection sign-offs complete before shipping?'],
+    'QP-05 Receiving Inspection':['Are all received materials inspected before use?','Are certs verified against purchase order requirements?','Are material certifications on file?','Are hold tags used for materials pending inspection?','Is the approved supplier list being followed?','Are rejected materials clearly segregated?','Are receiving records complete and traceable?','Is the heat/lot number recorded on receiving log?','Are inspection results linked to the job traveler?','Are supplier CARs being issued when required?'],
+    'QP-09 Corrective Action':['Are CARs opened for all required triggers?','Are root cause analyses adequate?','Are corrective actions verified for effectiveness?','Are repeat escapes being tracked?','Is the CAR log current and maintained?','Are D1-D8 steps being completed?','Are containment actions documented?','Are preventive actions being implemented?','Is management reviewing open CARs?','Are closure dates being met?'],
+    'QP-17 Calibration':['Are all gauges on the master list?','Are any gauges past their calibration due date?','Are calibration records retained?','Are out-of-tolerance conditions being reported?','Are gauge IDs traceable to certs?','Are gauges stored properly when not in use?','Is the calibration schedule being followed?','Are external calibrations performed by accredited labs?','Are recall procedures working?','Are operators using calibrated equipment only?'],
+    'QP-18 Training':['Are all operators trained for their assigned machines?','Are training records current?','Are AS9100D awareness trainings documented?','Is on-the-job training being documented?','Are qualifications reviewed annually?','Are new operators getting proper onboarding?','Are training records tied to specific procedures?','Are machine qualifications verified before assignment?','Is cross-training documented?','Are certifications tracked with expiry dates?'],
+  };
+  return checklists[qp]||['Is the procedure documented and current?','Are records being maintained per requirements?','Are responsible parties aware of their duties?','Has the procedure been followed consistently?','Are any improvement opportunities identified?','Are required inputs available and controlled?','Are outputs meeting quality requirements?','Are resources adequate for the process?','Are metrics being tracked?','Are previous findings closed?'];
+}
+
+function renderAuditChecklist(qp, auditor, date, items, el){
   el.innerHTML='<div class="card mb-16"><div class="card-header"><span class="card-title">Audit Checklist — '+qp+'</span></div>'
     +'<div class="step-list">'
     +items.map((item,i)=>'<div class="step active"><div class="step-num">'+(i+1)+'</div><div class="step-content">'
@@ -2600,10 +2638,14 @@ function auditStart(){
     +'</div>'
     +'<div style="margin-top:14px;display:flex;gap:8px">'
     +'<button class="btn btn-primary" id="audit-submit-btn">Submit Audit</button>'
-    +'<button class="btn btn-secondary" onclick="document.getElementById(\'audit-checklist\').innerHTML=\'\'">Cancel</button>'
+    +'<button class="btn btn-secondary" id="audit-cancel-btn">Cancel</button>'
     +'</div></div>';
-  setTimeout(()=>{const btn=document.getElementById('audit-submit-btn');if(btn)btn.onclick=()=>auditSubmit(qp,items.length,auditor,date);},50);
+  setTimeout(()=>{
+    const btn=document.getElementById('audit-submit-btn');if(btn)btn.onclick=()=>auditSubmit(qp,items.length,auditor,date);
+    const can=document.getElementById('audit-cancel-btn');if(can)can.onclick=()=>{ const e=document.getElementById('audit-checklist');if(e)e.innerHTML=''; };
+  },50);
 }
+
 
 function auditSubmit(qp,count,auditor,date){
   let findings=0;
@@ -2983,6 +3025,13 @@ function people(){
     document.getElementById('tr-custom-wrap').style.display=this.value==='Custom'?'block':'none';
   });
   renderOpChips();
+}
+
+
+function getSeedJobs(){
+  // Returns empty array - jobs are stored in DB
+  // Seed data was loaded on initial setup
+  return [];
 }
 
 function getDefaultStaff(){
