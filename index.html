@@ -620,6 +620,10 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
       <span class="nav-icon">▦</span> Scheduling Board
     </div>
 
+    <div class="nav-item" onclick="nav('newjob')" id="nav-newjob" style="background:linear-gradient(135deg,rgba(26,111,255,0.12),rgba(26,111,255,0.06));border-left:3px solid var(--accent)">
+      <span class="nav-icon">✚</span> New Job Wizard
+    </div>
+
     <div class="nav-section">Quality / QMS</div>
     <div class="nav-item" onclick="nav('receiving')" id="nav-receiving">
       <span class="nav-icon">◉</span> Material Receiving
@@ -720,7 +724,7 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 
 // ── NAVIGATION ──────────────────────────────────────────────
-const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal,customers,assignments,shiftnotes,certtracker,scraplog,jobsearch,prodplan,aiauditor};
+const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal,customers,assignments,shiftnotes,certtracker,scraplog,jobsearch,prodplan,aiauditor,newjob};
 let currentPage = 'floor';
 
 function nav(page){
@@ -757,7 +761,8 @@ function nav(page){
     scraplog:'Scrap & Rework Log',
     jobsearch:'Job Search',
     prodplan:'Production Planning — QP-13',
-    aiauditor:'AI Auditor'
+    aiauditor:'AI Auditor',
+    newjob:'New Job Wizard'
   };
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if(PAGES[page]) PAGES[page]();
@@ -6163,6 +6168,311 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 // Init handled in DOMContentLoaded above
+
+// ── MODULE: NEW JOB WIZARD ───────────────────────────────────
+// Drive template file IDs (sourced from existing job packets)
+const DRIVE_TEMPLATES = {
+  traveler:       '10S7YjafJFcRxWbJVOdiswwtwZ6BJmcpD',
+  contractReview: '1xN1EdSb5rVodvUsqKKXwy1g0FibB_AwL',
+  discrepancy:    '11ddJI7hY45HOptD3z7SNKuTkl-gUSP-e',
+  kanban:         '1UoG67p9DtXR1DOP1ht83onbXASmkbBnw',
+  activeJobsFolder: '1yAr180S7MLET84AR3-RVM82IrbhD1oDF'
+};
+
+function getNextWO(){
+  const jobs = DB.get('sched_jobs')||[];
+  let maxNum = 38; // highest known WO as of 05/04/2026
+  jobs.forEach(j=>{
+    const m = (j.wo||'').match(/WO-2026-(\d+)/);
+    if(m) maxNum = Math.max(maxNum, parseInt(m[1]));
+  });
+  return 'WO-2026-'+String(maxNum+1).padStart(3,'0');
+};
+
+function newjob(){
+  const nextWO = getNextWO();
+  const customers = (DB.get('customers')||[]).map(c=>c.name||c.company||'').filter(Boolean);
+  const machines = ['UMC 500SS (#1)','VF3 (#2)','VF2 (#3)','DS-30Y (#6)','Machine #4','Machine #5'];
+
+  render(`
+  <div class="page-header">
+    <h1>&#x2728; New Job Wizard</h1>
+    <p>Creates ERP job + Google Drive folder + all documents in one shot</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px">
+
+    <!-- LEFT: JOB INFO -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Job Information</span></div>
+
+      <label>Work Order #</label>
+      <input id="nj-wo" value="${nextWO}" style="font-weight:700;font-size:16px;color:var(--accent)">
+
+      <label>Customer</label>
+      <input id="nj-customer" list="nj-cust-list" placeholder="Customer name">
+      <datalist id="nj-cust-list">${customers.map(c=>'<option value="'+c+'">').join('')}</datalist>
+
+      <label>Customer PO #</label>
+      <input id="nj-po" placeholder="e.g. PO-00154434">
+
+      <label>Part Number</label>
+      <input id="nj-partnum" placeholder="e.g. J-21-06210">
+
+      <label>Part Name / Description</label>
+      <input id="nj-partname" placeholder="e.g. Plate, Rod Clevis Mounting">
+
+      <label>Quantity</label>
+      <input id="nj-qty" type="number" placeholder="1" value="1">
+
+      <label>Material</label>
+      <input id="nj-material" placeholder="e.g. 6061-T6 Aluminum">
+    </div>
+
+    <!-- RIGHT: SCHEDULE + OPTIONS -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Schedule & Value</span></div>
+
+        <label>Due / Ship Date</label>
+        <input id="nj-ship" type="date">
+
+        <label>Primary Machine</label>
+        <select id="nj-machine">
+          ${machines.map(m=>'<option>'+m+'</option>').join('')}
+        </select>
+
+        <label>Assigned Operator</label>
+        <select id="nj-operator">
+          <option value="">-- Unassigned --</option>
+          <option>Lucas</option>
+          <option>Tristan</option>
+          <option>Trish</option>
+        </select>
+
+        <label>Job Value ($)</label>
+        <input id="nj-value" type="number" placeholder="0.00">
+
+        <label>Priority</label>
+        <select id="nj-priority">
+          <option value="Normal">Normal</option>
+          <option value="Rush">Rush</option>
+          <option value="Hot">Hot</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Documents to Create</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400">
+            <input type="checkbox" id="nj-doc-traveler" checked> Traveler (Job Packet)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400">
+            <input type="checkbox" id="nj-doc-cr" checked> Contract Review (QP-12)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400">
+            <input type="checkbox" id="nj-doc-discrepancy" checked> Discrepancy Report
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400">
+            <input type="checkbox" id="nj-doc-kanban" checked> Kanban Cards
+          </label>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#f0f9ff;border-radius:6px;font-size:12px;color:#0369a1">
+          <strong>Drive folder structure:</strong><br>
+          &#x1F4C1; WO-XXXX | PartNum | Part Name<br>
+          &nbsp;&nbsp;&#x1F4C2; 01 - Drawing<br>
+          &nbsp;&nbsp;&#x1F4C2; 02 - Job Packet &#x2192; Traveler.docx<br>
+          &nbsp;&nbsp;&#x1F4C2; 03 - Inspection Records<br>
+          &nbsp;&nbsp;&#x1F4C2; 04 - Material Certs<br>
+          &nbsp;&nbsp;&#x1F4C4; ContractReview_QP12.docx<br>
+          &nbsp;&nbsp;&#x1F4C4; DiscrepancyReport.docx<br>
+          &nbsp;&nbsp;&#x1F4C4; KanbanCards.xlsx
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:900px;margin-top:16px">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Notes / Special Instructions</span></div>
+      <textarea id="nj-notes" rows="3" placeholder="Special instructions, customer requirements, print notes..." style="width:100%;padding:8px;font-size:13px;resize:vertical"></textarea>
+    </div>
+  </div>
+
+  <div style="max-width:900px;margin-top:16px;display:flex;gap:12px;align-items:center">
+    <button class="btn btn-primary" style="font-size:15px;padding:12px 32px" id="nj-submit-btn" onclick="newJobSubmit()">
+      &#x2728; Create Job + Drive Folder
+    </button>
+    <button class="btn btn-secondary" onclick="nav('schedule')">Cancel</button>
+    <span id="nj-status" style="font-size:13px;color:var(--text3)"></span>
+  </div>
+
+  <div id="nj-result" style="max-width:900px;margin-top:16px"></div>
+  `);
+}
+
+async function newJobSubmit(){
+  const wo       = document.getElementById('nj-wo').value.trim();
+  const customer = document.getElementById('nj-customer').value.trim();
+  const po       = document.getElementById('nj-po').value.trim();
+  const partnum  = document.getElementById('nj-partnum').value.trim();
+  const partname = document.getElementById('nj-partname').value.trim();
+  const qty      = parseInt(document.getElementById('nj-qty').value)||1;
+  const material = document.getElementById('nj-material').value.trim();
+  const ship     = document.getElementById('nj-ship').value;
+  const machine  = document.getElementById('nj-machine').value;
+  const operator = document.getElementById('nj-operator').value;
+  const value    = parseFloat(document.getElementById('nj-value').value)||0;
+  const priority = document.getElementById('nj-priority').value;
+  const notes    = document.getElementById('nj-notes').value.trim();
+  const doTraveler    = document.getElementById('nj-doc-traveler').checked;
+  const doCR          = document.getElementById('nj-doc-cr').checked;
+  const doDiscrepancy = document.getElementById('nj-doc-discrepancy').checked;
+  const doKanban      = document.getElementById('nj-doc-kanban').checked;
+
+  if(!wo||!customer||!partname){ toast('Fill in WO#, Customer, and Part Name'); return; }
+
+  const btn    = document.getElementById('nj-submit-btn');
+  const status = document.getElementById('nj-status');
+  const result = document.getElementById('nj-result');
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+
+  // ── STEP 1: Save to ERP ──────────────────────────────────
+  status.textContent = 'Step 1/4 — Saving job to ERP...';
+  const jobs = DB.get('sched_jobs')||[];
+  const newJob = {
+    id: Date.now(),
+    wo, customer, po, partnum, partname, qty, material,
+    ship, machine, operator, value, priority, notes,
+    status: 'Queued',
+    opened: todayISO(),
+    driveFolder: null
+  };
+  jobs.push(newJob);
+  DB.set('sched_jobs', jobs);
+
+  // Also log in production planning
+  const ppJobs = DB.get('pp_jobs')||[];
+  ppJobs.push({ wo, customer, partname, qty, ship, status:'Planned', opened:todayISO() });
+  DB.set('pp_jobs', ppJobs);
+
+  // ── STEP 2: Create Drive folder structure ────────────────
+  status.textContent = 'Step 2/4 — Creating Google Drive folder...';
+  let jobFolderId = null;
+  let jobFolderUrl = null;
+  let driveErrors = [];
+  const folderName = wo + (partnum?' | '+partnum:'') + (partname?' | '+partname:'');
+
+  try {
+    // Get auth token
+    const token = await getDriveToken();
+    if(!token) throw new Error('Not authenticated with Google Drive');
+
+    // Create main job folder
+    const folderRes = await driveCreateFolder(token, folderName, DRIVE_TEMPLATES.activeJobsFolder);
+    jobFolderId  = folderRes.id;
+    jobFolderUrl = 'https://drive.google.com/drive/folders/'+jobFolderId;
+
+    status.textContent = 'Step 3/4 — Creating subfolders...';
+
+    // Create the 4 subfolders
+    const [f01,f02,f03,f04] = await Promise.all([
+      driveCreateFolder(token,'01 - Drawing',jobFolderId),
+      driveCreateFolder(token,'02 - Job Packet',jobFolderId),
+      driveCreateFolder(token,'03 - Inspection Records',jobFolderId),
+      driveCreateFolder(token,'04 - Material Certs',jobFolderId),
+    ]);
+
+    status.textContent = 'Step 4/4 — Copying document templates...';
+
+    // Copy templates with correct names
+    const woSlug = wo.replace(/[^a-zA-Z0-9-]/g,'_');
+    const partSlug = (partnum||'job').replace(/[^a-zA-Z0-9-]/g,'_');
+    const copies = [];
+
+    if(doTraveler)    copies.push(driveCopyFile(token, DRIVE_TEMPLATES.traveler,       woSlug+'_'+partSlug+'_Traveler.docx',           f02.id));
+    if(doCR)          copies.push(driveCopyFile(token, DRIVE_TEMPLATES.contractReview, wo+'_ContractReview_QP12.docx',                  jobFolderId));
+    if(doDiscrepancy) copies.push(driveCopyFile(token, DRIVE_TEMPLATES.discrepancy,    wo+'_DiscrepancyReport.docx',                    jobFolderId));
+    if(doKanban)      copies.push(driveCopyFile(token, DRIVE_TEMPLATES.kanban,         wo+'_KanbanCards.xlsx',                          jobFolderId));
+
+    const copyResults = await Promise.allSettled(copies);
+    copyResults.forEach((r,i)=>{ if(r.status==='rejected') driveErrors.push('Doc '+(i+1)+': '+r.reason); });
+
+    // Save folder link back to job
+    const jobs2 = DB.get('sched_jobs')||[];
+    const ji = jobs2.findIndex(j=>j.wo===wo);
+    if(ji>=0){ jobs2[ji].driveFolder=jobFolderUrl; DB.set('sched_jobs',jobs2); }
+
+  } catch(err) {
+    driveErrors.push('Drive: '+err.message);
+  }
+
+  // ── DONE: Show result ────────────────────────────────────
+  btn.disabled = false;
+  btn.textContent = '\u2728 Create Job + Drive Folder';
+  status.textContent = '';
+
+  const driveOK = !driveErrors.length && jobFolderUrl;
+  result.innerHTML = `
+    <div class="card" style="border-left:4px solid ${driveOK?'var(--green)':'var(--amber)'};padding:20px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:12px">${driveOK?'\u2705':'\u26A0\uFE0F'} Job Created${driveOK?' — Drive folder ready':''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:16px">
+        <div><span class="muted">WO #</span><br><strong style="color:var(--accent);font-size:15px">${wo}</strong></div>
+        <div><span class="muted">Customer</span><br><strong>${customer}</strong></div>
+        <div><span class="muted">Part</span><br>${partnum} — ${partname}</div>
+        <div><span class="muted">Qty / Ship</span><br>${qty} pcs / ${ship||'TBD'}</div>
+        <div><span class="muted">Machine</span><br>${machine}</div>
+        <div><span class="muted">Value</span><br>$${value.toLocaleString()}</div>
+      </div>
+      ${jobFolderUrl?`<a href="${jobFolderUrl}" target="_blank" class="btn btn-primary" style="margin-right:8px">\uD83D\uDCC1 Open Drive Folder</a>`:'<span style="color:var(--amber);font-size:13px">\u26A0\uFE0F Drive folder not created — check Google auth</span>'}
+      <button class="btn btn-secondary" onclick="nav('schedule')">View Scheduling Board</button>
+      <button class="btn btn-secondary" style="margin-left:8px" onclick="nav('newjob')">Create Another Job</button>
+      ${driveErrors.length?'<div style="margin-top:12px;font-size:12px;color:var(--red)">Drive issues: '+driveErrors.join('; ')+'</div>':''}
+    </div>
+  `;
+}
+
+// ── Drive API helpers ────────────────────────────────────────
+async function getDriveToken(){
+  // Pull token from Supabase session or Google auth cookie
+  // The MCP Google Drive connection stores the token in the session
+  if(window._googleDriveToken) return window._googleDriveToken;
+  // Try to get from gapi if loaded
+  if(window.gapi && gapi.auth2){
+    const auth = gapi.auth2.getAuthInstance();
+    if(auth && auth.isSignedIn.get()){
+      return auth.currentUser.get().getAuthResponse().access_token;
+    }
+  }
+  // Fallback: prompt user
+  throw new Error('Google Drive token not available. Please connect Google Drive in settings.');
+}
+
+async function driveCreateFolder(token, name, parentId){
+  const res = await fetch('https://www.googleapis.com/drive/v3/files',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+    body: JSON.stringify({
+      name, mimeType:'application/vnd.google-apps.folder',
+      parents:[parentId]
+    })
+  });
+  if(!res.ok) throw new Error('Create folder failed: '+res.status);
+  return res.json();
+}
+
+async function driveCopyFile(token, fileId, newName, parentId){
+  const res = await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'/copy',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+    body: JSON.stringify({ name:newName, parents:[parentId] })
+  });
+  if(!res.ok) throw new Error('Copy file failed: '+res.status+' '+fileId);
+  return res.json();
+}
+// ── END NEW JOB WIZARD ───────────────────────────────────────
+
 </script>
 
   <!-- BOTTOM NAV (mobile only) -->
