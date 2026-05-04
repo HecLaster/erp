@@ -2409,6 +2409,30 @@ function cashflow(){
   </div>
   <!-- ── END FIXED OVERHEAD ── -->
 
+  <!-- ── 12-WEEK CASH FLOW CHART ── -->
+  <div class="card mb-16">
+    <div class="card-header">
+      <span class="card-title">12-Week Cash Flow Forecast</span>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text3);margin:0">Starting Balance $:</label>
+        <input id="cf-start-bal" type="number" placeholder="e.g. 25000"
+          value="${DB.get('cf_start_balance')||''}"
+          onchange="DB.set('cf_start_balance',parseFloat(this.value)||0);cashflow();"
+          style="width:110px;font-size:13px;padding:4px 8px;text-align:right">
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-left:8px">
+          <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px"></span>Income</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px"></span>Overhead</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#1A6FFF;border-radius:2px;margin-right:4px"></span>Balance</span>
+        </div>
+      </div>
+    </div>
+    <div style="position:relative;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <canvas id="cf-chart" style="width:100%;min-width:580px;height:260px;display:block"></canvas>
+    </div>
+    <div id="cf-alert" style="margin-top:10px"></div>
+  </div>
+  <!-- ── END CHART ── -->
+
   <div class="section-grid grid-2 mb-16">
     <div class="card">
       <div class="card-header"><span class="card-title">Log Expense / AP</span></div>
@@ -2445,6 +2469,158 @@ function cashflow(){
     </table>
   </div>
   `);
+  // Draw chart after DOM renders
+  requestAnimationFrame(()=>drawCFChart(arJobs, fixed));
+}
+
+function drawCFChart(arJobs, fixed){
+  const canvas = document.getElementById('cf-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const startBal = parseFloat(DB.get('cf_start_balance'))||0;
+  const weeklyOverhead = fixed.reduce((s,f)=>s+fixedWeekly(f),0);
+
+  // Build 12 weekly buckets starting from today (Monday-aligned)
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay()+6)%7)); // back to Monday
+  monday.setHours(0,0,0,0);
+
+  const labels = [];
+  const income = [];
+  const overhead = [];
+  const balance = [];
+
+  let runBal = startBal;
+  for(let w=0;w<12;w++){
+    const wStart = new Date(monday); wStart.setDate(monday.getDate()+w*7);
+    const wEnd   = new Date(wStart); wEnd.setDate(wStart.getDate()+7);
+    const lbl = (wStart.getMonth()+1)+'/'+(wStart.getDate());
+    labels.push(lbl);
+
+    // Income = AR payments due this week (NET 30 from ship)
+    const wIncome = arJobs.filter(j=>{
+      return j.payDue >= wStart && j.payDue < wEnd;
+    }).reduce((s,j)=>s+(j.value||0),0);
+
+    income.push(wIncome);
+    overhead.push(weeklyOverhead);
+    runBal = runBal + wIncome - weeklyOverhead;
+    balance.push(runBal);
+  }
+
+  // Dimensions
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth||700;
+  const H = 260;
+  canvas.width  = W*dpr;
+  canvas.height = H*dpr;
+  canvas.style.width  = W+'px';
+  canvas.style.height = H+'px';
+  ctx.scale(dpr,dpr);
+
+  const padL=52, padR=16, padT=20, padB=40;
+  const chartW = W-padL-padR;
+  const chartH = H-padT-padB;
+  const n = labels.length;
+  const barW = (chartW/n)*0.3;
+  const slotW = chartW/n;
+
+  // Scale
+  const allVals = [...income,...overhead,...balance];
+  const maxV = Math.max(...allVals,0)*1.15||10000;
+  const minV = Math.min(...balance,0)*1.15;
+  const range = maxV - minV;
+  const toY = v => padT + chartH - ((v-minV)/range)*chartH;
+  const zero = toY(0);
+
+  ctx.clearRect(0,0,W,H);
+
+  // Zero line
+  ctx.strokeStyle='rgba(150,150,150,0.35)';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(padL,zero); ctx.lineTo(padL+chartW,zero); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Grid lines (3)
+  ctx.strokeStyle='rgba(150,150,150,0.15)';
+  [0.25,0.5,0.75,1].forEach(p=>{
+    const yg = padT + chartH*p;
+    ctx.beginPath(); ctx.moveTo(padL,yg); ctx.lineTo(padL+chartW,yg); ctx.stroke();
+  });
+
+  // Draw income bars (green) + overhead bars (red) side by side
+  for(let i=0;i<n;i++){
+    const cx = padL + i*slotW + slotW/2;
+    // income bar
+    const iy1 = toY(income[i]);
+    const iy2 = toY(0);
+    ctx.fillStyle='#22c55e';
+    ctx.fillRect(cx-barW-2, Math.min(iy1,iy2), barW, Math.abs(iy1-iy2)||1);
+    // overhead bar
+    const oy1 = toY(overhead[i]);
+    const oy2 = toY(0);
+    ctx.fillStyle='#ef4444';
+    ctx.fillRect(cx+2, Math.min(oy1,oy2), barW, Math.abs(oy1-oy2)||1);
+  }
+
+  // Balance line
+  ctx.lineWidth=2.5;
+  ctx.lineJoin='round';
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const cx = padL + i*slotW + slotW/2;
+    const cy = toY(balance[i]);
+    if(i===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy);
+  }
+  ctx.strokeStyle='#1A6FFF';
+  ctx.stroke();
+
+  // Balance dots — red if negative
+  for(let i=0;i<n;i++){
+    const cx = padL + i*slotW + slotW/2;
+    const cy = toY(balance[i]);
+    ctx.beginPath();
+    ctx.arc(cx,cy,4,0,Math.PI*2);
+    ctx.fillStyle = balance[i]<0 ? '#ef4444' : '#1A6FFF';
+    ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+
+  // Y-axis labels
+  ctx.fillStyle='#888'; ctx.font='10px monospace'; ctx.textAlign='right';
+  [minV, minV+range*0.25, minV+range*0.5, minV+range*0.75, maxV].forEach(v=>{
+    const y = toY(v);
+    const label = v>=1000?'$'+(v/1000).toFixed(0)+'k': v<=-1000?'-$'+(Math.abs(v)/1000).toFixed(0)+'k':'$'+Math.round(v);
+    ctx.fillStyle = v<0?'#ef4444':'#888';
+    ctx.fillText(label, padL-6, y+4);
+  });
+
+  // X-axis labels
+  ctx.fillStyle='#888'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  for(let i=0;i<n;i++){
+    const cx = padL + i*slotW + slotW/2;
+    ctx.fillText('Wk '+(i+1)+'\n'+labels[i], cx, H-padB+14);
+    ctx.fillText(labels[i], cx, H-padB+26);
+  }
+
+  // Alert box
+  const alertEl = document.getElementById('cf-alert');
+  if(!alertEl) return;
+  const firstNeg = balance.findIndex(b=>b<0);
+  if(firstNeg>=0){
+    const wStart2 = new Date(monday); wStart2.setDate(monday.getDate()+firstNeg*7);
+    const lbl2 = (wStart2.getMonth()+1)+'/'+(wStart2.getDate());
+    alertEl.innerHTML='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;color:#dc2626;font-size:13px">'+
+      '⚠️ <strong>Cash goes negative</strong> week of '+lbl2+' (Week '+(firstNeg+1)+') — projected balance: <strong>$'+Math.round(balance[firstNeg]).toLocaleString()+'</strong>. '+
+      'Add more revenue or reduce overhead to close the gap.</div>';
+  } else if(startBal>0){
+    alertEl.innerHTML='<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;color:#16a34a;font-size:13px">'+
+      '✓ Cash stays positive across all 12 weeks. Lowest projected balance: <strong>$'+Math.round(Math.min(...balance)).toLocaleString()+'</strong></div>';
+  } else {
+    alertEl.innerHTML='<div style="font-size:12px;color:#888;padding:4px 0">Enter your current bank balance above to see positive/negative predictions.</div>';
+  }
 }
 function expenseLog(){
   const amt=document.getElementById('exp-amt').value;
