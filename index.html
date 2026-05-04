@@ -637,7 +637,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
     <div class="nav-section">Coming Soon</div>
     <div class="nav-item" onclick="nav('people')" id="nav-people"><span class="nav-icon">◷</span> People & Training</div>
     <div class="nav-item" onclick="nav('sales')" id="nav-sales"><span class="nav-icon">◵</span> Sales Plan vs Actual</div>
-    <div class="nav-item locked"><span class="nav-icon">◈</span> AI Auditor <span class="nav-badge soon">Soon</span></div>
+    <div class="nav-item" onclick="nav('aiauditor')" id="nav-aiauditor"><span class="nav-icon">◈</span> AI Auditor</div>
     <div class="nav-item" onclick="nav('ncm')" id="nav-ncm"><span class="nav-icon">◉</span> Nonconforming Material</div>
     <div class="nav-item" onclick="nav('crev')" id="nav-crev"><span class="nav-icon">◎</span> Contract Review</div>
     <div class="nav-item" onclick="nav('shipping')" id="nav-shipping"><span class="nav-icon">◐</span> Shipping & COC</div>
@@ -720,7 +720,7 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 
 // ── NAVIGATION ──────────────────────────────────────────────
-const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal,customers,assignments,shiftnotes,certtracker,scraplog,jobsearch,prodplan};
+const PAGES = {floor,summary,schedule,receiving,calibration,fai,car,kpi,sales,people,quoting,cashflow,trace,suppliers,audits,ncm,crev,shipping,complaints,risk,mgmtreview,pm,jobcost,tooling,custportal,customers,assignments,shiftnotes,certtracker,scraplog,jobsearch,prodplan,aiauditor};
 let currentPage = 'floor';
 
 function nav(page){
@@ -756,7 +756,8 @@ function nav(page){
     certtracker:'Material Cert Tracker',
     scraplog:'Scrap & Rework Log',
     jobsearch:'Job Search',
-    prodplan:'Production Planning — QP-13'
+    prodplan:'Production Planning — QP-13',
+    aiauditor:'AI Auditor'
   };
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if(PAGES[page]) PAGES[page]();
@@ -5154,6 +5155,182 @@ document.addEventListener('DOMContentLoaded', function() {
   checkAutoBackup();
   DB.loadAll().catch(function(e){ console.warn('Supabase:', e); });
 });
+
+
+// ── AI AUDITOR ───────────────────────────────────────────────
+function aiauditor(){
+  const jobs = DB.get('sched_jobs')||[];
+  const cars = DB.get('car_records')||[];
+  const ncms = DB.get('ncm_recs')||[];
+  const gauges = DB.get('cal_gauges')||[];
+  const plans = DB.get('prod_plans')||[];
+  const auditRecs = DB.get('audit_recs')||[];
+
+  const activeJobs = jobs.filter(j=>j.status!=='Shipped');
+  const openCARs = cars.filter(c=>c.status!=='Closed');
+  const pendingNCMs = ncms.filter(n=>n.disposition==='Pending');
+  const overdueGauges = gauges.filter(g=>new Date(g.nextCal)<new Date());
+  const jobsMissingPlan = activeJobs.filter(j=>!plans.find(p=>p.wo===j.wo));
+
+  render(`
+  <div class="page-header">
+    <h1>AI Auditor</h1>
+    <p>AI-powered QMS analysis · Identifies gaps before a real auditor does</p>
+  </div>
+
+  <div class="section-grid grid-2 mb-16">
+    <div>
+      <!-- LIVE QMS STATUS -->
+      <div class="kpi-grid mb-16" style="grid-template-columns:repeat(2,1fr)">
+        <div class="kpi" style="border-left:3px solid ${openCARs.length>0?'var(--red)':'var(--green)'}">
+          <div class="kpi-val ${openCARs.length>0?'red':'green'}">${openCARs.length}</div>
+          <div class="kpi-label">Open CARs</div>
+        </div>
+        <div class="kpi" style="border-left:3px solid ${overdueGauges.length>0?'var(--red)':'var(--green)'}">
+          <div class="kpi-val ${overdueGauges.length>0?'red':'green'}">${overdueGauges.length}</div>
+          <div class="kpi-label">Overdue Gauges</div>
+        </div>
+        <div class="kpi" style="border-left:3px solid ${pendingNCMs.length>0?'var(--amber)':'var(--green)'}">
+          <div class="kpi-val ${pendingNCMs.length>0?'amber':'green'}">${pendingNCMs.length}</div>
+          <div class="kpi-label">Pending NCMs</div>
+        </div>
+        <div class="kpi" style="border-left:3px solid ${jobsMissingPlan.length>0?'var(--amber)':'var(--green)'}">
+          <div class="kpi-val ${jobsMissingPlan.length>0?'amber':'green'}">${jobsMissingPlan.length}</div>
+          <div class="kpi-label">Jobs Missing Plan</div>
+        </div>
+      </div>
+
+      <!-- RUN AI ANALYSIS -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">⚡ Run AI Analysis</span></div>
+        <div class="ai-box mb-12">
+          <div class="ai-label">What the AI Auditor does</div>
+          <div class="ai-text">Analyzes your live ERP data — open CARs, NCMs, calibration status, production plans, job completion rate, scrap trends — and identifies gaps against AS9100D requirements before a real auditor finds them.</div>
+        </div>
+        <label>Focus Area</label>
+        <select id="ai-focus">
+          <option value="full">Full QMS Health Check</option>
+          <option value="production">Production & Quality</option>
+          <option value="calibration">Calibration & Measurement</option>
+          <option value="corrective">Corrective Actions</option>
+          <option value="audit_readiness">Certification Audit Readiness</option>
+        </select>
+        <div style="margin-top:14px">
+          <button class="btn btn-primary" onclick="runAIAuditor()">⚡ Run Analysis</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Quick Findings</span></div>
+      ${openCARs.length===0&&overdueGauges.length===0&&pendingNCMs.length===0&&jobsMissingPlan.length===0
+        ? '<div class="alert alert-success">✅ No immediate gaps found — QMS looks healthy</div>'
+        : ''
+      }
+      ${overdueGauges.map(g=>'<div class="briefing-item" style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);margin-bottom:6px"><span style="font-size:14px">🔴</span> <strong>'+g.id+'</strong> — Calibration overdue since '+g.nextCal+'</div>').join('')}
+      ${openCARs.slice(0,3).map(c=>'<div class="briefing-item" style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);margin-bottom:6px"><span style="font-size:14px">⚠️</span> CAR <strong>'+c.num+'</strong> — '+c.trigger+' · Open</div>').join('')}
+      ${pendingNCMs.slice(0,3).map(n=>'<div class="briefing-item" style="background:rgba(255,152,0,0.06);border:1px solid rgba(255,152,0,0.2);margin-bottom:6px"><span style="font-size:14px">🔶</span> NCM <strong>'+n.num+'</strong> — Disposition pending</div>').join('')}
+      ${jobsMissingPlan.slice(0,3).map(j=>'<div class="briefing-item" style="background:rgba(255,152,0,0.06);border:1px solid rgba(255,152,0,0.2);margin-bottom:6px"><span style="font-size:14px">📋</span> <strong>'+j.wo+'</strong> — No production plan (QP-13)</div>').join('')}
+    </div>
+  </div>
+
+  <!-- AI ANALYSIS RESULTS -->
+  <div id="ai-auditor-results"></div>
+
+  <!-- AUDIT HISTORY -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">AI Audit History</span></div>
+    ${(DB.get('ai_audit_history')||[]).length===0
+      ? '<div class="muted" style="font-size:13px;padding:8px 0">No AI audits run yet — click Run Analysis above</div>'
+      : (DB.get('ai_audit_history')||[]).slice(-5).reverse().map(a=>
+          '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
+          +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+          +'<strong style="font-size:13px">'+a.focus+'</strong>'
+          +'<span class="muted" style="font-size:11px">'+a.date+'</span>'
+          +'</div>'
+          +'<div style="font-size:12px;color:var(--text3)">'+a.summary+'</div>'
+          +'</div>'
+        ).join('')
+    }
+  </div>
+  `);
+}
+
+function runAIAuditor(){
+  const focus = document.getElementById('ai-focus')?.value||'full';
+  const resultsEl = document.getElementById('ai-auditor-results');
+  if(!resultsEl) return;
+
+  // Build context from live ERP data
+  const jobs = DB.get('sched_jobs')||[];
+  const cars = DB.get('car_records')||[];
+  const ncms = DB.get('ncm_recs')||[];
+  const gauges = DB.get('cal_gauges')||[];
+  const plans = DB.get('prod_plans')||[];
+  const scraps = DB.get('scrap_log')||[];
+
+  const context = {
+    activeJobs: jobs.filter(j=>j.status!=='Shipped').length,
+    openCARs: cars.filter(c=>c.status!=='Closed').length,
+    pendingNCMs: ncms.filter(n=>n.disposition==='Pending').length,
+    overdueGauges: gauges.filter(g=>new Date(g.nextCal)<new Date()).length,
+    jobsMissingPlan: jobs.filter(j=>j.status!=='Shipped'&&!plans.find(p=>p.wo===j.wo)).length,
+    totalScrap: scraps.filter(s=>s.action==='Scrap').reduce((sum,s)=>sum+(parseInt(s.qty)||0),0),
+    auditsDone: (DB.get('audit_recs')||[]).length,
+  };
+
+  resultsEl.innerHTML = '<div class="card mb-16"><div class="card-header"><span class="card-title">⚡ AI Analysis Running...</span></div>'
+    +'<div style="padding:20px;text-align:center;color:var(--text3)">Analyzing your QMS data against AS9100D requirements...</div></div>';
+
+  fetch('/api/claude', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      messages: [{
+        role: 'user',
+        content: 'You are an AS9100D quality auditor reviewing a precision CNC machine shop. Analyze this ERP data and provide a structured audit report. Focus: ' + focus + '. Current data: ' + JSON.stringify(context) + '. Provide: 1) Overall health score (0-100), 2) Top 3 strengths, 3) Top 3 gaps/risks, 4) 3 recommended actions. Format as JSON: {"score": 85, "strengths": ["..."], "gaps": ["..."], "actions": ["..."], "summary": "one sentence"}'
+      }]
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    try {
+      const text = data.content[0].text;
+      const clean = text.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(clean);
+
+      // Save to history
+      const history = DB.get('ai_audit_history')||[];
+      history.push({focus, date: todayISO(), summary: result.summary, score: result.score});
+      DB.set('ai_audit_history', history);
+
+      const scoreColor = result.score>=80?'var(--green)':result.score>=60?'var(--amber)':'var(--red)';
+      resultsEl.innerHTML = '<div class="card mb-16">'
+        +'<div class="card-header"><span class="card-title">⚡ AI Audit Results — '+focus+'</span><span style="font-size:11px;color:var(--text3)">'+todayISO()+'</span></div>'
+        +'<div style="text-align:center;padding:20px 0">'
+        +'<div style="font-size:48px;font-weight:700;color:'+scoreColor+'">'+result.score+'</div>'
+        +'<div style="font-size:13px;color:var(--text3)">QMS Health Score / 100</div>'
+        +'</div>'
+        +'<div class="section-grid grid-3" style="gap:12px;margin-top:8px">'
+        +'<div><div style="font-size:10px;color:var(--green2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">✓ Strengths</div>'
+        +result.strengths.map(s=>'<div class="briefing-item" style="background:rgba(14,158,106,0.06);border:1px solid rgba(14,158,106,0.2);margin-bottom:6px;font-size:12px">'+s+'</div>').join('')+'</div>'
+        +'<div><div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">⚠ Gaps / Risks</div>'
+        +result.gaps.map(g=>'<div class="briefing-item" style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);margin-bottom:6px;font-size:12px">'+g+'</div>').join('')+'</div>'
+        +'<div><div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">→ Recommended Actions</div>'
+        +result.actions.map(a=>'<div class="briefing-item" style="background:rgba(26,111,255,0.06);border:1px solid rgba(26,111,255,0.2);margin-bottom:6px;font-size:12px">'+a+'</div>').join('')+'</div>'
+        +'</div></div>';
+    } catch(e) {
+      resultsEl.innerHTML = '<div class="card mb-16"><div class="card-header"><span class="card-title">Analysis Complete</span></div>'
+        +'<div class="ai-box"><div class="ai-text">'+( data.content?.[0]?.text||'Analysis complete — check your QMS data for details.')+'</div></div></div>';
+    }
+  })
+  .catch(err => {
+    resultsEl.innerHTML = '<div class="card mb-16"><div class="ai-box"><div class="ai-text">⚠ Could not reach AI — check your API connection. Your live data shows: '
+      +JSON.stringify({openCARs: cars.filter(c=>c.status!=='Closed').length, overdueGauges: gauges.filter(g=>new Date(g.nextCal)<new Date()).length})+'</div></div></div>';
+  });
+}
 
 // ── ALERTS BAR ───────────────────────────────────────────────
 function refreshAlerts(){
