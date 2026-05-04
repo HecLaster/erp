@@ -2278,10 +2278,43 @@ function carClose(id){
 
 
 // ── MODULE 12: CASH FLOW ────────────────────────────────────
+// Default fixed overhead — pre-loaded with Tier One actuals
+const DEFAULT_FIXED_EXPENSES = [
+  {id:'fix1', cat:'Facility',      desc:'Building Mortgage',                freq:'monthly', amount:3608},
+  {id:'fix2', cat:'Equipment',     desc:'UMC 500SS Loan',                   freq:'monthly', amount:2787},
+  {id:'fix3', cat:'Equipment',     desc:'DS-30Y Lathe Loan',                freq:'monthly', amount:2080},
+  {id:'fix4', cat:'Equipment',     desc:'VF2SS 5-Axis / TRT 160 / VF2SS Bundle', freq:'monthly', amount:2045},
+  {id:'fix5', cat:'Utilities',     desc:'Utilities (Electric/Gas/Water)',    freq:'monthly', amount:1550},
+  {id:'fix6', cat:'Software',      desc:'Software & Phones',                freq:'monthly', amount:140},
+  {id:'fix7', cat:'Payroll',       desc:'Staff Payroll',                    freq:'weekly',  amount:3560},
+  {id:'fix8', cat:'Owner',         desc:'Hec Draw',                         freq:'monthly', amount:7500},
+  {id:'fix9', cat:'Insurance',     desc:'Business Insurance',               freq:'monthly', amount:821},
+  {id:'fix10',cat:'Vehicle',       desc:'Truck Payment',                    freq:'monthly', amount:1150},
+];
+
+function getFixedExpenses(){
+  const stored = DB.get('fixed_expenses');
+  if(!stored || stored.length===0){
+    DB.set('fixed_expenses', DEFAULT_FIXED_EXPENSES);
+    return DEFAULT_FIXED_EXPENSES;
+  }
+  return stored;
+}
+
+function fixedMonthly(fe){
+  // Convert weekly to monthly (×52/12)
+  return fe.freq==='weekly' ? fe.amount*(52/12) : fe.amount;
+}
+
+function fixedWeekly(fe){
+  return fe.freq==='weekly' ? fe.amount : fe.amount*(12/52);
+}
+
 function cashflow(){
   const invoices = DB.get('invoices')||[];
   const expenses = DB.get('expenses')||[];
   const jobs = DB.get('sched_jobs')||[];
+  const fixed = getFixedExpenses();
 
   // AR = Shipped jobs awaiting payment (NET 30 from ship date)
   const now = new Date();
@@ -2300,12 +2333,21 @@ function cashflow(){
   const totalInvoiced = invoices.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
   const totalExpenses = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
 
+  // Fixed overhead totals
+  const totalFixedMonthly = fixed.reduce((s,f)=>s+fixedMonthly(f),0);
+  const totalFixedWeekly  = fixed.reduce((s,f)=>s+fixedWeekly(f),0);
+
+  // Category subtotals for the breakdown bar
+  const cats = {};
+  fixed.forEach(f=>{ const m=fixedMonthly(f); cats[f.cat]=(cats[f.cat]||0)+m; });
+  const catColors = {Facility:'var(--accent)',Equipment:'var(--purple)',Utilities:'var(--amber)',Software:'var(--blue2,#60a5fa)',Payroll:'var(--green2)',Owner:'var(--green)',Insurance:'var(--red)',Vehicle:'var(--text3)'};
+
   const ar30 = arJobs.filter(j=>j.payDue<=d30).reduce((s,j)=>s+(j.value||0),0);
   const ar60 = arJobs.filter(j=>j.payDue>d30&&j.payDue<=d60).reduce((s,j)=>s+(j.value||0),0);
   const ar90 = arJobs.filter(j=>j.payDue>d60&&j.payDue<=d90).reduce((s,j)=>s+(j.value||0),0);
 
   render(`
-  <div class="page-header"><h1>Cash Flow Forecast</h1><p>AR/AP · 30/60/90-day projection · Negative flow alerts</p></div>
+  <div class="page-header"><h1>Cash Flow Forecast</h1><p>AR/AP · Fixed Overhead · 30/60/90-day projection · Negative flow alerts</p></div>
 
   <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
     <div class="kpi" style="border-left:3px solid var(--green)"><div class="kpi-val green">$${(totalAR/1000).toFixed(1)}k</div><div class="kpi-label">Total AR Pipeline</div></div>
@@ -2313,6 +2355,59 @@ function cashflow(){
     <div class="kpi" style="border-left:3px solid var(--purple)"><div class="kpi-val">$${(ar60/1000).toFixed(1)}k</div><div class="kpi-label">31–60 Days</div></div>
     <div class="kpi" style="border-left:3px solid var(--amber)"><div class="kpi-val amber">$${(ar90/1000).toFixed(1)}k</div><div class="kpi-label">61–90 Days</div></div>
   </div>
+
+  <!-- ── FIXED OVERHEAD SECTION ── -->
+  <div class="card mb-16">
+    <div class="card-header">
+      <span class="card-title">Fixed Overhead</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Monthly: <strong style="color:var(--red)">$${totalFixedMonthly.toLocaleString('en-US',{maximumFractionDigits:0})}</strong></span>
+        <span style="font-size:12px;color:var(--text3);margin-left:8px">Weekly: <strong style="color:var(--amber)">$${totalFixedWeekly.toLocaleString('en-US',{maximumFractionDigits:0})}</strong></span>
+        <button class="btn btn-secondary btn-sm" onclick="addFixedExpenseRow()">+ Add</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFixedExpenses()">Reset Defaults</button>
+      </div>
+    </div>
+
+    <!-- Category breakdown bar -->
+    <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;gap:2px">
+      ${Object.entries(cats).map(([cat,amt])=>`<div style="flex:${amt};background:${catColors[cat]||'var(--text3)'};border-radius:2px" title="${cat}: $${amt.toLocaleString('en-US',{maximumFractionDigits:0})}/mo"></div>`).join('')}
+    </div>
+
+    <table id="fixed-expense-table">
+      <thead><tr><th>Category</th><th>Description</th><th>Frequency</th><th style="text-align:right">Amount</th><th style="text-align:right">Monthly Equiv.</th><th></th></tr></thead>
+      <tbody>
+        ${fixed.map((f,i)=>`
+        <tr>
+          <td><select onchange="updateFixed(${i},'cat',this.value)" style="font-size:12px;padding:2px 4px">
+            ${['Facility','Equipment','Utilities','Software','Payroll','Owner','Insurance','Vehicle','Other'].map(c=>`<option${f.cat===c?' selected':''}>${c}</option>`).join('')}
+          </select></td>
+          <td><input value="${f.desc}" onchange="updateFixed(${i},'desc',this.value)" style="font-size:12px;padding:2px 6px;width:100%;min-width:180px"></td>
+          <td><select onchange="updateFixed(${i},'freq',this.value)" style="font-size:12px;padding:2px 4px">
+            <option${f.freq==='monthly'?' selected':''}>monthly</option>
+            <option${f.freq==='weekly'?' selected':''}>weekly</option>
+          </select></td>
+          <td style="text-align:right"><input type="number" value="${f.amount}" onchange="updateFixed(${i},'amount',this.value)" style="font-size:12px;padding:2px 6px;width:90px;text-align:right"></td>
+          <td class="mono" style="text-align:right;color:var(--red);font-size:13px">$${fixedMonthly(f).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+          <td><button class="btn btn-secondary btn-sm" style="color:var(--red);padding:2px 8px" onclick="deleteFixed(${i})">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot>
+        <tr style="border-top:2px solid var(--border)">
+          <td colspan="3" style="font-weight:700;padding:8px 0">TOTAL MONTHLY OVERHEAD</td>
+          <td></td>
+          <td class="mono" style="text-align:right;font-weight:700;color:var(--red);font-size:15px">$${totalFixedMonthly.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td colspan="3" style="font-weight:600;padding:2px 0;color:var(--text3)">TOTAL WEEKLY BURN</td>
+          <td></td>
+          <td class="mono" style="text-align:right;font-weight:600;color:var(--amber);font-size:13px">$${totalFixedWeekly.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <!-- ── END FIXED OVERHEAD ── -->
 
   <div class="section-grid grid-2 mb-16">
     <div class="card">
@@ -2356,6 +2451,33 @@ function expenseLog(){
   if(!amt){toast('Enter amount');return;}
   DB.push('expenses',{cat:document.getElementById('exp-cat').value,amount:amt,date:document.getElementById('exp-date').value,desc:document.getElementById('exp-desc').value});
   toast('✓ Expense logged');
+  cashflow();
+}
+function updateFixed(idx,field,val){
+  const fixed=getFixedExpenses();
+  if(field==='amount') fixed[idx][field]=parseFloat(val)||0;
+  else fixed[idx][field]=val;
+  DB.set('fixed_expenses',fixed);
+  cashflow();
+}
+function deleteFixed(idx){
+  if(!confirm('Remove this expense?')) return;
+  const fixed=getFixedExpenses();
+  fixed.splice(idx,1);
+  DB.set('fixed_expenses',fixed);
+  toast('Expense removed');
+  cashflow();
+}
+function addFixedExpenseRow(){
+  const fixed=getFixedExpenses();
+  fixed.push({id:'fix_'+Date.now(),cat:'Other',desc:'New Expense',freq:'monthly',amount:0});
+  DB.set('fixed_expenses',fixed);
+  cashflow();
+}
+function resetFixedExpenses(){
+  if(!confirm('Reset to Tier One defaults? This will overwrite any custom changes.')) return;
+  DB.set('fixed_expenses',DEFAULT_FIXED_EXPENSES);
+  toast('Reset to defaults');
   cashflow();
 }
 
