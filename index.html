@@ -2310,11 +2310,257 @@ function fixedWeekly(fe){
   return fe.freq==='weekly' ? fe.amount : fe.amount*(12/52);
 }
 
+// Seed QB open AR — pre-loaded from QuickBooks export 05/04/2026
+// Keyed by invoice number; only imports once, never overwrites manual edits
+const QB_AR_SEED = [
+  {id:'qb-2579', inv:'2579', customer:'Hirebotics',      amount:500.00,    invoiceDate:'2026-04-13', dueDate:'2026-04-28'},
+  {id:'qb-2581', inv:'2581', customer:'Spirax Sarco Inc', amount:12676.32, invoiceDate:'2026-04-15', dueDate:'2026-05-15'},
+  {id:'qb-2583', inv:'2583', customer:'Spirax Sarco Inc', amount:12676.32, invoiceDate:'2026-04-23', dueDate:'2026-05-23'},
+  {id:'qb-2584', inv:'2584', customer:'Spirax Sarco Inc', amount:225.00,   invoiceDate:'2026-04-24', dueDate:'2026-05-24'},
+  {id:'qb-2586', inv:'2586', customer:'JC Ford',          amount:14530.00, invoiceDate:'2026-05-01', dueDate:'2026-05-31'},
+  {id:'qb-2587', inv:'2587', customer:'Spirax Sarco Inc', amount:6690.28,  invoiceDate:'2026-05-04', dueDate:'2026-06-03'},
+];
+
+function getOpenAR(){
+  // Merge seed with any user-added AR, skip paid ones
+  let stored = DB.get('open_ar')||null;
+  if(!stored){
+    stored = QB_AR_SEED.map(r=>Object.assign({},r,{paid:false,paidDate:null}));
+    DB.set('open_ar', stored);
+  }
+  return stored;
+}
+
+function markARPaid(id){
+  const ar = getOpenAR();
+  const idx = ar.findIndex(r=>r.id===id);
+  if(idx<0) return;
+  ar[idx].paid = true;
+  ar[idx].paidDate = todayISO();
+  DB.set('open_ar', ar);
+  toast('✓ Marked paid — '+ar[idx].customer+' $'+ar[idx].amount.toLocaleString());
+  cashflow();
+}
+
+function addARRow(){
+  const ar = getOpenAR();
+  const id = 'ar-'+Date.now();
+  ar.push({id, inv:'', customer:'', amount:0, invoiceDate:todayISO(), dueDate:'', paid:false, paidDate:null});
+  DB.set('open_ar', ar);
+  cashflow();
+}
+
+function updateAR(id, field, val){
+  const ar = getOpenAR();
+  const idx = ar.findIndex(r=>r.id===id);
+  if(idx<0) return;
+  ar[idx][field] = field==='amount' ? parseFloat(val)||0 : val;
+  DB.set('open_ar', ar);
+  cashflow();
+}
+
+// ── AP PAYDOWN PLANNER ─────────────────────────────────────
+const QB_AP_SEED = [
+  {id:'ap-1',  vendor:'Cumberland Die Supply', bill:'A1133',   billDate:'2019-02-01', dueDate:'2019-03-03', amount:512.56,   paid:false, paidDate:null},
+  {id:'ap-2',  vendor:'McMaster Carr',          bill:'45099',   billDate:'2025-05-05', dueDate:'2025-06-04', amount:496.97,   paid:false, paidDate:null},
+  {id:'ap-3',  vendor:'John W. McDougall',      bill:'13478',   billDate:'2025-06-19', dueDate:'2025-07-19', amount:13388.00, paid:false, paidDate:null},
+  {id:'ap-4',  vendor:'Max Tool Inc',            bill:'5834357', billDate:'2025-07-24', dueDate:'2025-08-23', amount:5194.02,  paid:false, paidDate:null},
+  {id:'ap-5',  vendor:'Max Tool Inc',            bill:'5836666', billDate:'2025-08-06', dueDate:'2025-09-05', amount:19830.37, paid:false, paidDate:null},
+  {id:'ap-6',  vendor:'Max Tool Inc',            bill:'5845539', billDate:'2025-09-23', dueDate:'2025-10-23', amount:16151.90, paid:false, paidDate:null},
+  {id:'ap-7',  vendor:'Max Tool Inc',            bill:'5846259', billDate:'2025-09-26', dueDate:'2025-10-26', amount:7221.60,  paid:false, paidDate:null},
+  {id:'ap-8',  vendor:'Max Tool Inc',            bill:'5854877', billDate:'2025-11-06', dueDate:'2025-12-06', amount:5618.94,  paid:false, paidDate:null},
+  {id:'ap-9',  vendor:'Max Tool Inc',            bill:'5855164', billDate:'2025-11-07', dueDate:'2025-12-07', amount:4918.32,  paid:false, paidDate:null},
+  {id:'ap-10', vendor:'Max Tool Inc',            bill:'5855867', billDate:'2025-11-11', dueDate:'2025-12-11', amount:15391.60, paid:false, paidDate:null},
+  {id:'ap-11', vendor:'Max Tool Inc',            bill:'5859603', billDate:'2025-11-26', dueDate:'2026-01-10', amount:268.34,   paid:false, paidDate:null},
+  {id:'ap-12', vendor:'Dickson County Truck',    bill:'',        billDate:'2025-12-31', dueDate:'2026-01-30', amount:2298.00,  paid:false, paidDate:null},
+  {id:'ap-13', vendor:'Dickson County Truck',    bill:'',        billDate:'2025-12-31', dueDate:'2026-01-30', amount:395.00,   paid:false, paidDate:null},
+  {id:'ap-14', vendor:'Secor Metal Finishing',   bill:'56427',   billDate:'2026-02-18', dueDate:'2026-03-20', amount:962.50,   paid:false, paidDate:null},
+  {id:'ap-15', vendor:'Prince & Izant',          bill:'SN38',    billDate:'2026-03-23', dueDate:'2026-04-22', amount:918.69,   paid:false, paidDate:null},
+  {id:'ap-16', vendor:'Lilja Industrial',        bill:'2594',    billDate:'2026-03-30', dueDate:'2026-04-29', amount:10500.00, paid:false, paidDate:null},
+  {id:'ap-17', vendor:'Prince & Izant',          bill:'SN39a',   billDate:'2026-04-10', dueDate:'2026-05-10', amount:990.87,   paid:false, paidDate:null},
+  {id:'ap-18', vendor:'Prince & Izant',          bill:'SN39b',   billDate:'2026-04-15', dueDate:'2026-05-15', amount:1317.07,  paid:false, paidDate:null},
+  {id:'ap-19', vendor:'Prince & Izant',          bill:'SN39c',   billDate:'2026-05-04', dueDate:'2026-06-03', amount:424.87,   paid:false, paidDate:null},
+];
+
+function getOpenAP(){
+  let stored = DB.get('open_ap')||null;
+  if(!stored){
+    stored = QB_AP_SEED.map(r=>Object.assign({},r));
+    DB.set('open_ap', stored);
+  }
+  return stored;
+}
+
+function markAPPaid(id){
+  const ap = getOpenAP();
+  const idx = ap.findIndex(r=>r.id===id);
+  if(idx<0) return;
+  ap[idx].paid = true;
+  ap[idx].paidDate = todayISO();
+  DB.set('open_ap', ap);
+  toast('\u2713 Paid: '+ap[idx].vendor+' $'+ap[idx].amount.toLocaleString());
+  cashflow();
+}
+
+function updateAP(id, field, val){
+  const ap = getOpenAP();
+  const idx = ap.findIndex(r=>r.id===id);
+  if(idx<0) return;
+  ap[idx][field] = field==='amount' ? parseFloat(val)||0 : val;
+  DB.set('open_ap', ap);
+  cashflow();
+}
+
+function addAPRow(){
+  const ap = getOpenAP();
+  ap.push({id:'ap-'+Date.now(), vendor:'', bill:'', billDate:todayISO(), dueDate:todayISO(), amount:0, paid:false, paidDate:null});
+  DB.set('open_ap', ap);
+  cashflow();
+}
+
+function renderAPTable(){
+  const el = document.getElementById('ap-table');
+  if(!el) return;
+  const now = new Date();
+  const ap = getOpenAP();
+  const unpaid = ap.filter(r=>!r.paid).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const totalAP = unpaid.reduce((s,r)=>s+r.amount,0);
+  const weeklyBudget = parseFloat(DB.get('ap_weekly_budget'))||0;
+
+  // Build paydown schedule
+  let schedule = [];
+  if(weeklyBudget>0){
+    let remaining = unpaid.map(r=>Object.assign({},r));
+    let week = 0;
+    let weekBal = weeklyBudget;
+    let payments = {};
+    while(remaining.length>0 && week<104){
+      weekBal = weeklyBudget;
+      let weekPayments = [];
+      for(let i=0;i<remaining.length && weekBal>0;i++){
+        const pay = Math.min(weekBal, remaining[i].amount);
+        remaining[i].amount -= pay;
+        weekBal -= pay;
+        weekPayments.push({vendor:remaining[i].vendor, pay});
+      }
+      remaining = remaining.filter(r=>r.amount>0.01);
+      if(weekPayments.length) schedule.push({week:week+1, payments:weekPayments});
+      week++;
+    }
+  }
+
+  // Find payoff week
+  let payoffWeeks = 0;
+  let payoffDate = null;
+  if(weeklyBudget>0 && totalAP>0){
+    payoffWeeks = Math.ceil(totalAP/weeklyBudget);
+    payoffDate = new Date(now);
+    payoffDate.setDate(now.getDate()+(payoffWeeks*7));
+  }
+
+  let html = '';
+
+  // Summary bar
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">';
+  html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 16px">'
+    +'<div style="font-size:11px;color:#dc2626;font-weight:600">TOTAL OPEN AP</div>'
+    +'<div style="font-size:20px;font-weight:700;color:#dc2626">$'+totalAP.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>';
+  html += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 16px">'
+    +'<div style="font-size:11px;color:#0369a1;font-weight:600">WEEKLY PAYDOWN BUDGET</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-top:4px">'
+    +'<span style="font-size:16px;color:#0369a1">$</span>'
+    +'<input id="ap-budget-input" type="number" value="'+(weeklyBudget||'')+'" placeholder="e.g. 2000"'
+    +' style="width:100px;font-size:16px;font-weight:700;padding:2px 6px;color:#0369a1;border:1px solid #bae6fd;border-radius:4px">'
+    +'<span style="font-size:11px;color:#0369a1">/week</span></div></div>';
+  if(weeklyBudget>0 && payoffDate){
+    const mo = payoffDate.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+    html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 16px">'
+      +'<div style="font-size:11px;color:#16a34a;font-weight:600">PROJECTED PAYOFF</div>'
+      +'<div style="font-size:16px;font-weight:700;color:#16a34a">'+mo+'</div>'
+      +'<div style="font-size:11px;color:#16a34a">'+payoffWeeks+' weeks at $'+weeklyBudget.toLocaleString()+'/wk</div></div>';
+  }
+  html += '</div>';
+
+  // Progress bar (paid vs total from seed)
+  const seedTotal = QB_AP_SEED.reduce((s,r)=>s+r.amount,0);
+  const paidPct = Math.max(0,Math.min(100,Math.round(((seedTotal-totalAP)/seedTotal)*100)));
+  html += '<div style="margin-bottom:16px">'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px">'
+    +'<span>AP Paydown Progress</span><span>'+paidPct+'% cleared ($'+((seedTotal-totalAP)).toLocaleString('en-US',{maximumFractionDigits:0})+' of $'+seedTotal.toLocaleString('en-US',{maximumFractionDigits:0})+')</span></div>'
+    +'<div style="height:8px;background:#fee2e2;border-radius:4px;overflow:hidden">'
+    +'<div style="height:100%;width:'+paidPct+'%;background:#22c55e;border-radius:4px;transition:width 0.3s"></div></div></div>';
+
+  // Bills table
+  html += '<table><thead><tr><th>Vendor</th><th>Bill #</th><th>Due Date</th><th>Aging</th>'
+    +'<th style="text-align:right">Open Balance</th><th>Priority</th><th></th></tr></thead><tbody>';
+
+  if(unpaid.length===0){
+    html += '<tr><td colspan="7" style="text-align:center;color:#16a34a;padding:20px;font-weight:600">&#10003; All AP cleared!</td></tr>';
+  } else {
+    unpaid.forEach((r,i)=>{
+      const due = new Date(r.dueDate+'T12:00:00');
+      const agingDays = Math.round((now-due)/86400000);
+      const isOld = agingDays>180;
+      const isMid = agingDays>30 && agingDays<=180;
+      const agingColor = isOld?'#dc2626':isMid?'#d97706':'#16a34a';
+      const priority = i+1;
+      html += '<tr>'
+        +'<td style="font-size:13px;font-weight:500"><input class="ap-field" data-id="'+r.id+'" data-field="vendor" value="'+r.vendor+'" style="min-width:140px;font-size:12px;padding:2px 4px"></td>'
+        +'<td class="mono" style="font-size:11px"><input class="ap-field" data-id="'+r.id+'" data-field="bill" value="'+r.bill+'" style="width:70px;font-size:11px;padding:2px 4px"></td>'
+        +'<td><input type="date" class="ap-field" data-id="'+r.id+'" data-field="dueDate" value="'+r.dueDate+'" style="font-size:11px;padding:2px 4px"></td>'
+        +'<td class="mono" style="font-size:12px;color:'+agingColor+';font-weight:600">'+agingDays+'d</td>'
+        +'<td style="text-align:right"><input type="number" class="ap-field" data-id="'+r.id+'" data-field="amount" value="'+r.amount+'" style="width:90px;font-size:12px;padding:2px 4px;text-align:right"></td>'
+        +'<td style="text-align:center"><span style="background:#e0e7ff;color:#4338ca;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">#'+priority+'</span></td>'
+        +'<td><button class="btn btn-primary btn-sm ap-paid-btn" data-id="'+r.id+'" style="font-size:11px;padding:3px 8px;white-space:nowrap">Mark Paid</button></td>'
+        +'</tr>';
+    });
+    html += '<tr style="border-top:2px solid var(--border2)">'
+      +'<td colspan="4" style="font-weight:700;padding:8px 0">TOTAL OPEN AP</td>'
+      +'<td class="mono" style="text-align:right;font-weight:700;color:#dc2626">$'+totalAP.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+      +'<td colspan="2"></td></tr>';
+  }
+  html += '</tbody></table>';
+
+  // Paydown schedule
+  if(weeklyBudget>0 && schedule.length>0){
+    html += '<div style="margin-top:20px"><div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#0369a1">Paydown Schedule — $'+weeklyBudget.toLocaleString()+'/week</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    schedule.slice(0,24).forEach(wk=>{
+      const wkDate = new Date(now); wkDate.setDate(now.getDate()+(wk.week-1)*7);
+      const lbl = (wkDate.getMonth()+1)+'/'+(wkDate.getDate());
+      const wkTotal = wk.payments.reduce((s,p)=>s+p.pay,0);
+      html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;min-width:140px">'
+        +'<div style="font-size:10px;color:#64748b;font-weight:600">WK '+wk.week+' &bull; '+lbl+'</div>'
+        +'<div style="font-size:13px;font-weight:700;color:#dc2626;margin:2px 0">$'+wkTotal.toLocaleString('en-US',{maximumFractionDigits:0})+'</div>'
+        +'<div style="font-size:10px;color:#64748b">'+wk.payments.map(p=>p.vendor.split(' ')[0]).join(', ')+'</div>'
+        +'</div>';
+    });
+    if(schedule.length>24) html += '<div style="padding:8px;color:#888;font-size:12px">...+'+(schedule.length-24)+' more weeks</div>';
+    html += '</div></div>';
+  }
+
+  el.innerHTML = html;
+
+  // Event delegation
+  el.querySelectorAll('.ap-field').forEach(input=>{
+    input.addEventListener('change', function(){ updateAP(this.dataset.id, this.dataset.field, this.value); });
+  });
+  el.querySelectorAll('.ap-paid-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){ markAPPaid(this.dataset.id); });
+  });
+  const budgetInput = el.querySelector('#ap-budget-input');
+  if(budgetInput) budgetInput.addEventListener('change', function(){
+    DB.set('ap_weekly_budget', parseFloat(this.value)||0);
+    renderAPTable();
+  });
+}
+
 function cashflow(){
   const invoices = DB.get('invoices')||[];
   const expenses = DB.get('expenses')||[];
   const jobs = DB.get('sched_jobs')||[];
   const fixed = getFixedExpenses();
+  const openAR = getOpenAR().filter(r=>!r.paid);
 
   // AR = Shipped jobs awaiting payment (NET 30 from ship date)
   const now = new Date();
@@ -2322,11 +2568,10 @@ function cashflow(){
   const d60 = new Date(now); d60.setDate(d60.getDate()+60);
   const d90 = new Date(now); d90.setDate(d90.getDate()+90);
 
-  const shippedJobs = jobs.filter(j=>j.status==='Shipped' && (j.value||0)>0);
-  const arJobs = shippedJobs.map(j=>{
-    const sd = new Date((j.shipActual||j.ship||'2026-05-02')+'T12:00:00');
-    const pd = new Date(sd); pd.setDate(pd.getDate()+30);
-    return Object.assign({},j,{payDue:pd});
+  // Build arJobs from open AR records (primary source)
+  const arJobs = openAR.map(r=>{
+    const pd = new Date(r.dueDate+'T12:00:00');
+    return {wo:'INV-'+r.inv, customer:r.customer, value:r.amount, payDue:pd, dueDate:r.dueDate, id:r.id};
   });
 
   const totalAR = arJobs.reduce((s,j)=>s+(j.value||0),0);
@@ -2446,15 +2691,11 @@ function cashflow(){
       <div style="margin-top:14px"><button class="btn btn-primary" onclick="expenseLog()">Log Expense</button></div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title">AR by Job — Next 90 Days</span></div>
-      ${arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d90).sort((a,b)=>new Date(a.ship)-new Date(b.ship)).slice(0,8).map(j=>{
-        const daysOut=Math.round((new Date(j.ship+'T12:00:00')-now)/86400000);
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">'
-          +'<div><div class="mono" style="font-size:12px">'+j.wo+'</div><div style="font-size:11px;color:var(--text3)">'+(j.customer||'')+'</div></div>'
-          +'<div style="text-align:right"><div class="mono" style="color:var(--green2);font-size:13px">$'+(j.value||0).toLocaleString()+'</div>'
-          +'<div style="font-size:10px;color:var(--text3)">'+daysOut+'d</div></div></div>';
-      }).join('')}
-      ${arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d90).length===0?'<div class="muted" style="font-size:13px">No jobs due in 90 days with value set.<br>Add job values in the scheduling board.</div>':''}
+      <div class="card-header">
+        <span class="card-title">Open AR — All Invoices</span>
+        <button class="btn btn-secondary btn-sm" onclick="addARRow()">+ Add Invoice</button>
+      </div>
+      <div id="open-ar-table"></div>
     </div>
   </div>
 
@@ -2468,9 +2709,75 @@ function cashflow(){
       </tbody>
     </table>
   </div>
+
+  <!-- AP PAYDOWN PLANNER -->
+  <div class="card mt-16" style="margin-top:16px">
+    <div class="card-header">
+      <span class="card-title">AP Paydown Planner</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="addAPRow()">+ Add Bill</button>
+        <button class="btn btn-secondary btn-sm" onclick="renderAPTable()">↻</button>
+      </div>
+    </div>
+    <div id="ap-table"></div>
+  </div>
+  <!-- END AP PAYDOWN -->
   `);
   // Draw chart after DOM renders
-  requestAnimationFrame(()=>drawCFChart(arJobs, fixed));
+  requestAnimationFrame(()=>{
+    drawCFChart(arJobs, fixed);
+    renderARTable(now);
+    renderAPTable();
+  });
+}
+
+function renderARTable(now){
+  const el = document.getElementById('open-ar-table');
+  if(!el) return;
+  if(!now) now = new Date();
+  const allAR = getOpenAR();
+  const unpaid = allAR.filter(r=>!r.paid).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const totalOpen = unpaid.reduce((s,r)=>s+r.amount,0);
+
+  let html = '<table><thead><tr><th>Inv #</th><th>Customer</th><th>Due Date</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead><tbody>';
+  if(unpaid.length===0){
+    html += '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">No open invoices</td></tr>';
+  } else {
+    unpaid.forEach(r=>{
+      const due = new Date(r.dueDate+'T12:00:00');
+      const daysLeft = Math.round((due-now)/86400000);
+      const overdue = daysLeft<0;
+      const dueSoon = daysLeft>=0&&daysLeft<=7;
+      const statusColor = overdue?'#dc2626':dueSoon?'#d97706':'#16a34a';
+      const statusLabel = overdue?'OVERDUE '+Math.abs(daysLeft)+'d':'Due in '+daysLeft+'d';
+      html += '<tr>'
+        +'<td class="mono" style="font-size:12px"><input class="ar-field" data-id="'+r.id+'" data-field="inv" value="'+r.inv+'" style="width:60px;font-size:12px;padding:2px 4px"></td>'
+        +'<td><input class="ar-field" data-id="'+r.id+'" data-field="customer" value="'+r.customer+'" style="min-width:130px;font-size:12px;padding:2px 4px"></td>'
+        +'<td><input type="date" class="ar-field" data-id="'+r.id+'" data-field="dueDate" value="'+r.dueDate+'" style="font-size:12px;padding:2px 4px"></td>'
+        +'<td style="text-align:right"><input type="number" class="ar-field" data-id="'+r.id+'" data-field="amount" value="'+r.amount+'" style="width:90px;font-size:12px;padding:2px 4px;text-align:right"></td>'
+        +'<td><span style="font-size:11px;font-weight:600;color:'+statusColor+'">'+statusLabel+'</span></td>'
+        +'<td><button class="btn btn-primary btn-sm ar-paid-btn" data-id="'+r.id+'" style="font-size:11px;padding:3px 8px">Mark Paid</button></td>'
+        +'</tr>';
+    });
+    html += '<tr style="border-top:2px solid var(--border2)">'
+      +'<td colspan="3" style="font-weight:700;padding:8px 0">TOTAL OPEN AR</td>'
+      +'<td class="mono" style="text-align:right;font-weight:700;color:#16a34a">$'+totalOpen.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+      +'<td colspan="2"></td></tr>';
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+
+  // Event delegation — no inline handlers needed
+  el.querySelectorAll('.ar-field').forEach(input=>{
+    input.addEventListener('change', function(){
+      updateAR(this.dataset.id, this.dataset.field, this.value);
+    });
+  });
+  el.querySelectorAll('.ar-paid-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      markARPaid(this.dataset.id);
+    });
+  });
 }
 
 function drawCFChart(arJobs, fixed){
@@ -2479,6 +2786,8 @@ function drawCFChart(arJobs, fixed){
   const ctx = canvas.getContext('2d');
   const startBal = parseFloat(DB.get('cf_start_balance'))||0;
   const weeklyOverhead = fixed.reduce((s,f)=>s+fixedWeekly(f),0);
+  const weeklyAPBudget = parseFloat(DB.get('ap_weekly_budget'))||0;
+  const totalWeeklyOut = weeklyOverhead + weeklyAPBudget;
 
   // Build 12 weekly buckets starting from today (Monday-aligned)
   const now = new Date();
@@ -2504,8 +2813,8 @@ function drawCFChart(arJobs, fixed){
     }).reduce((s,j)=>s+(j.value||0),0);
 
     income.push(wIncome);
-    overhead.push(weeklyOverhead);
-    runBal = runBal + wIncome - weeklyOverhead;
+    overhead.push(totalWeeklyOut);
+    runBal = runBal + wIncome - totalWeeklyOut;
     balance.push(runBal);
   }
 
@@ -3641,7 +3950,7 @@ function sales(){
           <td class="mono">$'+totalTarget.toLocaleString()+'</td>
           <td class="mono" style="color:var(--accent)">$'+totalBooked.toLocaleString()+'</td>
           <td class="mono" style="color:var(--green2)">$'+totalInvoiced.toLocaleString()+'</td>
-          <td class="mono" style="color:'+(totalBooked-totalTarget>=0?'var(--green2)':'var(--red))')+'">'+(totalBooked-totalTarget>=0?'+':'')+(totalBooked-totalTarget).toLocaleString()+'</td>
+          <td class="mono" style="color:'+(totalBooked-totalTarget>=0?'var(--green2)':'var(--red)')+'">'+(totalBooked-totalTarget>=0?'+':'')+(totalBooked-totalTarget).toLocaleString()+'</td>
           <td><span class="badge '+(paceRate>=100?'badge-green':paceRate>=70?'badge-blue':'badge-red')+'">'+paceRate+'%</span></td>
         </tr>
       </tbody>
