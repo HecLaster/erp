@@ -2283,19 +2283,24 @@ function cashflow(){
   const expenses = DB.get('expenses')||[];
   const jobs = DB.get('sched_jobs')||[];
 
-  // Estimate AR from active jobs
-  const arJobs = jobs.filter(j=>j.status!=='Shipped');
-  const totalAR = arJobs.reduce((s,j)=>s+(j.value||0),0);
-  const totalInvoiced = invoices.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-  const totalExpenses = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-
-  // 30/60/90 day buckets
+  // AR = Shipped jobs awaiting payment (NET 30 from ship date)
   const now = new Date();
   const d30 = new Date(now); d30.setDate(d30.getDate()+30);
   const d60 = new Date(now); d60.setDate(d60.getDate()+60);
   const d90 = new Date(now); d90.setDate(d90.getDate()+90);
 
-  const ar30 = arJobs.filter(j=>j.ship&&new Date(j.ship+'T12:00:00')<=d30).reduce((s,j)=>s+(j.value||0),0);
+  const shippedJobs = jobs.filter(j=>j.status==='Shipped' && (j.value||0)>0);
+  const arJobs = shippedJobs.map(j=>{
+    const sd = new Date((j.shipActual||j.ship||'2026-05-02')+'T12:00:00');
+    const pd = new Date(sd); pd.setDate(pd.getDate()+30);
+    return Object.assign({},j,{payDue:pd});
+  });
+
+  const totalAR = arJobs.reduce((s,j)=>s+(j.value||0),0);
+  const totalInvoiced = invoices.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
+  const totalExpenses = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+
+  const ar30 = arJobs.filter(j=>j.payDue<=d30).reduce((s,j)=>s+(j.value||0),0);
   const ar60 = arJobs.filter(j=>j.payDue>d30&&j.payDue<=d60).reduce((s,j)=>s+(j.value||0),0);
   const ar90 = arJobs.filter(j=>j.payDue>d60&&j.payDue<=d90).reduce((s,j)=>s+(j.value||0),0);
 
@@ -5270,6 +5275,7 @@ function doLogin() {
     var ls = document.getElementById('login-screen');
     if (ls) ls.parentNode.removeChild(ls);
     applyRole(u.role);
+    forceLoadJCFord();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
