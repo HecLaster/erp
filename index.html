@@ -3777,22 +3777,6 @@ function getSeedJobs(){
       signSetup: 'HL', signSetupDate: '2026-05-01',
       signFAI: 'HL', signFAIDate: '2026-05-01',
       signFinal: 'HL', signFinalDate: '2026-05-02'
-    },
-    {
-      id: 1746450000000,
-      wo: 'WO-2026-039', part: '54276', customer: 'Spirax Sarco',
-      desc: 'Bracket, 1-1/2 FD-2 Float Arm', qty: 20, ship: '2026-05-22',
-      mat: 'Per Print', po: '201376-000-OP', machine: 1,
-      operations: [
-        { machine: 1, locked: true, desc: '5-axis mill — CNC #1', opNum: 10 },
-        { machine: 4, locked: true, desc: '5-axis mill — CNC #4', opNum: 10 },
-        { machine: 5, locked: true, desc: '5-axis mill — CNC #5', opNum: 10 }
-      ],
-      locked: true, ops: [],
-      status: 'Queued', priority: 'Normal',
-      operator: 'Lucas', value: 10000,
-      matETA: '2026-05-15', startDate: '2026-05-18',
-      fai: false, notes: 'Mat arrives 5/15. Start 5/18. 2 pcs/day/machine (6/day total). Ship via customer UPS #0600X7 or FedEx #319143491. Rev A drawing D-54276.'
     }
   ];
 }
@@ -5858,6 +5842,34 @@ function forceLoadJCFord(){
 }
 
 
+function ensureNewJobs(){
+  var existing = DB.get('sched_jobs')||[];
+  var newWOs = ['WO-2026-039'];
+  var newData = [
+    {
+      id: 1746450000000,
+      wo: 'WO-2026-039', part: '54276', customer: 'Spirax Sarco',
+      desc: 'Bracket, 1-1/2 FD-2 Float Arm', qty: 20, ship: '2026-05-22',
+      mat: 'Per Print', po: '201376-000-OP', machine: 1,
+      operations: [
+        { machine: 1, locked: true, desc: '5-axis mill — CNC #1', opNum: 10 },
+        { machine: 4, locked: true, desc: '5-axis mill — CNC #4', opNum: 10 },
+        { machine: 5, locked: true, desc: '5-axis mill — CNC #5', opNum: 10 }
+      ],
+      locked: true, ops: [],
+      status: 'Queued', priority: 'Normal',
+      operator: 'Lucas', value: 10000,
+      matETA: '2026-05-15', startDate: '2026-05-18', fai: false,
+      notes: 'Mat arrives 5/15. Start 5/18. 2 pcs/day/machine (6/day). Ship via customer UPS #0600X7 or FedEx #319143491. Rev A drawing D-54276.'
+    }
+  ];
+  // Only add jobs that aren't already in the list
+  var missing = newData.filter(function(j){ return !existing.find(function(e){ return e.wo === j.wo; }); });
+  if(missing.length > 0){
+    DB.set('sched_jobs', existing.concat(missing));
+  }
+}
+
 // ── AUTH & LOGIN ─────────────────────────────────────────────
 var USERS = {
   'hlaster@tieronemachine.com': { pass: 'TierOne2026!', role: 'owner',    name: 'Hec' },
@@ -5904,6 +5916,7 @@ function doLogin() {
     if (ls) ls.parentNode.removeChild(ls);
     applyRole(u.role);
     forceLoadJCFord();
+    ensureNewJobs();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
@@ -5951,6 +5964,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (checkSession()) {
     // Force-load JC Ford jobs with correct values
     forceLoadJCFord();
+    ensureNewJobs();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
