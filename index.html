@@ -4951,6 +4951,7 @@ function openTraveler(id){
 
     <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="window.print()">🖨 Print Traveler</button>
+      <button class="btn" style="background:var(--red);color:#fff;border:none" onclick="deleteJob()">🗑 Delete Job</button>
       <button class="btn btn-primary" onclick="saveTraveler()">Save Changes</button>
     </div>
   `;
@@ -4963,6 +4964,17 @@ function closeTraveler(){
   document.getElementById('traveler-modal').classList.remove('open');
   document.body.style.overflow = '';
   _travelerJobId = null;
+}
+
+function deleteJob(){
+  const wo = _travelerJobId;
+  if(!wo) return;
+  if(!confirm('Delete ' + wo + '? This cannot be undone.')) return;
+  const jobs = DB.get('sched_jobs') || [];
+  DB.set('sched_jobs', jobs.filter(j => j.wo !== wo));
+  closeTraveler();
+  toast('🗑 ' + wo + ' deleted');
+  schedboard();
 }
 
 function saveTraveler(){
@@ -6954,6 +6966,7 @@ async function driveUploadFile(token, b64Data, fileName, mimeType, parentId){
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary btn-sm" onclick="saveTraveler()">Save Changes</button>
+        <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" onclick="deleteJob()" id="traveler-delete-btn">🗑 Delete Job</button>
         <button id="traveler-close" onclick="closeTraveler()">✕ Close</button>
       </div>
     </div>
