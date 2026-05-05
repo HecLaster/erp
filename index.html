@@ -5923,6 +5923,45 @@ function forceLoadJCFord(){
 }
 
 
+function ensureNewJobs(){
+  var existing = DB.get('sched_jobs')||[];
+  var newData = [
+    {
+      id: 1746450000000,
+      wo: 'WO-2026-039', part: '54276', customer: 'Spirax Sarco',
+      desc: 'Bracket, 1-1/2 FD-2 Float Arm', qty: 20, ship: '2026-05-22',
+      mat: 'Per Print', po: '201376-000-OP', machine: 1,
+      operations: [
+        { machine: 1, locked: true, desc: '5-axis mill — CNC #1', opNum: 10 },
+        { machine: 4, locked: true, desc: '5-axis mill — CNC #4', opNum: 10 },
+        { machine: 5, locked: true, desc: '5-axis mill — CNC #5', opNum: 10 }
+      ],
+      locked: true, ops: [], status: 'Queued', priority: 'Normal',
+      operator: 'Lucas', value: 10000,
+      matETA: '2026-05-15', startDate: '2026-05-18', fai: false,
+      notes: 'Mat arrives 5/15. Start 5/18. 2 pcs/day/machine (6/day). Ship via customer UPS #0600X7 or FedEx #319143491. Rev A drawing D-54276.'
+    },
+    {
+      id: 1746450001000,
+      wo: 'WO-2026-006-M', part: 'D-72385', customer: 'SXS',
+      desc: 'Bushing MTG Plate', qty: 250, ship: '',
+      mat: '316SS', po: '190154', machine: 2,
+      operations: [
+        { machine: 2, locked: true, desc: '3-axis mill — CNC #2', opNum: 10 }
+      ],
+      locked: true, ops: [], status: 'Queued', priority: 'Normal',
+      operator: '', value: 0, fai: false,
+      notes: '250 pcs remaining. 3 min/pc @ CNC #2. Zero cost — rolls into shipped assembly. Original WO qty: 300.'
+    }
+  ];
+  var missing = newData.filter(function(j){
+    return !existing.find(function(e){ return e.wo === j.wo; });
+  });
+  if(missing.length > 0){
+    DB.set('sched_jobs', existing.concat(missing));
+  }
+}
+
 // ── AUTH & LOGIN ─────────────────────────────────────────────
 var USERS = {
   'hlaster@tieronemachine.com': { pass: 'TierOne2026!', role: 'owner',    name: 'Hec' },
@@ -5969,6 +6008,7 @@ function doLogin() {
     if (ls) ls.parentNode.removeChild(ls);
     applyRole(u.role);
     forceLoadJCFord();
+    ensureNewJobs();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
@@ -6016,6 +6056,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (checkSession()) {
     // Force-load JC Ford jobs with correct values
     forceLoadJCFord();
+    ensureNewJobs();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
