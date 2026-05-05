@@ -2579,6 +2579,19 @@ function cashflow(){
     return {wo:'INV-'+r.inv, customer:r.customer, value:r.amount, payDue:pd, dueDate:r.dueDate, id:r.id};
   });
 
+  // Build projJobs — active/queued jobs not yet invoiced, projected at ship date + 30 days NET
+  const projJobs = jobs.filter(j=>
+    j.value > 0 &&
+    j.ship &&
+    j.status !== 'Shipped'
+  ).map(j=>{
+    const shipDate = new Date(j.ship+'T12:00:00');
+    const payDue = new Date(shipDate); payDue.setDate(payDue.getDate()+30);
+    return {wo:j.wo, customer:j.customer, value:j.value, payDue, ship:j.ship};
+  });
+
+  const totalProj = projJobs.reduce((s,j)=>s+(j.value||0),0);
+
   const totalAR = arJobs.reduce((s,j)=>s+(j.value||0),0);
   const totalInvoiced = invoices.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
   const totalExpenses = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
@@ -2599,8 +2612,9 @@ function cashflow(){
   render(`
   <div class="page-header"><h1>Cash Flow Forecast</h1><p>AR/AP · Fixed Overhead · 30/60/90-day projection · Negative flow alerts</p></div>
 
-  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(4,1fr)">
-    <div class="kpi" style="border-left:3px solid var(--green)"><div class="kpi-val green">$${(totalAR/1000).toFixed(1)}k</div><div class="kpi-label">Total AR Pipeline</div></div>
+  <div class="kpi-grid mb-16" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--green)"><div class="kpi-val green">$${(totalAR/1000).toFixed(1)}k</div><div class="kpi-label">Confirmed AR</div></div>
+    <div class="kpi" style="border-left:3px solid #16a34a"><div class="kpi-val" style="color:#16a34a">$${(totalProj/1000).toFixed(1)}k</div><div class="kpi-label">Projected Pipeline</div></div>
     <div class="kpi" style="border-left:3px solid var(--accent)"><div class="kpi-val">$${(ar30/1000).toFixed(1)}k</div><div class="kpi-label">Due in 30 Days</div></div>
     <div class="kpi" style="border-left:3px solid var(--purple)"><div class="kpi-val">$${(ar60/1000).toFixed(1)}k</div><div class="kpi-label">31–60 Days</div></div>
     <div class="kpi" style="border-left:3px solid var(--amber)"><div class="kpi-val amber">$${(ar90/1000).toFixed(1)}k</div><div class="kpi-label">61–90 Days</div></div>
@@ -2671,6 +2685,7 @@ function cashflow(){
           style="width:110px;font-size:13px;padding:4px 8px;text-align:right">
         <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-left:8px">
           <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px"></span>Income</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#86efac;border-radius:2px;margin-right:4px;border:1px dashed #16a34a"></span>Projected</span>
           <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px"></span>Overhead</span>
           <span><span style="display:inline-block;width:10px;height:10px;background:#1A6FFF;border-radius:2px;margin-right:4px"></span>Balance</span>
         </div>
@@ -2730,7 +2745,7 @@ function cashflow(){
   `);
   // Draw chart after DOM renders
   requestAnimationFrame(()=>{
-    drawCFChart(arJobs, fixed);
+    drawCFChart(arJobs, fixed, projJobs);
     renderARTable(now);
     renderAPTable();
   });
@@ -2785,7 +2800,8 @@ function renderARTable(now){
   });
 }
 
-function drawCFChart(arJobs, fixed){
+function drawCFChart(arJobs, fixed, projJobs){
+  projJobs = projJobs||[];
   const canvas = document.getElementById('cf-chart');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -2802,6 +2818,7 @@ function drawCFChart(arJobs, fixed){
 
   const labels = [];
   const income = [];
+  const projected = [];
   const overhead = [];
   const balance = [];
 
@@ -2812,12 +2829,18 @@ function drawCFChart(arJobs, fixed){
     const lbl = (wStart.getMonth()+1)+'/'+(wStart.getDate());
     labels.push(lbl);
 
-    // Income = AR payments due this week (NET 30 from ship)
+    // Confirmed income = open AR due this week
     const wIncome = arJobs.filter(j=>{
       return j.payDue >= wStart && j.payDue < wEnd;
     }).reduce((s,j)=>s+(j.value||0),0);
 
+    // Projected income = active unshipped jobs whose ship+30 lands this week
+    const wProj = projJobs.filter(j=>{
+      return j.payDue >= wStart && j.payDue < wEnd;
+    }).reduce((s,j)=>s+(j.value||0),0);
+
     income.push(wIncome);
+    projected.push(wProj);
     overhead.push(totalWeeklyOut);
     runBal = runBal + wIncome - totalWeeklyOut;
     balance.push(runBal);
@@ -2840,8 +2863,8 @@ function drawCFChart(arJobs, fixed){
   const barW = (chartW/n)*0.3;
   const slotW = chartW/n;
 
-  // Scale
-  const allVals = [...income,...overhead,...balance];
+  // Scale — include projected in max calculation
+  const allVals = [...income,...projected,...overhead,...balance];
   const maxV = Math.max(...allVals,0)*1.15||10000;
   const minV = Math.min(...balance,0)*1.15;
   const range = maxV - minV;
@@ -2864,14 +2887,35 @@ function drawCFChart(arJobs, fixed){
     ctx.beginPath(); ctx.moveTo(padL,yg); ctx.lineTo(padL+chartW,yg); ctx.stroke();
   });
 
-  // Draw income bars (green) + overhead bars (red) side by side
+  // Draw projected bars (light green, dashed outline) behind confirmed income
+  for(let i=0;i<n;i++){
+    if(projected[i]<=0) continue;
+    const cx = padL + i*slotW + slotW/2;
+    const py1 = toY(projected[i]);
+    const py2 = toY(0);
+    const bx = cx-barW-2;
+    const bh = Math.abs(py1-py2)||1;
+    const by = Math.min(py1,py2);
+    ctx.fillStyle='#bbf7d0';
+    ctx.fillRect(bx, by, barW, bh);
+    // dashed border
+    ctx.strokeStyle='#16a34a';
+    ctx.lineWidth=1;
+    ctx.setLineDash([3,2]);
+    ctx.strokeRect(bx, by, barW, bh);
+    ctx.setLineDash([]);
+  }
+
+  // Draw confirmed income bars (solid green) + overhead bars (red)
   for(let i=0;i<n;i++){
     const cx = padL + i*slotW + slotW/2;
-    // income bar
-    const iy1 = toY(income[i]);
-    const iy2 = toY(0);
-    ctx.fillStyle='#22c55e';
-    ctx.fillRect(cx-barW-2, Math.min(iy1,iy2), barW, Math.abs(iy1-iy2)||1);
+    // confirmed income bar — draws on top of projected if both exist
+    if(income[i]>0){
+      const iy1 = toY(income[i]);
+      const iy2 = toY(0);
+      ctx.fillStyle='#22c55e';
+      ctx.fillRect(cx-barW-2, Math.min(iy1,iy2), barW, Math.abs(iy1-iy2)||1);
+    }
     // overhead bar
     const oy1 = toY(overhead[i]);
     const oy2 = toY(0);
@@ -5842,34 +5886,6 @@ function forceLoadJCFord(){
 }
 
 
-function ensureNewJobs(){
-  var existing = DB.get('sched_jobs')||[];
-  var newWOs = ['WO-2026-039'];
-  var newData = [
-    {
-      id: 1746450000000,
-      wo: 'WO-2026-039', part: '54276', customer: 'Spirax Sarco',
-      desc: 'Bracket, 1-1/2 FD-2 Float Arm', qty: 20, ship: '2026-05-22',
-      mat: 'Per Print', po: '201376-000-OP', machine: 1,
-      operations: [
-        { machine: 1, locked: true, desc: '5-axis mill — CNC #1', opNum: 10 },
-        { machine: 4, locked: true, desc: '5-axis mill — CNC #4', opNum: 10 },
-        { machine: 5, locked: true, desc: '5-axis mill — CNC #5', opNum: 10 }
-      ],
-      locked: true, ops: [],
-      status: 'Queued', priority: 'Normal',
-      operator: 'Lucas', value: 10000,
-      matETA: '2026-05-15', startDate: '2026-05-18', fai: false,
-      notes: 'Mat arrives 5/15. Start 5/18. 2 pcs/day/machine (6/day). Ship via customer UPS #0600X7 or FedEx #319143491. Rev A drawing D-54276.'
-    }
-  ];
-  // Only add jobs that aren't already in the list
-  var missing = newData.filter(function(j){ return !existing.find(function(e){ return e.wo === j.wo; }); });
-  if(missing.length > 0){
-    DB.set('sched_jobs', existing.concat(missing));
-  }
-}
-
 // ── AUTH & LOGIN ─────────────────────────────────────────────
 var USERS = {
   'hlaster@tieronemachine.com': { pass: 'TierOne2026!', role: 'owner',    name: 'Hec' },
@@ -5916,7 +5932,6 @@ function doLogin() {
     if (ls) ls.parentNode.removeChild(ls);
     applyRole(u.role);
     forceLoadJCFord();
-    ensureNewJobs();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
@@ -5964,7 +5979,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (checkSession()) {
     // Force-load JC Ford jobs with correct values
     forceLoadJCFord();
-    ensureNewJobs();
     refreshAlerts();
     floor();
     setTimeout(function(){ showBriefing(); }, 800);
