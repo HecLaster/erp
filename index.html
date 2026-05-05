@@ -1425,11 +1425,12 @@ function schedule(){
             +queueJobs.map(j=>{
               const d=Math.round((new Date(j.ship+'T12:00:00')-new Date())/86400000);
               const dc=d<0?'var(--red)':d<=7?'var(--amber)':'var(--text3)';
-              return '<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer" data-id="'+j.id+'" data-st="Setup" title="Click to start setup">'
+              return '<div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:3px 8px;font-size:11px;">'
                 +(j.priority==='Hot'||j.priority==='Rush'?'🔴 ':'')
                 +(j.locked?'🔒 ':'')
-                +'<span class="mono" data-traveler="'+j.id+'">'+j.wo+'</span>'
+                +'<span class="mono" style="cursor:pointer;color:var(--accent2)" data-traveler="'+j.id+'">'+ j.wo+'</span>'
                 +'<span style="color:'+dc+';font-family:var(--mono)"> '+j.ship+'</span>'
+                +'<button onclick="moveJobPrompt(\''+ j.id +'\')" style="margin-left:auto;background:none;border:1px solid var(--border2);border-radius:var(--r);padding:1px 6px;font-size:10px;cursor:pointer;color:var(--text3)" title="Move to machine">↕ Move</button>'
                 +'</div>';
             }).join('')
             +'</div>'
@@ -1593,50 +1594,60 @@ function autoAssignMachine(existingOps, priority){
 function schedAutoAll(){
   const jobs = DB.get('sched_jobs')||[];
   
-  // Sort by priority then ship date
+  // Sort by priority then ship date — include ALL non-shipped jobs
+  // j.locked = job pinned to machine (skip entirely)
+  // op.locked = operation pinned to specific machine (keep that op's machine)
   const priOrder = {Rush:0, Hot:1, Normal:2};
-  const toSchedule = jobs
-    .filter(j=>j.status!=='Shipped' && !j.locked)
+  const active = jobs.filter(j=>j.status!=='Shipped');
+  const toSchedule = active
+    .filter(j=>!j.locked)
     .sort((a,b)=>{
       const pa=priOrder[a.priority]||2, pb=priOrder[b.priority]||2;
       if(pa!==pb) return pa-pb;
+      if(!a.ship && !b.ship) return 0;
+      if(!a.ship) return 1;
+      if(!b.ship) return -1;
       return new Date(a.ship)-new Date(b.ship);
     });
 
-  // Track load per machine
+  // Track load per machine — pre-populate with locked jobs
   const loads = {1:0,2:0,3:0,4:0,5:0,6:0};
-  // Pre-populate with locked jobs
-  jobs.filter(j=>j.locked).forEach(j=>{
-    if(j.operations) j.operations.forEach(op=>{ loads[op.machine]=(loads[op.machine]||0)+1; });
-    else loads[j.machine]=(loads[j.machine]||0)+1;
+  active.filter(j=>j.locked).forEach(j=>{
+    if(j.operations && j.operations.length>0){
+      j.operations.forEach(op=>{ loads[op.machine]=(loads[op.machine]||0)+1; });
+    } else {
+      loads[j.machine]=(loads[j.machine]||0)+1;
+    }
   });
 
+  let moved = 0;
   toSchedule.forEach(j=>{
     if(j.operations && j.operations.length>0){
-      // Auto-assign each unlocked operation
       j.operations.forEach((op,i)=>{
-        if(op.locked) { loads[op.machine]=(loads[op.machine]||0)+1; return; }
+        if(op.locked){ loads[op.machine]=(loads[op.machine]||0)+1; return; }
         const machine = bestMachineForOp(op, j.operations[i-1], loads);
         op.machine = machine;
         loads[machine]=(loads[machine]||0)+1;
       });
       j.machine = j.operations[0].machine;
     } else {
-      // Legacy job — assign based on ops array
       const machine = bestMachineForJob(j, loads);
       j.machine = machine;
       loads[machine]=(loads[machine]||0)+1;
     }
+    moved++;
   });
 
-  // Merge back
-  const locked = jobs.filter(j=>j.locked);
   const updated = jobs.map(j=>{
     const found = toSchedule.find(t=>t.id===j.id);
     return found||j;
   });
   DB.set('sched_jobs', updated);
-  toast(`⚡ Auto-scheduled ${toSchedule.length} jobs across 6 machines`);
+  if(moved===0){
+    toast('⚡ All jobs are machine-locked — unlock jobs to auto-schedule them');
+  } else {
+    toast('⚡ Auto-scheduled '+moved+' jobs across 6 machines');
+  }
   schedule();
 }
 
@@ -1697,6 +1708,25 @@ function schedSetStatus(id, status){
 }
 
 function schedAI(){ schedAutoAll(); }
+
+function moveJobPrompt(id){
+  const jobs = DB.get('sched_jobs')||[];
+  const j = jobs.find(j=>String(j.id)===String(id));
+  if(!j) return;
+  const machineNames = {1:'#1 UMC 500SS (5-axis)',2:'#2 VF3 (3-axis)',3:'#3 VF2 (3-axis)',4:'#4 VF2SS+TRT160 (5-axis)',5:'#5 VF2SS+TRT160 (5-axis)',6:'#6 DS-30Y (Lathe)'};
+  const choice = prompt('Move '+j.wo+' to which machine?\n\n1 = UMC 500SS (5-axis)\n2 = VF3 (3-axis)\n3 = VF2 (3-axis)\n4 = VF2SS+TRT160 (5-axis)\n5 = VF2SS+TRT160 (5-axis)\n6 = DS-30Y Lathe\n\nEnter machine number (1-6):');
+  const m = parseInt(choice);
+  if(!m || m<1 || m>6) return;
+  const ji = jobs.findIndex(j=>String(j.id)===String(id));
+  jobs[ji].machine = m;
+  if(jobs[ji].operations && jobs[ji].operations.length>0){
+    jobs[ji].operations[0].machine = m;
+    jobs[ji].operations[0].desc = machineNames[m];
+  }
+  DB.set('sched_jobs', jobs);
+  toast('↕ '+j.wo+' moved to '+machineNames[m]);
+  schedule();
+}
 
 
 // ── MODULE 4: MATERIAL RECEIVING ────────────────────────────
