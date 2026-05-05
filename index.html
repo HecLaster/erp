@@ -3915,17 +3915,22 @@ function sales(){
   const currentMonth = new Date().getMonth();
 
   // Compute booked by month from job data
+  // Booked = all jobs (Active, Scheduled, Queued, Shipped) bucketed by ship date (or opened date if no ship date)
+  // Invoiced = Shipped jobs only, bucketed by actual ship date
   const booked = Array(12).fill(0);
   const invoiced = Array(12).fill(0);
   jobs.forEach(j=>{
-    if(j.opened){
-      const m = new Date(j.opened).getMonth();
-      const val = j.value||0;
-      booked[m] += val;
+    const val = j.value||0;
+    if(!val) return;
+    // Use ship date first, fall back to opened date for bucketing
+    const dateStr = j.ship || j.opened || '';
+    if(dateStr){
+      const m = new Date(dateStr).getMonth();
+      if(!isNaN(m)) booked[m] += val;
     }
     if(j.status==='Shipped'&&j.ship){
-      const m = new Date(j.ship).getMonth();
-      invoiced[m] += j.value||0;
+      const m = new Date(j.shipActual||j.ship).getMonth();
+      if(!isNaN(m)) invoiced[m] += val;
     }
   });
 
