@@ -5247,6 +5247,7 @@ function getCustomers(){
     {id:2,name:'JC Ford',contact:'',email:'',phone:'',address:'',notes:''},
     {id:3,name:'SXS',contact:'',email:'',phone:'',address:'',notes:''},
     {id:4,name:'Walor NA / TSM Corp',contact:'',email:'',phone:'',address:'Ship to TSM Corp Auburn Hills MI.',notes:'Black oxide finish required.'},
+    {id:5,name:'Hirebotics',contact:'',email:'',phone:'(731) 487-3411',address:'624 Grassmere Park Suite 21, Nashville TN 37211',notes:'Ship to Hirebotics Nashville. PO3880 — PRT-1231 Tool-less Clamp for OTA Cable Management.'},
   ];
 }
 
@@ -6119,7 +6120,12 @@ function ensureNewJobs(){
       desc:'Sprocket, Spring Motor', qty:10, ship:'2026-07-22', mat:'SS 17-4 PH H1150', po:'19121',
       machine:1, operations:[{machine:1,locked:true,desc:'5-axis mill — UMC 500SS',opNum:10}],
       locked:false, ops:[], status:'Scheduled', priority:'Normal', operator:'Lucas', value:1800, fai:false,
-      notes:'PO 19121 Line 3. Rev B. Pending FAI approval of WO-2026-050. $180/ea. Ref WO-2026-050.' }
+      notes:'PO 19121 Line 3. Rev B. Pending FAI approval of WO-2026-050. $180/ea. Ref WO-2026-050.' },
+    { id:1746600003000, wo:'WO-2026-053', part:'PRT-1231', customer:'Hirebotics',
+      desc:'Tool-less Clamp for OTA Cable Management', qty:100, ship:'2026-05-26', mat:'TBD', po:'PO3880',
+      machine:1, operations:[{machine:1,locked:false,desc:'5-axis mill — UMC 500SS',opNum:10}],
+      locked:false, ops:[], status:'Active', priority:'Normal', operator:'Lucas', value:1800, fai:true,
+      notes:'PO #PO3880. Rev A. First run of this part. $18.00/ea = $1,800.00. Ship by 05/26/2026.' }
   ];
   var missing = newData.filter(function(j){
     return !existing.find(function(e){ return e.wo === j.wo; });
