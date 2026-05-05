@@ -6139,7 +6139,13 @@ function ensureNewJobs(){
       desc:'Tool-less Clamp for OTA Cable Management', qty:100, ship:'2026-05-26', mat:'TBD', po:'PO3880',
       machine:1, operations:[{machine:1,locked:false,desc:'5-axis mill — UMC 500SS',opNum:10}],
       locked:false, ops:[], status:'Active', priority:'Normal', operator:'Lucas', value:1800, fai:true,
-      notes:'PO #PO3880. Rev A. First run of this part. $18.00/ea = $1,800.00. Ship by 05/26/2026.' }
+      notes:'PO #PO3880. Rev A. First run of this part. $18.00/ea = $1,800.00. Ship by 05/26/2026.' },
+    { id:1746600004000, wo:'WO-2026-054', part:'75450', customer:'Spirax Sarco',
+      desc:'Assembly, CL/CH Thermoton — Outside Assembly & Silbraze', qty:121, ship:'2026-05-22',
+      mat:'Per Print', po:'202020-000-OP', machine:0,
+      operations:[{machine:0,locked:false,desc:'Brazing — Trish',opNum:10}],
+      locked:false, ops:[], status:'Active', priority:'Normal', operator:'Trish', value:1815, fai:true,
+      notes:'PO 202020-000-OP. Outside assembly & silbraze of components 2818, 0180020, 20119, 4687. Related SO: WO-385381-10. $15.00/ea = $1,815.00.' }
   ];
   var missing = newData.filter(function(j){
     return !existing.find(function(e){ return e.wo === j.wo; });
