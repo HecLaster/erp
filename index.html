@@ -3934,6 +3934,9 @@ function sales(){
     }
   });
 
+  // Round all booked/invoiced values to avoid floating point display issues
+  booked.forEach((_,i)=>{ booked[i]=Math.round(booked[i]); });
+  invoiced.forEach((_,i)=>{ invoiced[i]=Math.round(invoiced[i]); });
   const totalTarget = salesTargets.reduce((s,t)=>s+t,0);
   const totalBooked = booked.reduce((s,v)=>s+v,0);
   const totalInvoiced = invoiced.reduce((s,v)=>s+v,0);
@@ -4038,11 +4041,11 @@ function sales(){
         }).join('')}
         <tr style="border-top:2px solid var(--border2);font-weight:500">
           <td>TOTAL</td>
-          <td class="mono">$'+totalTarget.toLocaleString()+'</td>
-          <td class="mono" style="color:var(--accent)">$'+totalBooked.toLocaleString()+'</td>
-          <td class="mono" style="color:var(--green2)">$'+totalInvoiced.toLocaleString()+'</td>
-          <td class="mono" style="color:'+(totalBooked-totalTarget>=0?'var(--green2)':'var(--red)')+'">'+(totalBooked-totalTarget>=0?'+':'')+(totalBooked-totalTarget).toLocaleString()+'</td>
-          <td><span class="badge '+(paceRate>=100?'badge-green':paceRate>=70?'badge-blue':'badge-red')+'">'+paceRate+'%</span></td>
+          <td class="mono">$${totalTarget.toLocaleString()}</td>
+          <td class="mono" style="color:var(--accent)">$${totalBooked.toLocaleString()}</td>
+          <td class="mono" style="color:var(--green2)">$${totalInvoiced.toLocaleString()}</td>
+          <td class="mono" style="color:${totalBooked-totalTarget>=0?'var(--green2)':'var(--red)'}">${(totalBooked-totalTarget>=0?'+':'')+(totalBooked-totalTarget).toLocaleString()}</td>
+          <td><span class="badge ${paceRate>=100?'badge-green':paceRate>=70?'badge-blue':'badge-red'}">${paceRate}%</span></td>
         </tr>
       </tbody>
     </table>
