@@ -2683,11 +2683,12 @@ function cashflow(){
           value="${DB.get('cf_start_balance')||''}"
           onchange="DB.set('cf_start_balance',parseFloat(this.value)||0);cashflow();"
           style="width:110px;font-size:13px;padding:4px 8px;text-align:right">
-        <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-left:8px">
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-left:8px;flex-wrap:wrap">
           <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px"></span>Income</span>
           <span><span style="display:inline-block;width:10px;height:10px;background:#86efac;border-radius:2px;margin-right:4px;border:1px dashed #16a34a"></span>Projected</span>
           <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px"></span>Overhead</span>
           <span><span style="display:inline-block;width:10px;height:10px;background:#1A6FFF;border-radius:2px;margin-right:4px"></span>Balance</span>
+          <span><span style="display:inline-block;width:18px;height:0;border-top:2.5px dashed #16a34a;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Proj. Balance</span>
         </div>
       </div>
     </div>
@@ -2821,8 +2822,10 @@ function drawCFChart(arJobs, fixed, projJobs){
   const projected = [];
   const overhead = [];
   const balance = [];
+  const projBalance = [];
 
   let runBal = startBal;
+  let runProjBal = startBal;
   for(let w=0;w<12;w++){
     const wStart = new Date(monday); wStart.setDate(monday.getDate()+w*7);
     const wEnd   = new Date(wStart); wEnd.setDate(wStart.getDate()+7);
@@ -2844,6 +2847,8 @@ function drawCFChart(arJobs, fixed, projJobs){
     overhead.push(totalWeeklyOut);
     runBal = runBal + wIncome - totalWeeklyOut;
     balance.push(runBal);
+    runProjBal = runProjBal + wIncome + wProj - totalWeeklyOut;
+    projBalance.push(runProjBal);
   }
 
   // Dimensions
@@ -2864,9 +2869,9 @@ function drawCFChart(arJobs, fixed, projJobs){
   const slotW = chartW/n;
 
   // Scale — include projected in max calculation
-  const allVals = [...income,...projected,...overhead,...balance];
+  const allVals = [...income,...projected,...overhead,...balance,...projBalance];
   const maxV = Math.max(...allVals,0)*1.15||10000;
-  const minV = Math.min(...balance,0)*1.15;
+  const minV = Math.min(...balance,...projBalance,0)*1.15;
   const range = maxV - minV;
   const toY = v => padT + chartH - ((v-minV)/range)*chartH;
   const zero = toY(0);
@@ -2923,7 +2928,7 @@ function drawCFChart(arJobs, fixed, projJobs){
     ctx.fillRect(cx+2, Math.min(oy1,oy2), barW, Math.abs(oy1-oy2)||1);
   }
 
-  // Balance line
+  // Balance line (confirmed — solid blue)
   ctx.lineWidth=2.5;
   ctx.lineJoin='round';
   ctx.beginPath();
@@ -2935,7 +2940,33 @@ function drawCFChart(arJobs, fixed, projJobs){
   ctx.strokeStyle='#1A6FFF';
   ctx.stroke();
 
-  // Balance dots — red if negative
+  // Projected balance line (dashed green)
+  ctx.lineWidth=2;
+  ctx.lineJoin='round';
+  ctx.setLineDash([6,4]);
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const cx = padL + i*slotW + slotW/2;
+    const cy = toY(projBalance[i]);
+    if(i===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy);
+  }
+  ctx.strokeStyle='#16a34a';
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Projected balance dots — hollow green circles
+  for(let i=0;i<n;i++){
+    const cx = padL + i*slotW + slotW/2;
+    const cy = toY(projBalance[i]);
+    ctx.beginPath();
+    ctx.arc(cx,cy,3.5,0,Math.PI*2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = projBalance[i]<0 ? '#ef4444' : '#16a34a';
+    ctx.lineWidth=1.5; ctx.stroke();
+  }
+
+  // Confirmed balance dots — red if negative
   for(let i=0;i<n;i++){
     const cx = padL + i*slotW + slotW/2;
     const cy = toY(balance[i]);
@@ -2967,15 +2998,21 @@ function drawCFChart(arJobs, fixed, projJobs){
   const alertEl = document.getElementById('cf-alert');
   if(!alertEl) return;
   const firstNeg = balance.findIndex(b=>b<0);
+  const firstProjNeg = projBalance.findIndex(b=>b<0);
   if(firstNeg>=0){
     const wStart2 = new Date(monday); wStart2.setDate(monday.getDate()+firstNeg*7);
     const lbl2 = (wStart2.getMonth()+1)+'/'+(wStart2.getDate());
+    const projNote = firstProjNeg<0
+      ? ' <span style="color:#16a34a">With projected jobs paid: stays positive (min <strong>$'+Math.round(Math.min(...projBalance)).toLocaleString()+'</strong>).</span>'
+      : '';
     alertEl.innerHTML='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;color:#dc2626;font-size:13px">'+
-      '⚠️ <strong>Cash goes negative</strong> week of '+lbl2+' (Week '+(firstNeg+1)+') — projected balance: <strong>$'+Math.round(balance[firstNeg]).toLocaleString()+'</strong>. '+
-      'Add more revenue or reduce overhead to close the gap.</div>';
+      '⚠️ <strong>Cash goes negative</strong> week of '+lbl2+' (Week '+(firstNeg+1)+') — confirmed balance: <strong>$'+Math.round(balance[firstNeg]).toLocaleString()+'</strong>. '+
+      'Add more revenue or reduce overhead to close the gap.'+projNote+'</div>';
   } else if(startBal>0){
+    const projMin = Math.min(...projBalance);
     alertEl.innerHTML='<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;color:#16a34a;font-size:13px">'+
-      '✓ Cash stays positive across all 12 weeks. Lowest projected balance: <strong>$'+Math.round(Math.min(...balance)).toLocaleString()+'</strong></div>';
+      '✓ Cash stays positive across all 12 weeks. Confirmed low: <strong>$'+Math.round(Math.min(...balance)).toLocaleString()+'</strong>'+
+      (projBalance.length ? ' · With pipeline: <strong>$'+Math.round(projMin).toLocaleString()+'</strong>' : '')+'</div>';
   } else {
     alertEl.innerHTML='<div style="font-size:12px;color:#888;padding:4px 0">Enter your current bank balance above to see positive/negative predictions.</div>';
   }
